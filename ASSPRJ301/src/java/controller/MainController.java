@@ -51,7 +51,7 @@ public class MainController extends HttpServlet {
                     String strUserID = request.getParameter("txtUsername");
                     String strPassword = request.getParameter("txtPassword");
                     if (isValidLogin(strUserID, strPassword)){
-                        url = "search.jsp";
+                        url = "home.jsp";
                         UserDTO user = getUser(strUserID);
                         request.setAttribute("user", user);
                     }else {
