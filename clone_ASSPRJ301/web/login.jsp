@@ -3,7 +3,7 @@
 <html lang="vi">
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <title>Đăng nhập</title>
+        <title>Đăng nhập / Đăng ký</title>
         <style>
             /* Reset CSS */
             * {
@@ -31,8 +31,8 @@
                 width: 100%;
             }
 
-            /* Form đăng nhập */
-            .login-form {
+            /* Form chung */
+            .form-wrapper {
                 background: white;
                 padding: 40px;
                 border-radius: 15px;
@@ -43,7 +43,7 @@
                 transition: transform 0.3s ease;
             }
 
-            .login-form:hover {
+            .form-wrapper:hover {
                 transform: scale(1.02);
             }
 
@@ -96,7 +96,7 @@
                 box-shadow: 0 0 5px rgba(93, 193, 185, 0.3);
             }
 
-            /* Nút đăng nhập */
+            /* Nút */
             .submit-btn {
                 background: #5DC1B9;
                 color: white;
@@ -115,31 +115,35 @@
                 transform: scale(1.05);
             }
 
+            /* Liên kết chuyển đổi */
+            .switch-form {
+                margin-top: 15px;
+                font-size: 14px;
+                color: #555;
+            }
+
+            .switch-form a {
+                color: #5DC1B9;
+                font-weight: bold;
+                text-decoration: none;
+                transition: 0.3s;
+            }
+
+            .switch-form a:hover {
+                color: #4BAA9F;
+            }
+
+            /* Ẩn form */
+            .hidden {
+                display: none;
+            }
+
             /* Hiển thị lỗi */
             .error-message {
                 color: red;
                 font-size: 14px;
                 margin-bottom: 10px;
-            }
-
-            /* Responsive */
-            @media (max-width: 480px) {
-                .login-form {
-                    padding: 30px;
-                }
-
-                .form-title {
-                    font-size: 24px;
-                }
-
-                .form-group input {
-                    font-size: 14px;
-                }
-
-                .submit-btn {
-                    font-size: 16px;
-                    padding: 12px;
-                }
+                text-align: center;
             }
         </style>
     </head>
@@ -147,13 +151,14 @@
         <%@include file="header.jsp" %> 
 
         <div class="login-container">
-            <div class="login-form">
+            <!-- Form đăng nhập -->
+            <div class="form-wrapper" id="loginForm">
                 <h2 class="form-title">Đăng nhập</h2>
-                
+
                 <% String errorMessage = (String) request.getAttribute("errorMessage"); %>
-                <% if (errorMessage != null) {%>
-                <p class="error-message"><%= errorMessage%></p>
-                <% }%>
+                <% if (errorMessage != null) { %>
+                    <p class="error-message"><%= errorMessage %></p>
+                <% } %>
 
                 <form action="MainController" method="post">
                     <input type="hidden" name="action" value="login" />
@@ -170,9 +175,56 @@
 
                     <button type="submit" class="submit-btn">Đăng nhập</button>
                 </form>
+
+                <p class="switch-form">Chưa có tài khoản? <a href="#" onclick="showRegister()">Đăng ký ngay</a></p>
+            </div>
+
+            <!-- Form đăng ký (ẩn ban đầu) -->
+            <div class="form-wrapper hidden" id="registerForm">
+                <h2 class="form-title">Đăng ký</h2>
+
+                <form action="MainController" method="post">
+                    <input type="hidden" name="action" value="register" />
+
+                    <div class="form-group">
+                        <label for="newUsername">Tên đăng nhập</label>
+                        <input type="text" id="newUsername" name="txtNewUsername" required />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" name="txtEmail" required />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="newPassword">Mật khẩu</label>
+                        <input type="password" id="newPassword" name="txtNewPassword" required />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirmPassword">Nhập lại mật khẩu</label>
+                        <input type="password" id="confirmPassword" name="txtConfirmPassword" required />
+                    </div>
+
+                    <button type="submit" class="submit-btn">Đăng ký</button>
+                </form>
+
+                <p class="switch-form">Đã có tài khoản? <a href="#" onclick="showLogin()">Đăng nhập</a></p>
             </div>
         </div>
 
         <%@include file="footer.jsp" %> 
+
+        <script>
+            function showRegister() {
+                document.getElementById("loginForm").classList.add("hidden");
+                document.getElementById("registerForm").classList.remove("hidden");
+            }
+
+            function showLogin() {
+                document.getElementById("registerForm").classList.add("hidden");
+                document.getElementById("loginForm").classList.remove("hidden");
+            }
+        </script>
     </body>
 </html>
