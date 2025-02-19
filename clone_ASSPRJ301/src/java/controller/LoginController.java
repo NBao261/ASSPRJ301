@@ -20,8 +20,8 @@ import javax.servlet.http.HttpServletResponse;
  *
  * @author cbao
  */
-@WebServlet(name = "MainController", urlPatterns = {"/MainController"})
-public class MainController extends HttpServlet {
+@WebServlet(name = "MainController", urlPatterns = {"/login"})
+public class LoginController extends HttpServlet {
     
     private static final String LOGIN_PAGE = "login.jsp";
     private static final String HOME_PAGE = "home.jsp";

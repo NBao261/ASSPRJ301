@@ -160,7 +160,7 @@
                     <p class="error-message"><%= errorMessage %></p>
                 <% } %>
 
-                <form action="MainController" method="post">
+                <form action="login" method="post">
                     <input type="hidden" name="action" value="login" />
 
                     <div class="form-group">

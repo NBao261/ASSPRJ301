@@ -28,7 +28,6 @@ public class UserDAO implements IDAO<UserDTO, String> {
     public boolean create(UserDTO entity) {
         String sql = "INSERT [dbo].[tblUsers] ([userID], [fullName], [roleID], [password]) "
                 + "VALUES (?, ?, ?, ?)";
-
         try {
             Connection conn = DBUtils.getConnection();
             PreparedStatement ps = conn.prepareCall(sql);
@@ -52,8 +51,8 @@ public class UserDAO implements IDAO<UserDTO, String> {
         String sql = "SELECT * FROM [tblUsers];";
         try {
             Connection conn = DBUtils.getConnection();
-            Statement st = conn.createStatement();
-            ResultSet rs = st.executeQuery(sql);
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ResultSet rs = ps.executeQuery();
             while (rs.next()) {
                 UserDTO user = new UserDTO(
                         rs.getString("userID"),
