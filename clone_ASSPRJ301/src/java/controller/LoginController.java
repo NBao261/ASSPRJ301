@@ -16,10 +16,6 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-/**
- *
- * @author cbao
- */
 @WebServlet(name = "MainController", urlPatterns = {"/login"})
 public class LoginController extends HttpServlet {
     

@@ -19,7 +19,7 @@
             <% if (user != null) { %>
                 <div class="user-info">
                     <span class="user-name">👋 Xin chào, <%= user.getFullName() %></span>
-                    <a href="MainController?action=logout" class="logout-btn">Đăng xuất</a>
+                    <a href="login?action=logout" class="logout-btn">Đăng xuất</a>
                 </div>
             <% } else { %>
                 <a href="booking.jsp" class="booking-btn">Đặt ngay</a>
