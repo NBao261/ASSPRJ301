@@ -156,9 +156,13 @@
                 <h2 class="form-title">Đăng nhập</h2>
 
                 <% String errorMessage = (String) request.getAttribute("errorMessage"); %>
-                <% if (errorMessage != null) { %>
-                    <p class="error-message"><%= errorMessage %></p>
+                <% String successMessage = (String) request.getAttribute("successMessage"); %>
+                <% if (errorMessage != null) {%>
+                <p class="error-message"><%= errorMessage%></p>
                 <% } %>
+                <% if (successMessage != null) {%>
+                <p class="success-message"><%= successMessage%></p>
+                <% }%>
 
                 <form action="login" method="post">
                     <input type="hidden" name="action" value="login" />
@@ -183,17 +187,15 @@
             <div class="form-wrapper hidden" id="registerForm">
                 <h2 class="form-title">Đăng ký</h2>
 
-                <form action="MainController" method="post">
-                    <input type="hidden" name="action" value="register" />
-
+                <form action="register" method="post">
                     <div class="form-group">
                         <label for="newUsername">Tên đăng nhập</label>
                         <input type="text" id="newUsername" name="txtNewUsername" required />
                     </div>
 
                     <div class="form-group">
-                        <label for="email">Email</label>
-                        <input type="email" id="email" name="txtEmail" required />
+                        <label for="fullName">Họ và tên</label>
+                        <input type="text" id="fullName" name="txtFullName" required />
                     </div>
 
                     <div class="form-group">
@@ -225,6 +227,13 @@
                 document.getElementById("registerForm").classList.add("hidden");
                 document.getElementById("loginForm").classList.remove("hidden");
             }
+            window.onload = function () {
+            <% if (request.getAttribute("showRegisterForm") != null) { %>
+                showRegister();
+            <% } else { %>
+                showLogin();
+            <% }%>
+            };
         </script>
     </body>
 </html>

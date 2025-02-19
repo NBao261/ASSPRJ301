@@ -18,25 +18,25 @@ import javax.servlet.http.HttpServletResponse;
 
 @WebServlet(name = "MainController", urlPatterns = {"/login"})
 public class LoginController extends HttpServlet {
-    
+
     private static final String LOGIN_PAGE = "login.jsp";
     private static final String HOME_PAGE = "home.jsp";
-    
-    public UserDTO getUser(String strUserID){
+
+    public UserDTO getUser(String strUserID) {
         UserDAO udao = new UserDAO();
         return udao.readById(strUserID);
     }
-    
-    public boolean isValidLogin(String strUserID, String strPassword){
+
+    public boolean isValidLogin(String strUserID, String strPassword) {
         UserDTO user = getUser(strUserID);
         return user != null && user.getPassword().equals(strPassword);
     }
-            
+
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         response.setContentType("text/html;charset=UTF-8");
         String url = LOGIN_PAGE;
-        
+
         try {
             String action = request.getParameter("action");
             if (action == null) {
@@ -55,7 +55,6 @@ public class LoginController extends HttpServlet {
                             url = LOGIN_PAGE;
                         }
                         break;
-
                     case "logout":
                         request.getSession().invalidate(); // Hủy session
                         url = LOGIN_PAGE;
@@ -82,4 +81,3 @@ public class LoginController extends HttpServlet {
         processRequest(request, response);
     }
 }
-
