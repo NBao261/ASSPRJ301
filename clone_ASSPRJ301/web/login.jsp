@@ -3,7 +3,7 @@
 <html lang="vi">
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <title>Đăng nhập / Đăng ký</title>
+        <title>Login</title>
         <style>
             /* Reset CSS */
             * {
