@@ -237,7 +237,14 @@
                     <p class="price">1.200.000đ / đêm</p>
                     <p class="amenities">Tiện nghi: Wifi, TV, Điều hòa, Tủ lạnh, Bàn làm việc</p>
                     <p class="ratings">⭐ 4.5/5 (50 đánh giá)</p>
-                    <a href="room-details.jsp" class="btn-view-details">Xem chi tiết</a>
+
+                    <%
+                        if (user != null) {
+                    %>
+                    <a href="booking.jsp?room=deluxe" class="btn-view-details">Đặt ngay</a>
+                    <% } else { %>
+                    <a href="login-regis.jsp" class="btn-view-details">Đăng nhập để đặt</a>
+                    <% } %>
                 </div>
             </div>
 
@@ -249,7 +256,14 @@
                     <p class="price">1.800.000đ / đêm</p>
                     <p class="amenities">Tiện nghi: Wifi, TV, Jacuzzi, Bể bơi riêng, Tủ lạnh</p>
                     <p class="ratings">⭐ 4.8/5 (120 đánh giá)</p>
-                    <a href="room-details.jsp" class="btn-view-details">Xem chi tiết</a>
+
+                    <%
+                        if (user != null) {
+                    %>
+                    <a href="booking.jsp?room=vip" class="btn-view-details">Đặt ngay</a>
+                    <% } else { %>
+                    <a href="login-regis.jsp" class="btn-view-details">Đăng nhập để đặt</a>
+                    <% } %>
                 </div>
                 <img src="https://dongtiengroup.vn/wp-content/uploads/2024/05/thiet-ke-homestay-nha-vuon-5.jpg" alt="Phòng VIP">
             </div>
@@ -263,7 +277,14 @@
                     <p class="price">2.500.000đ / đêm</p>
                     <p class="amenities">Tiện nghi: Wifi, TV, Bếp, Điều hòa, Phòng tắm riêng</p>
                     <p class="ratings">⭐ 4.7/5 (80 đánh giá)</p>
-                    <a href="room-details.jsp" class="btn-view-details">Xem chi tiết</a>
+
+                    <%
+                        if (user != null) {
+                    %>
+                    <a href="booking.jsp?room=family" class="btn-view-details">Đặt ngay</a>
+                    <% } else { %>
+                    <a href="login-regis.jsp" class="btn-view-details">Đăng nhập để đặt</a>
+                    <% }%>
                 </div>
             </div>
         </section>

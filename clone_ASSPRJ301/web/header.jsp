@@ -1,8 +1,5 @@
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%@page import="dto.UserDTO"%>
-<%
-    UserDTO user = (UserDTO) session.getAttribute("user");
-%>
 
 <header>
     <div class="container">
@@ -16,14 +13,17 @@
             </ul>
         </nav>
         <div class="header-right">
-            <% if (user != null) { %>
-                <div class="user-info">
-                    <span class="user-name">👋 Xin chào, <%= user.getFullName() %></span>
-                    <a href="login?action=logout" class="logout-btn">Đăng xuất</a>
-                </div>
+            <%
+                UserDTO user = (UserDTO) session.getAttribute("user");
+                if (user != null) {
+            %>
+            <div class="user-info">
+                <span class="user-name">👋 Xin chào, <%= user.getFullName()%></span>
+                <a href="login?action=logout" class="logout-btn">Đăng xuất</a>
+            </div>
             <% } else { %>
-                <a href="booking.jsp" class="booking-btn">Đặt ngay</a>
-            <% } %>
+            <a href="login-regis.jsp" class="booking-btn">Đăng nhập</a>
+            <% }%>
         </div>
         <div class="menu-toggle">&#9776;</div>
     </div>

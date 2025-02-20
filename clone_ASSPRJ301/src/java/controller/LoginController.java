@@ -8,20 +8,21 @@ package controller;
 import dao.UserDAO;
 import dto.UserDTO;
 import java.io.IOException;
-import java.io.PrintWriter;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
-@WebServlet(name = "MainController", urlPatterns = {"/login"})
+@WebServlet(name = "LoginController", urlPatterns = {"/login", "/logout", "/home"})
 public class LoginController extends HttpServlet {
 
     private static final String LOGIN_PAGE = "login-regis.jsp";
     private static final String HOME_PAGE = "home.jsp";
-
+    private static final String BOOKING_PAGE = "booking.jsp";
+    
     public UserDTO getUser(String strUserID) {
         UserDAO udao = new UserDAO();
         return udao.readById(strUserID);
@@ -39,6 +40,9 @@ public class LoginController extends HttpServlet {
 
         try {
             String action = request.getParameter("action");
+            HttpSession session = request.getSession();
+            UserDTO user = (UserDTO) session.getAttribute("user");
+
             if (action == null) {
                 url = LOGIN_PAGE;
             } else {
@@ -47,8 +51,8 @@ public class LoginController extends HttpServlet {
                         String strUserID = request.getParameter("txtUsername");
                         String strPassword = request.getParameter("txtPassword");
                         if (isValidLogin(strUserID, strPassword)) {
-                            UserDTO user = getUser(strUserID);
-                            request.getSession().setAttribute("user", user); // Lưu vào session
+                            user = getUser(strUserID);
+                            session.setAttribute("user", user); // Lưu user vào session
                             url = HOME_PAGE;
                         } else {
                             request.setAttribute("errorMessage", "Sai tài khoản hoặc mật khẩu!");
@@ -56,13 +60,24 @@ public class LoginController extends HttpServlet {
                         }
                         break;
                     case "logout":
-                        request.getSession().invalidate(); // Hủy session
+                        session.invalidate(); // Hủy session
                         url = LOGIN_PAGE;
+                        break;
+                    case "home":
+                        url = HOME_PAGE; // Không bắt buộc đăng nhập
+                        break;
+                    case "booking":
+                        String room = request.getParameter("room");
+                        if (user != null) {
+                            url = BOOKING_PAGE + "?room=" + room;
+                        } else {
+                            url = LOGIN_PAGE;
+                        }
                         break;
                 }
             }
         } catch (Exception e) {
-            log("Error in MainController: " + e.toString());
+            log("Error in LoginController: " + e.toString());
         } finally {
             RequestDispatcher rd = request.getRequestDispatcher(url);
             rd.forward(request, response);
