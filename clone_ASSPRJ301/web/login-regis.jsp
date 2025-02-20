@@ -138,8 +138,8 @@
                 display: none;
             }
 
-            /* Hiển thị lỗi */
-            .error-message {
+            /* Hiển thị lỗi, thông báo thành công */
+            .error-message, .success-message {
                 color: red;
                 font-size: 14px;
                 margin-bottom: 10px;
@@ -155,35 +155,36 @@
             <div class="form-wrapper" id="loginForm">
                 <h2 class="form-title">Đăng nhập</h2>
 
-                <% String errorMessage = (String) request.getAttribute("errorMessage"); %>
-                <% String successMessage = (String) request.getAttribute("successMessage"); %>
-                <% if (errorMessage != null) {%>
-                <p class="error-message"><%= errorMessage%></p>
-                <% } %>
-                <% if (successMessage != null) {%>
-                <p class="success-message"><%= successMessage%></p>
-                <% }%>
-
                 <form action="login" method="post">
                     <input type="hidden" name="action" value="login" />
 
                     <div class="form-group">
                         <label for="userId">Tên đăng nhập</label>
                         <input type="text" id="userId" name="txtUsername" required />
+                        <% if (request.getAttribute("errorUsername") != null) {%>
+                        <p class="error-message"><%= request.getAttribute("errorUsername")%></p>
+                        <% } %>
                     </div>
 
                     <div class="form-group">
                         <label for="password">Mật khẩu</label>
                         <input type="password" id="password" name="txtPassword" required />
+                        <% if (request.getAttribute("errorPassword") != null) {%>
+                        <p class="error-message"><%= request.getAttribute("errorPassword")%></p>
+                        <% } %>
                     </div>
 
                     <button type="submit" class="submit-btn">Đăng nhập</button>
+
+                    <% if (request.getAttribute("errorMessage") != null) {%>
+                    <p class="error-message"><%= request.getAttribute("errorMessage")%></p>
+                    <% } %>
                 </form>
 
                 <p class="switch-form">Chưa có tài khoản? <a href="#" onclick="showRegister()">Đăng ký ngay</a></p>
             </div>
 
-            <!-- Form đăng ký (ẩn ban đầu) -->
+            <!-- Form đăng ký -->
             <div class="form-wrapper hidden" id="registerForm">
                 <h2 class="form-title">Đăng ký</h2>
 
@@ -191,24 +192,44 @@
                     <div class="form-group">
                         <label for="newUsername">Tên đăng nhập</label>
                         <input type="text" id="newUsername" name="txtNewUsername" required />
+                        <% if (request.getAttribute("errorNewUsername") != null) {%>
+                        <p class="error-message"><%= request.getAttribute("errorNewUsername")%></p>
+                        <% } %>
                     </div>
 
                     <div class="form-group">
                         <label for="fullName">Họ và tên</label>
                         <input type="text" id="fullName" name="txtFullName" required />
+                        <% if (request.getAttribute("errorFullName") != null) {%>
+                        <p class="error-message"><%= request.getAttribute("errorFullName")%></p>
+                        <% } %>
                     </div>
 
                     <div class="form-group">
                         <label for="newPassword">Mật khẩu</label>
                         <input type="password" id="newPassword" name="txtNewPassword" required />
+                        <% if (request.getAttribute("errorNewPassword") != null) {%>
+                        <p class="error-message"><%= request.getAttribute("errorNewPassword")%></p>
+                        <% } %>
                     </div>
 
                     <div class="form-group">
                         <label for="confirmPassword">Nhập lại mật khẩu</label>
                         <input type="password" id="confirmPassword" name="txtConfirmPassword" required />
+                        <% if (request.getAttribute("errorConfirmPassword") != null) {%>
+                        <p class="error-message"><%= request.getAttribute("errorConfirmPassword")%></p>
+                        <% } %>
                     </div>
 
                     <button type="submit" class="submit-btn">Đăng ký</button>
+
+                    <% if (request.getAttribute("errorMessage") != null) {%>
+                    <p class="error-message"><%= request.getAttribute("errorMessage")%></p>
+                    <% } %>
+                    <% if (request.getAttribute("successMessage") != null) {%>
+                    <p class="success-message"><%= request.getAttribute("successMessage")%></p>
+                    <% } %>
+
                 </form>
 
                 <p class="switch-form">Đã có tài khoản? <a href="#" onclick="showLogin()">Đăng nhập</a></p>

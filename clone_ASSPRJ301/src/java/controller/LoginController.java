@@ -19,7 +19,7 @@ import javax.servlet.http.HttpServletResponse;
 @WebServlet(name = "MainController", urlPatterns = {"/login"})
 public class LoginController extends HttpServlet {
 
-    private static final String LOGIN_PAGE = "login.jsp";
+    private static final String LOGIN_PAGE = "login-regis.jsp";
     private static final String HOME_PAGE = "home.jsp";
 
     public UserDTO getUser(String strUserID) {
