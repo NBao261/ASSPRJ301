@@ -17,4 +17,12 @@ public interface IDAO<T, K> {
 
     public boolean create(T entity);
 
+    public boolean update(T entity);
+
+    public boolean delete(K id);
+
+    public List<T> search(String searchTerm);
+    
+    public List<T> readAll();
+
 }

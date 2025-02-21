@@ -1,10 +1,5 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-package controller;
 
+package controller;
 import dao.UserDAO;
 import dto.UserDTO;
 import java.io.IOException;
@@ -21,14 +16,13 @@ public class LoginController extends HttpServlet {
 
     private static final String LOGIN_PAGE = "login-regis.jsp";
     private static final String HOME_PAGE = "home.jsp";
-    private static final String BOOKING_PAGE = "booking.jsp";
-    
-    public UserDTO getUser(String strUserID) {
+
+    private UserDTO getUser(String strUserID) {
         UserDAO udao = new UserDAO();
         return udao.readById(strUserID);
     }
 
-    public boolean isValidLogin(String strUserID, String strPassword) {
+    private boolean isValidLogin(String strUserID, String strPassword) {
         UserDTO user = getUser(strUserID);
         return user != null && user.getPassword().equals(strPassword);
     }
@@ -43,45 +37,41 @@ public class LoginController extends HttpServlet {
             HttpSession session = request.getSession();
             UserDTO user = (UserDTO) session.getAttribute("user");
 
-            if (action == null) {
-                url = LOGIN_PAGE;
-            } else {
+            if (action != null) {
                 switch (action) {
                     case "login":
-                        String strUserID = request.getParameter("txtUsername");
-                        String strPassword = request.getParameter("txtPassword");
+                        String strUserID = request.getParameter("txtUsername").trim();
+                        String strPassword = request.getParameter("txtPassword").trim();
                         if (isValidLogin(strUserID, strPassword)) {
                             user = getUser(strUserID);
                             session.setAttribute("user", user); // Lưu user vào session
-                            url = HOME_PAGE;
+                            response.sendRedirect(HOME_PAGE); // Thay đổi URL
+                            return;
                         } else {
                             request.setAttribute("errorMessage", "Sai tài khoản hoặc mật khẩu!");
-                            url = LOGIN_PAGE;
                         }
                         break;
+
                     case "logout":
                         session.invalidate(); // Hủy session
-                        url = LOGIN_PAGE;
-                        break;
+                        response.sendRedirect(LOGIN_PAGE); // Chuyển hướng về trang đăng nhập
+                        return;
+
                     case "home":
-                        url = HOME_PAGE; // Không bắt buộc đăng nhập
-                        break;
-                    case "booking":
-                        String room = request.getParameter("room");
                         if (user != null) {
-                            url = BOOKING_PAGE + "?room=" + room;
-                        } else {
-                            url = LOGIN_PAGE;
+                            response.sendRedirect(HOME_PAGE);
+                            return;
                         }
                         break;
                 }
             }
         } catch (Exception e) {
-            log("Error in LoginController: " + e.toString());
-        } finally {
-            RequestDispatcher rd = request.getRequestDispatcher(url);
-            rd.forward(request, response);
+            log("Error in LoginController: " + e.getMessage(), e);
         }
+
+        // Chỉ forward nếu cần hiển thị thông báo lỗi
+        RequestDispatcher rd = request.getRequestDispatcher(url);
+        rd.forward(request, response);
     }
 
     @Override

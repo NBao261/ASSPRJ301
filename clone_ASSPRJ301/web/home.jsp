@@ -211,7 +211,6 @@
     <body>
         <%@include file="header.jsp" %>
 
-        <!-- Banner -->
         <div class="banner">
             <div class="banner-content">
                 <h1>Chào mừng đến với Homestay của chúng tôi!</h1>
@@ -219,8 +218,6 @@
                 <a href="#room-list" class="btn-view-details">Xem chi tiết</a>
             </div>
         </div>
-
-        <!-- Giới thiệu về Homestay -->
         <section class="intro">
             <h2>Về chúng tôi</h2>
             <p>Homestay của chúng tôi mang đến không gian nghỉ dưỡng lý tưởng với các phòng sang trọng, tiện nghi đầy đủ và dịch vụ chu đáo. Chúng tôi cam kết mang lại sự thoải mái, thư giãn tuyệt đối cho quý khách.</p>
@@ -241,7 +238,7 @@
                     <%
                         if (user != null) {
                     %>
-                    <a href="booking.jsp?room=deluxe" class="btn-view-details">Đặt ngay</a>
+                    <a href="room-details?room=Deluxe" class="btn-view-details">Xem chi tiết</a>
                     <% } else { %>
                     <a href="login-regis.jsp" class="btn-view-details">Đăng nhập để đặt</a>
                     <% } %>
@@ -260,7 +257,7 @@
                     <%
                         if (user != null) {
                     %>
-                    <a href="booking.jsp?room=vip" class="btn-view-details">Đặt ngay</a>
+                    <a href="room-details?room=VIP" class="btn-view-details">Xem chi tiết</a>
                     <% } else { %>
                     <a href="login-regis.jsp" class="btn-view-details">Đăng nhập để đặt</a>
                     <% } %>
@@ -281,7 +278,7 @@
                     <%
                         if (user != null) {
                     %>
-                    <a href="booking.jsp?room=family" class="btn-view-details">Đặt ngay</a>
+                    <a href="room-details?room=Family" class="btn-view-details">Xem chi tiết</a>
                     <% } else { %>
                     <a href="login-regis.jsp" class="btn-view-details">Đăng nhập để đặt</a>
                     <% }%>
