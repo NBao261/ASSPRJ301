@@ -319,7 +319,7 @@
                     <p class="amenities">Tiện nghi: Wifi, TV, Điều hòa, Tủ lạnh, Bàn làm việc</p>
                     <p class="ratings">⭐ 4.5/5 (50 đánh giá)</p>
 
-                    <%                      
+                    <%
                         if (user != null) {
                     %>
                     <a href="room-details?roomId=1" class="btn-view-details">Xem chi tiết</a>
