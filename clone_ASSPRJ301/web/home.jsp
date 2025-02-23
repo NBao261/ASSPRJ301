@@ -238,7 +238,7 @@
                     <%
                         if (user != null) {
                     %>
-                    <a href="room-details?room=Deluxe" class="btn-view-details">Xem chi tiết</a>
+                    <a href="room-details?roomId=1" class="btn-view-details">Xem chi tiết</a>
                     <% } else { %>
                     <a href="login-regis.jsp" class="btn-view-details">Đăng nhập để đặt</a>
                     <% } %>
@@ -257,7 +257,7 @@
                     <%
                         if (user != null) {
                     %>
-                    <a href="room-details?room=VIP" class="btn-view-details">Xem chi tiết</a>
+                    <a href="room-details?roomId=2" class="btn-view-details">Xem chi tiết</a>
                     <% } else { %>
                     <a href="login-regis.jsp" class="btn-view-details">Đăng nhập để đặt</a>
                     <% } %>
@@ -278,7 +278,7 @@
                     <%
                         if (user != null) {
                     %>
-                    <a href="room-details?room=Family" class="btn-view-details">Xem chi tiết</a>
+                    <a href="room-details?roomId=3" class="btn-view-details">Xem chi tiết</a>
                     <% } else { %>
                     <a href="login-regis.jsp" class="btn-view-details">Đăng nhập để đặt</a>
                     <% }%>

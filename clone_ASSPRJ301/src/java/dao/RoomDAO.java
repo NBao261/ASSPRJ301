@@ -7,6 +7,34 @@ import java.sql.ResultSet;
 import utils.DBUtils;
 
 public class RoomDAO {
+
+    public RoomDTO getRoomById(int roomId) {
+        RoomDTO room = null;
+        String sql = "SELECT * FROM rooms WHERE id = ?";
+        
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setInt(1, roomId);
+            ResultSet rs = ps.executeQuery();
+            
+            if (rs.next()) {
+                room = new RoomDTO(
+                    rs.getInt("id"),
+                    rs.getString("name"),
+                    rs.getString("description"),
+                    rs.getDouble("price"),
+                    rs.getString("amenities"),
+                    rs.getFloat("ratings"),
+                    rs.getString("image_url")
+                );
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return room;
+    }
+
     public RoomDTO getRoomByName(String roomName) {
         RoomDTO room = null;
         String sql = "SELECT * FROM rooms WHERE name = ?";

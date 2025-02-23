@@ -14,20 +14,21 @@ import dto.RoomDTO;
 @WebServlet(name = "RoomDetailsController", urlPatterns = {"/room-details"})
 public class RoomDetailsController extends HttpServlet {
 
-    protected void processRequest(HttpServletRequest request, HttpServletResponse response)
+   protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         response.setContentType("text/html;charset=UTF-8");
 
-        String roomName = request.getParameter("room");  // Lấy tên phòng từ URL
+        // Lấy roomId từ request
+        int roomId = Integer.parseInt(request.getParameter("roomId"));  
         RoomDAO roomDAO = new RoomDAO();
-        RoomDTO room = roomDAO.getRoomByName(roomName);
+        RoomDTO room = roomDAO.getRoomById(roomId);  
 
         if (room != null) {
             request.setAttribute("room", room);
             RequestDispatcher rd = request.getRequestDispatcher("room-details.jsp");
             rd.forward(request, response);
         } else {
-            response.sendRedirect("home.jsp");  // Nếu phòng không tồn tại, quay lại trang chủ
+            response.sendRedirect("home.jsp");  
         }
     }
 

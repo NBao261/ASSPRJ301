@@ -19,6 +19,7 @@
             %>
             <div class="user-info">
                 <span class="user-name">👋 Xin chào, <%= user.getFullName()%></span>
+                <a href="viewBookings" class="booking-btn">Đơn của tôi</a>
                 <a href="login?action=logout" class="logout-btn">Đăng xuất</a>
             </div>
             <% } else { %>
