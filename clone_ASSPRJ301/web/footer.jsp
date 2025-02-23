@@ -2,13 +2,6 @@
 <footer>
     <div class="footer-content">
         <p>© 2025 Homestay Booking. Tất cả quyền lợi được bảo vệ.</p>
-        
-        <!-- Liên kết hữu ích -->
-        <div class="useful-links">
-            <a href="terms.jsp">Điều khoản dịch vụ</a>
-            <a href="privacy.jsp">Chính sách bảo mật</a>
-            <a href="support.jsp">Hỗ trợ</a>
-        </div>
 
         <!-- Biểu tượng mạng xã hội (FontAwesome) -->
         <div class="social-links">
@@ -66,27 +59,6 @@
         margin-bottom: 10px;
     }
 
-    /* Liên kết hữu ích */
-    .useful-links {
-        margin: 15px 0;
-        display: flex;
-        justify-content: center;
-        gap: 20px;
-        flex-wrap: wrap;
-    }
-
-    .useful-links a {
-        color: white;
-        text-decoration: none;
-        font-size: 14px;
-        transition: color 0.3s ease;
-    }
-
-    .useful-links a:hover {
-        color: #ecf0f1;
-        text-decoration: underline;
-    }
-
     /* Biểu tượng mạng xã hội (FontAwesome) */
     .social-links {
         margin-top: 10px;
@@ -128,14 +100,6 @@
     /* Responsive Design */
     @media (max-width: 768px) {
         .footer-content p {
-            font-size: 12px;
-        }
-
-        .useful-links {
-            gap: 10px;
-        }
-
-        .useful-links a {
             font-size: 12px;
         }
 
