@@ -515,9 +515,9 @@
                     <div class="room-gallery-details">
                         <h3>Ảnh chi tiết</h3>
                         <div class="gallery-grid">
-                            <img src="images/room-bathroom.jpg" alt="Phòng tắm">
-                            <img src="images/room-workspace.jpg" alt="Góc làm việc">
-                            <img src="images/room-view.jpg" alt="View từ cửa sổ">
+                            <img src="assets/images/br.jpg" alt="Phòng tắm">
+                            <img src="assets/images/q.jpg" alt="Góc làm việc">
+                            <img src="assets/images/window-bay-view.jpg" alt="View từ cửa sổ">
                         </div>
                     </div>
                 </div>

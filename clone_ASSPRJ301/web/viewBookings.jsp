@@ -36,21 +36,21 @@
             z-index: 1000;
         }
 
-        .header-container {
+/*        .header-container {
             position: fixed;
             top: 0;
             left: 0;
-            height: 60px; /* Match header.jsp height for desktop */
+            height: 60px;  Match header.jsp height for desktop 
         }
 
         .footer-container {
             position: fixed;
             bottom: 0;
             left: 0;
-            width: 100%; /* Ensure full width */
-            height: 80px; /* Match footer.jsp height for desktop */
+            width: 100%;  Ensure full width 
+            height: 80px;  Match footer.jsp height for desktop 
             z-index: 999;
-        }
+        }*/
 
         .main-content {
             flex: 1;
@@ -304,9 +304,7 @@
     <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
 </head>
 <body>
-    <div class="header-container">
-        <%@include file="header.jsp"%>
-    </div>
+    <%@include file ="header.jsp" %>
 
     <div class="main-content">
         <div class="container">
