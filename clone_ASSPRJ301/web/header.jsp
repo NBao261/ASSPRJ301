@@ -14,22 +14,22 @@
             box-sizing: border-box;
         }
 
-        /* Remove body padding-top since it's handled by the including page */
         body {
             margin: 0;
+            font-family: 'Segoe UI', Arial, sans-serif;
         }
 
         header {
-            background: linear-gradient(45deg, #5DC1B9, #4ECDC4); /* Gradient for modern look */
+            background: linear-gradient(45deg, #5DC1B9, #4ECDC4);
             color: white;
-            padding: 10px 50px; /* Reduced padding for a sleeker look */
-            position: fixed; /* Keep fixed positioning for consistency */
+            padding: 10px 50px;
+            position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             z-index: 1000;
             transition: all 0.3s ease-in-out;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
 
         .container {
@@ -37,12 +37,11 @@
             justify-content: space-between;
             align-items: center;
             max-width: 1200px;
-            margin: 0 auto; /* Center the container */
-            height: 60px; /* Fixed height for consistency across pages */
+            margin: 0 auto;
+            height: 60px;
         }
 
         .logo {
-            font-family: 'Segoe UI', Arial, sans-serif;
             font-size: 28px;
             font-weight: 700;
             letter-spacing: 1.5px;
@@ -68,7 +67,6 @@
         .nav-links a {
             color: white;
             text-decoration: none;
-            font-family: 'Roboto', Arial, sans-serif;
             font-size: 16px;
             font-weight: 500;
             padding: 8px 12px;
@@ -79,7 +77,6 @@
         .nav-links a:hover, .nav-links a:focus {
             background: rgba(255, 255, 255, 0.15);
             transform: translateY(-2px);
-            outline: none;
         }
 
         .header-right {
@@ -88,47 +85,102 @@
             gap: 10px;
         }
 
-        .booking-btn, .logout-btn {
-            padding: 8px 18px;
-            text-decoration: none;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-            font-family: 'Roboto', Arial, sans-serif;
-            font-size: 14px;
-            font-weight: 600;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        .booking-btn {
-            background-color: #e74c3c;
-            color: white;
-        }
-
-        .booking-btn:hover {
-            background-color: #ff5e5e;
-            transform: scale(1.05);
-        }
-
-        .logout-btn {
-            background-color: #8e44ad;
-            color: white;
-        }
-
-        .logout-btn:hover {
-            background-color: #9b59b6;
-            transform: scale(1.05);
-        }
-
         .user-info {
+            position: relative;
             display: flex;
             align-items: center;
         }
 
         .user-name {
             margin-right: 10px;
-            font-family: 'Roboto', Arial, sans-serif;
             font-size: 14px;
             font-weight: 500;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .user-name:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: linear-gradient(45deg, #5DC1B9, #4ECDC4);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            list-style: none;
+            padding: 10px 0;
+            min-width: 180px;
+            z-index: 1001;
+        }
+
+        .user-info:hover .dropdown-menu {
+            display: block;
+        }
+
+        .dropdown-menu li {
+            margin: 0;
+        }
+
+        .dropdown-menu a {
+            display: block;
+            color: white;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            padding: 10px 20px;
+            transition: all 0.3s ease;
+        }
+
+        .dropdown-menu a:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateX(5px);
+        }
+
+        /* Enhanced Login Button Styling */
+        .login-btn {
+            padding: 8px 20px;
+            text-decoration: none;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: 600;
+            background: linear-gradient(45deg, #ff6b6b, #e74c3c);
+            color: white;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .login-btn:hover {
+            background: linear-gradient(45deg, #ff8787, #ff5e5e);
+            transform: scale(1.05) translateY(-2px);
+            box-shadow: 0 6px 18px rgba(231, 76, 60, 0.5);
+            color: #fff;
+        }
+
+        .login-btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.6s ease, height 0.6s ease;
+        }
+
+        .login-btn:hover::before {
+            width: 200px;
+            height: 200px;
         }
 
         .menu-toggle {
@@ -145,13 +197,13 @@
 
         @media (max-width: 768px) {
             header {
-                padding: 10px 20px; /* Reduced padding for mobile */
+                padding: 10px 20px;
             }
 
             .nav-links {
                 display: none;
                 flex-direction: column;
-                background: linear-gradient(45deg, #5DC1B9, #4ECDC4); /* Match header background */
+                background: linear-gradient(45deg, #5DC1B9, #4ECDC4);
                 position: absolute;
                 width: 100%;
                 left: 0;
@@ -181,13 +233,29 @@
                 gap: 5px;
             }
 
-            .booking-btn, .logout-btn {
-                padding: 6px 14px;
-                font-size: 12px;
+            .user-name {
+                display: none;
             }
 
-            .user-name {
-                display: none; /* Hide user name on mobile for space */
+            .dropdown-menu {
+                display: none;
+                position: static;
+                width: 100%;
+                box-shadow: none;
+                border-radius: 0;
+            }
+
+            .user-info:hover .dropdown-menu {
+                display: none;
+            }
+
+            .user-info.active .dropdown-menu {
+                display: block;
+            }
+
+            .login-btn {
+                padding: 6px 16px;
+                font-size: 12px;
             }
 
             .menu-toggle {
@@ -195,7 +263,7 @@
             }
 
             .container {
-                height: 50px; /* Reduced height for mobile */
+                height: 50px;
             }
         }
     </style>
@@ -219,11 +287,14 @@
                 %>
                 <div class="user-info">
                     <span class="user-name">👋 Xin chào, <%= user.getFullName() %></span>
-                    <a href="viewBookings" class="booking-btn">Đơn của tôi</a>
-                    <a href="login?action=logout" class="logout-btn">Đăng xuất</a>
+                    <ul class="dropdown-menu">
+                        <li><a href="viewBookings">Đơn của tôi</a></li>
+                        <li><a href="profile.jsp">Thông tin cá nhân</a></li>
+                        <li><a href="login?action=logout">Đăng xuất</a></li>
+                    </ul>
                 </div>
                 <% } else { %>
-                <a href="login-regis.jsp" class="booking-btn">Đăng nhập</a>
+                <a href="login-regis.jsp" class="login-btn">Đăng nhập</a>
                 <% } %>
             </div>
             <div class="menu-toggle">☰</div>
@@ -231,10 +302,21 @@
     </header>
 
     <script>
+        // Toggle navigation menu on mobile
         document.querySelector(".menu-toggle").addEventListener("click", function () {
             document.querySelector(".nav-links").classList.toggle("active");
         });
 
+        // Toggle dropdown on mobile click
+        const userInfo = document.querySelector(".user-info");
+        if (window.innerWidth <= 768 && userInfo) {
+            document.querySelector(".user-name").addEventListener("click", function (e) {
+                e.preventDefault();
+                userInfo.classList.toggle("active");
+            });
+        }
+
+        // Header shadow on scroll
         window.addEventListener("scroll", function () {
             const header = document.querySelector("header");
             if (window.scrollY > 50) {
