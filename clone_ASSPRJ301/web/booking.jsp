@@ -9,7 +9,7 @@
 
     if (roomIdParam != null && !roomIdParam.trim().isEmpty()) {
         int roomId = Integer.parseInt(roomIdParam);
-        room = roomDAO.getRoomById(roomId); // Sử dụng getRoomById thay vì getRoomByName
+        room = roomDAO.getRoomById(roomId); // Sử dụng getRoomById 
     }
 
     // Lấy thông báo thành công hoặc lỗi từ request
