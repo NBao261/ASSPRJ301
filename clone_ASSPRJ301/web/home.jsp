@@ -12,18 +12,18 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', Arial, sans-serif; /* Match header/footer font */
+            font-family: 'Segoe UI', Arial, sans-serif;
         }
 
         body {
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); /* Subtle gradient for modern look */
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
             color: #333;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
         }
 
-        /* Header and Footer Containers (handled by included files) */
+        /* Header and Footer Containers */
         .header-container, .footer-container {
             width: 100%;
             z-index: 1000;
@@ -31,9 +31,7 @@
 
         .main-content {
             flex: 1;
-            display: flex;
-            flex-direction: column;
-            padding: 80px 0 80px; /* Space for fixed header (60px) and footer (80px) */
+            padding: 80px 0 80px;
             overflow: auto;
         }
 
@@ -54,44 +52,46 @@
             background: rgba(0, 0, 0, 0.5);
             padding: 40px;
             border-radius: 15px;
-            max-width: 800px;
+            max-width: 900px;
+            width: 90%;
             backdrop-filter: blur(5px);
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
-            transition: transform 0.3s ease;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
 
         .banner-content:hover {
             transform: translateY(-5px);
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.4);
         }
 
         .banner h1 {
             font-size: 48px;
             font-weight: 700;
             margin-bottom: 20px;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
         }
 
         .banner p {
             font-size: 20px;
-            margin-bottom: 25px;
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+            margin-bottom: 30px;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
         }
 
         .btn-view-details {
-            background: linear-gradient(45deg, #5DC1B9, #4ECDC4); /* Match header/footer gradient */
+            background: #5DC1B9;
             color: white;
-            padding: 12px 25px;
+            padding: 10px 20px;
             text-decoration: none;
-            border-radius: 10px;
-            font-size: 18px;
+            border-radius: 8px;
+            font-size: 16px;
             font-weight: 600;
-            transition: background 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+            transition: background 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
             display: inline-block;
             box-shadow: 0 4px 12px rgba(93, 193, 185, 0.4);
         }
 
         .btn-view-details:hover {
-            background: linear-gradient(45deg, #4ECDC4, #45b7d1);
+            background: #4ECDC4;
             transform: translateY(-3px);
             box-shadow: 0 6px 15px rgba(93, 193, 185, 0.6);
         }
@@ -128,19 +128,19 @@
             width: 90%;
             margin: 0 auto 40px;
             padding: 0 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
         }
 
         .room {
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
             background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            display: flex;
+            flex-direction: column;
         }
 
         .room:hover {
@@ -149,21 +149,24 @@
         }
 
         .room img {
-            width: 50%;
+            width: 100%;
             object-fit: cover;
-            height: 300px; /* Fixed height for consistency */
-            border-radius: 15px 0 0 15px;
+            height: 250px;
+            border-radius: 15px 15px 0 0;
         }
 
         .room-info {
-            width: 50%;
             padding: 25px;
-            text-align: left;
-            border-radius: 0 15px 15px 0;
+            text-align: center; /* Căn giữa toàn bộ nội dung trong room-info */
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center; /* Đảm bảo nội dung được căn giữa theo chiều dọc */
+            align-items: center; /* Căn giữa theo chiều ngang */
         }
 
         .room h2 {
-            font-size: 28px;
+            font-size: 24px;
             margin-bottom: 15px;
             color: #2c3e50;
         }
@@ -173,12 +176,13 @@
             color: #555;
             margin-bottom: 12px;
             line-height: 1.6;
+            text-align: center; /* Căn giữa từng đoạn văn bản */
         }
 
         .room .price {
-            font-size: 24px;
+            font-size: 22px;
             font-weight: 600;
-            color: #5DC1B9; /* Match header/footer color */
+            color: #5DC1B9;
             margin: 15px 0;
         }
 
@@ -186,40 +190,25 @@
             font-size: 14px;
             color: #777;
             margin-bottom: 15px;
+            text-align: center; /* Căn giữa tiện nghi */
         }
 
         .room .ratings {
             font-size: 16px;
             font-weight: 600;
             color: #f39c12;
+            margin-bottom: 20px;
         }
 
-        .room .btn-view-details {
-            background: linear-gradient(45deg, #5DC1B9, #4ECDC4);
-            color: white;
-            padding: 10px 20px;
-            text-decoration: none;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: 600;
-            transition: background 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
-            display: inline-block;
-            box-shadow: 0 4px 12px rgba(93, 193, 185, 0.4);
+        .room .btn-container {
+            text-align: center; /* Đảm bảo nút luôn được căn giữa */
+            margin-top: 20px;
         }
 
-        .room .btn-view-details:hover {
-            background: linear-gradient(45deg, #4ECDC4, #45b7d1);
-            transform: translateY(-3px);
-            box-shadow: 0 6px 15px rgba(93, 193, 185, 0.6);
-        }
-
-        html {
-            scroll-behavior: smooth;
-        }
-
+        /* Responsive Design */
         @media (max-width: 768px) {
             .main-content {
-                padding: 60px 0 70px; /* Adjust for mobile header (50px) and footer (70px) */
+                padding: 60px 0 70px;
             }
 
             .banner {
@@ -228,7 +217,7 @@
 
             .banner-content {
                 padding: 20px;
-                max-width: 90%;
+                max-width: 85%;
             }
 
             .banner h1 {
@@ -240,8 +229,8 @@
             }
 
             .btn-view-details {
-                padding: 10px 18px;
-                font-size: 16px;
+                padding: 8px 18px;
+                font-size: 14px;
             }
 
             .intro {
@@ -257,32 +246,27 @@
                 font-size: 16px;
             }
 
-            .room {
-                flex-direction: column;
-                margin-bottom: 20px;
-            }
-
-            .room img, .room-info {
-                width: 100%;
-                padding: 15px;
-            }
-
             .room img {
-                height: 200px; /* Reduced height for mobile */
+                height: 200px;
             }
 
             .room h2 {
-                font-size: 22px;
+                font-size: 20px;
             }
 
             .room .price {
-                font-size: 20px;
+                font-size: 18px;
             }
 
             .room .btn-view-details {
                 padding: 8px 16px;
                 font-size: 14px;
             }
+        }
+
+        /* Smooth scrolling */
+        html {
+            scroll-behavior: smooth;
         }
     </style>
     <!-- Include FontAwesome for footer.jsp -->
@@ -313,59 +297,68 @@
             <div class="room">
                 <img src="https://mia.vn/media/uploads/blog-du-lich/top-11-homestay-ba-vi-01-1700960372.jpeg" alt="Phòng Deluxe">
                 <div class="room-info">
-                    <h2>Phòng Deluxe</h2>
-                    <p>Không gian rộng rãi, đầy đủ tiện nghi, thích hợp cho các cặp đôi hoặc những ai yêu thích sự yên tĩnh.</p>
-                    <p class="price">1.200.000đ / đêm</p>
-                    <p class="amenities">Tiện nghi: Wifi, TV, Điều hòa, Tủ lạnh, Bàn làm việc</p>
-                    <p class="ratings">⭐ 4.5/5 (50 đánh giá)</p>
-
-                    <%
-                        if (user != null) {
-                    %>
-                    <a href="room-details?roomId=1" class="btn-view-details">Xem chi tiết</a>
-                    <% } else { %>
-                    <a href="login-regis.jsp" class="btn-view-details">Đăng nhập để đặt</a>
-                    <% } %>
+                    <div>
+                        <h2>Phòng Deluxe</h2>
+                        <p>Không gian rộng rãi, đầy đủ tiện nghi, thích hợp cho các cặp đôi hoặc những ai yêu thích sự yên tĩnh.</p>
+                        <p class="price">1.200.000đ / đêm</p>
+                        <p class="amenities">Tiện nghi: Wifi, TV, Điều hòa, Tủ lạnh, Bàn làm việc</p>
+                        <p class="ratings">⭐ 4.5/5 (50 đánh giá)</p>
+                    </div>
+                    <div class="btn-container">
+                        <%
+                            if (user != null) {
+                        %>
+                        <a href="room-details?roomId=1" class="btn-view-details">Xem chi tiết</a>
+                        <% } else { %>
+                        <a href="login-regis.jsp" class="btn-view-details">Đăng nhập để đặt</a>
+                        <% } %>
+                    </div>
                 </div>
             </div>
 
             <!-- Room 2 -->
             <div class="room">
-                <div class="room-info">
-                    <h2>Phòng VIP</h2>
-                    <p>Thiết kế sang trọng, view biển tuyệt đẹp, phục vụ cho những ai muốn tận hưởng một kỳ nghỉ đặc biệt.</p>
-                    <p class="price">1.800.000đ / đêm</p>
-                    <p class="amenities">Tiện nghi: Wifi, TV, Jacuzzi, Bể bơi riêng, Tủ lạnh</p>
-                    <p class="ratings">⭐ 4.8/5 (120 đánh giá)</p>
-
-                    <%
-                        if (user != null) {
-                    %>
-                    <a href="room-details?roomId=2" class="btn-view-details">Xem chi tiết</a>
-                    <% } else { %>
-                    <a href="login-regis.jsp" class="btn-view-details">Đăng nhập để đặt</a>
-                    <% } %>
-                </div>
                 <img src="https://dongtiengroup.vn/wp-content/uploads/2024/05/thiet-ke-homestay-nha-vuon-5.jpg" alt="Phòng VIP">
+                <div class="room-info">
+                    <div>
+                        <h2>Phòng VIP</h2>
+                        <p>Thiết kế sang trọng, view biển tuyệt đẹp, phục vụ cho những ai muốn tận hưởng một kỳ nghỉ đặc biệt.</p>
+                        <p class="price">1.800.000đ / đêm</p>
+                        <p class="amenities">Tiện nghi: Wifi, TV, Jacuzzi, Bể bơi riêng, Tủ lạnh</p>
+                        <p class="ratings">⭐ 4.8/5 (120 đánh giá)</p>
+                    </div>
+                    <div class="btn-container">
+                        <%
+                            if (user != null) {
+                        %>
+                        <a href="room-details?roomId=2" class="btn-view-details">Xem chi tiết</a>
+                        <% } else { %>
+                        <a href="login-regis.jsp" class="btn-view-details">Đăng nhập để đặt</a>
+                        <% } %>
+                    </div>
+                </div>
             </div>
 
             <!-- Room 3 -->
             <div class="room">
                 <img src="https://sakos.vn/wp-content/uploads/2023/05/momo-upload-api-220510091852-637877711328579007.jpeg" alt="Phòng Gia Đình">
                 <div class="room-info">
-                    <h2>Phòng Gia Đình</h2>
-                    <p>Lý tưởng cho gia đình, không gian rộng rãi, thoáng mát, thích hợp cho kỳ nghỉ dài ngày.</p>
-                    <p class="price">2.500.000đ / đêm</p>
-                    <p class="amenities">Tiện nghi: Wifi, TV, Bếp, Điều hòa, Phòng tắm riêng</p>
-                    <p class="ratings">⭐ 4.7/5 (80 đánh giá)</p>
-
-                    <%
-                        if (user != null) {
-                    %>
-                    <a href="room-details?roomId=3" class="btn-view-details">Xem chi tiết</a>
-                    <% } else { %>
-                    <a href="login-regis.jsp" class="btn-view-details">Đăng nhập để đặt</a>
-                    <% } %>
+                    <div>
+                        <h2>Phòng Gia Đình</h2>
+                        <p>Lý tưởng cho gia đình, không gian rộng rãi, thoáng mát, thích hợp cho kỳ nghỉ dài ngày.</p>
+                        <p class="price">2.500.000đ / đêm</p>
+                        <p class="amenities">Tiện nghi: Wifi, TV, Bếp, Điều hòa, Phòng tắm riêng</p>
+                        <p class="ratings">⭐ 4.7/5 (80 đánh giá)</p>
+                    </div>
+                    <div class="btn-container">
+                        <%
+                            if (user != null) {
+                        %>
+                        <a href="room-details?roomId=3" class="btn-view-details">Xem chi tiết</a>
+                        <% } else { %>
+                        <a href="login-regis.jsp" class="btn-view-details">Đăng nhập để đặt</a>
+                        <% } %>
+                    </div>
                 </div>
             </div>
         </section>
