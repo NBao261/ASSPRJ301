@@ -91,18 +91,24 @@
             align-items: center;
         }
 
-        .user-name {
-            margin-right: 10px;
-            font-size: 14px;
-            font-weight: 500;
-            padding: 8px 12px;
-            border-radius: 8px;
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 600;
+            color: #5DC1B9;
             cursor: pointer;
-            transition: background 0.3s ease;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
 
-        .user-name:hover {
-            background: rgba(255, 255, 255, 0.15);
+        .user-avatar:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
         }
 
         .dropdown-menu {
@@ -110,21 +116,58 @@
             position: absolute;
             top: 100%;
             right: 0;
-            background: linear-gradient(45deg, #5DC1B9, #4ECDC4);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-            border-radius: 8px;
+            background: linear-gradient(45deg, rgba(93, 193, 185, 0.9), rgba(78, 205, 196, 0.9));
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
             list-style: none;
-            padding: 10px 0;
-            min-width: 180px;
+            padding: 15px;
+            min-width: 220px;
             z-index: 1001;
+            backdrop-filter: blur(5px); /* Tạo hiệu ứng mờ nhẹ */
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: opacity 0.2s ease-in-out;
+            opacity: 0;
         }
 
         .user-info:hover .dropdown-menu {
             display: block;
+            opacity: 1;
+        }
+
+        .dropdown-menu .user-profile {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+            margin-bottom: 10px;
+        }
+
+        .dropdown-menu .user-profile .avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            font-weight: 600;
+            color: #5DC1B9;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .dropdown-menu .user-profile .name {
+            font-size: 16px;
+            font-weight: 500;
+            color: white;
+            text-align: center;
+            padding: 0 10px;
         }
 
         .dropdown-menu li {
-            margin: 0;
+            margin: 5px 0;
         }
 
         .dropdown-menu a {
@@ -134,6 +177,7 @@
             font-size: 14px;
             font-weight: 500;
             padding: 10px 20px;
+            border-radius: 8px;
             transition: all 0.3s ease;
         }
 
@@ -142,7 +186,6 @@
             transform: translateX(5px);
         }
 
-        /* Enhanced Login Button Styling */
         .login-btn {
             padding: 8px 20px;
             text-decoration: none;
@@ -233,16 +276,20 @@
                 gap: 5px;
             }
 
-            .user-name {
-                display: none;
+            .user-avatar {
+                width: 35px;
+                height: 35px;
+                font-size: 18px;
             }
 
             .dropdown-menu {
                 display: none;
                 position: static;
                 width: 100%;
+                background: linear-gradient(45deg, rgba(93, 193, 185, 0.9), rgba(78, 205, 196, 0.9));
                 box-shadow: none;
                 border-radius: 0;
+                padding: 10px;
             }
 
             .user-info:hover .dropdown-menu {
@@ -251,6 +298,17 @@
 
             .user-info.active .dropdown-menu {
                 display: block;
+                opacity: 1;
+            }
+
+            .dropdown-menu .user-profile .avatar {
+                width: 50px;
+                height: 50px;
+                font-size: 24px;
+            }
+
+            .dropdown-menu .user-profile .name {
+                font-size: 14px;
             }
 
             .login-btn {
@@ -284,10 +342,16 @@
                 <%
                     UserDTO user = (UserDTO) session.getAttribute("user");
                     if (user != null) {
+                        String fullName = user.getFullName();
+                        String avatarInitial = fullName != null && !fullName.isEmpty() ? fullName.substring(0, 1).toUpperCase() : "U";
                 %>
                 <div class="user-info">
-                    <span class="user-name">👋 Xin chào, <%= user.getFullName() %></span>
+                    <div class="user-avatar"><%= avatarInitial %></div>
                     <ul class="dropdown-menu">
+                        <li class="user-profile">
+                            <div class="avatar"><%= avatarInitial %></div>
+                            <span class="name"><%= fullName != null ? fullName : "Người dùng" %></span>
+                        </li>
                         <li><a href="viewBookings">Đơn của tôi</a></li>
                         <li><a href="profile.jsp">Thông tin cá nhân</a></li>
                         <li><a href="login?action=logout">Đăng xuất</a></li>
@@ -302,21 +366,18 @@
     </header>
 
     <script>
-        // Toggle navigation menu on mobile
         document.querySelector(".menu-toggle").addEventListener("click", function () {
             document.querySelector(".nav-links").classList.toggle("active");
         });
 
-        // Toggle dropdown on mobile click
         const userInfo = document.querySelector(".user-info");
         if (window.innerWidth <= 768 && userInfo) {
-            document.querySelector(".user-name").addEventListener("click", function (e) {
+            document.querySelector(".user-avatar").addEventListener("click", function (e) {
                 e.preventDefault();
                 userInfo.classList.toggle("active");
             });
         }
 
-        // Header shadow on scroll
         window.addEventListener("scroll", function () {
             const header = document.querySelector("header");
             if (window.scrollY > 50) {

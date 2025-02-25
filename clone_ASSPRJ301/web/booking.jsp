@@ -474,7 +474,7 @@
 
             calculateTotal(); // Tính tổng tiền khi thay đổi ngày
 
-            if (checkInDate && checkOutDate) {
+            if (checkInDate && checkOutDate) { //Kiem tra xem con trong khong va in truc tiep len mh
                 let xhr = new XMLHttpRequest();
                 xhr.open("GET", "checkAvailability?roomId=" + roomId + "&checkInDate=" + checkInDate + "&checkOutDate=" + checkOutDate, true);
                 xhr.onreadystatechange = function () {
