@@ -1,12 +1,14 @@
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%@page import="java.text.SimpleDateFormat"%>
 <%@page import="java.util.List"%>
+<%@page import="java.util.Date"%>
 <%@page import="dto.BookingDTO"%>
 <%@page import="dto.RoomDTO"%>
 <%
     List<BookingDTO> bookingList = (List<BookingDTO>) request.getAttribute("bookingList");
     String errorMessage = (String) request.getAttribute("errorMessage");
     SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+    Date currentDate = new Date(); // Ngày hiện tại
 %>
 <!DOCTYPE html>
 <html lang="vi">
@@ -157,6 +159,14 @@
                 color: #e74c3c;
             }
 
+            .booking-table .status.success {
+                color: #2ecc71;
+            }
+
+            .booking-table .status.completed {
+                color: #7f8c8d;
+            }
+
             .booking-table .actions {
                 display: flex;
                 gap: 10px;
@@ -183,13 +193,13 @@
                 transform: translateY(-2px);
             }
 
-            .btn.update {
-                background: linear-gradient(45deg, #5DC1B9, #4ECDC4);
+            .btn.view {
+                background: linear-gradient(45deg, #3498db, #2980b9);
                 color: white;
             }
 
-            .btn.update:hover {
-                background: linear-gradient(45deg, #4ECDC4, #45b7d1);
+            .btn.view:hover {
+                background: linear-gradient(45deg, #2980b9, #1f6391);
                 transform: translateY(-2px);
             }
 
@@ -258,25 +268,38 @@
                     </thead>
                     <tbody>
                         <% for (BookingDTO booking : bookingList) {
-                                RoomDTO room = booking.getRoom();%>
+                                RoomDTO room = booking.getRoom();
+                                String statusClass = "";
+                                String displayStatus = "";
+                                
+                                if ("Cancelled".equals(booking.getStatus())) {
+                                    statusClass = "cancelled";
+                                    displayStatus = "Đã hủy";
+                                } else if (currentDate.after(booking.getCheckOutDate())) {
+                                    statusClass = "completed";
+                                    displayStatus = "Đã ở";
+                                } else {
+                                    statusClass = "success";
+                                    displayStatus = "Thành công";
+                                }
+                        %>
                         <tr>
                             <td><%= room.getName()%></td>
                             <td><%= sdf.format(booking.getCheckInDate())%></td>
                             <td><%= sdf.format(booking.getCheckOutDate())%></td>
                             <td class="price"><%= String.format("%,.0f", booking.getTotalPrice())%> VND</td>
-                            <td class="status <%= "Cancelled".equals(booking.getStatus()) ? "cancelled" : ""%>">
-                                <%= booking.getStatus()%>
-                            </td>
+                            <td class="status <%= statusClass %>"><%= displayStatus %></td>
                             <td class="actions">
-                                <% if (!"Cancelled".equals(booking.getStatus())) {%>
+                                <% if (!"Cancelled".equals(booking.getStatus()) && currentDate.before(booking.getCheckOutDate())) {%>
                                 <form id="cancelForm_<%= booking.getId()%>" action="cancelBooking" method="post" style="display:inline;">
                                     <input type="hidden" name="bookingId" value="<%= booking.getId()%>">
                                     <button type="button" class="btn cancel" onclick="confirmCancel('<%= booking.getId()%>')">Hủy</button>
                                 </form>
-                                <% }%>
-                                <form action="updateBooking.jsp" method="get" style="display:inline;">
-                                    <input type="hidden" name="bookingId" value="<%= booking.getId()%>">
-                                    <button type="submit" class="btn update">Cập nhật</button>
+                                <% } %>
+                                <!-- Nút Xem -->
+                                <form action="room-details" method="get" style="display:inline;">
+                                    <input type="hidden" name="roomId" value="<%= room.getId()%>">
+                                    <button type="submit" class="btn view">Xem</button>
                                 </form>
                             </td>
                         </tr>
@@ -286,6 +309,5 @@
                 <% }%>
             </div>
         </div>
-
     </body>
 </html>

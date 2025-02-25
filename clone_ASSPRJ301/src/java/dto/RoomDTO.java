@@ -1,5 +1,8 @@
 package dto;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class RoomDTO {
     private int id;
     private String name;
@@ -7,12 +10,16 @@ public class RoomDTO {
     private double price;
     private String amenities;
     private float ratings;
-    private String imageUrl;
+    private String imageUrl; 
+    private List<String> detailImages;
 
+    
     public RoomDTO() {
+        this.detailImages = new ArrayList<>(); 
     }
 
-    public RoomDTO(int id, String name, String description, double price, String amenities, float ratings, String imageUrl) {
+    // Constructor đầy đủ tham số
+    public RoomDTO(int id, String name, String description, double price, String amenities, float ratings, String imageUrl, List<String> detailImages) {
         this.id = id;
         this.name = name;
         this.description = description;
@@ -20,8 +27,10 @@ public class RoomDTO {
         this.amenities = amenities;
         this.ratings = ratings;
         this.imageUrl = imageUrl;
+        this.detailImages = (detailImages != null) ? detailImages : new ArrayList<>(); 
     }
 
+    // Getters và Setters
     public int getId() {
         return id;
     }
@@ -77,5 +86,16 @@ public class RoomDTO {
     public void setImageUrl(String imageUrl) {
         this.imageUrl = imageUrl;
     }
-    
+
+    public List<String> getDetailImages() {
+        return detailImages;
+    }
+
+    public void setDetailImages(List<String> detailImages) {
+        this.detailImages = (detailImages != null) ? detailImages : new ArrayList<>();
+    }
+
+    public void addDetailImage(String imageUrl) {
+        this.detailImages.add(imageUrl);
+    }
 }

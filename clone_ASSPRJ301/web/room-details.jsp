@@ -1,5 +1,6 @@
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%@ page import="dto.RoomDTO" %>
+<%@ page import="java.util.List" %>
 <!DOCTYPE html>
 <html lang="vi">
     <head>
@@ -69,7 +70,12 @@
                 height: 500px;
                 object-fit: cover;
                 border-radius: 15px;
+                display: none; /* Ẩn tất cả ảnh ban đầu */
                 transition: opacity 0.5s ease-in-out;
+            }
+
+            .room-gallery img.active {
+                display: block; /* Chỉ hiển thị ảnh đang active */
             }
 
             .prev, .next {
@@ -88,7 +94,7 @@
 
             .prev:hover, .next:hover {
                 background: rgba(0, 0, 0, 0.9);
-                transform: scale(1.1);
+                transform: translateY(-50%) scale(1.1);
             }
 
             .prev { left: 20px; }
@@ -139,31 +145,6 @@
                 background: linear-gradient(45deg, #4ECDC4, #45b7d1);
                 transform: scale(1.05);
                 box-shadow: 0 6px 20px rgba(93, 193, 185, 0.6);
-            }
-
-            /* Gallery Details */
-            .room-gallery-details {
-                margin-top: 30px;
-            }
-
-            .gallery-grid {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                gap: 15px;
-                margin-top: 15px;
-            }
-
-            .gallery-grid img {
-                width: 100%;
-                height: 200px;
-                object-fit: cover;
-                border-radius: 10px;
-                transition: transform 0.3s ease, box-shadow 0.3s ease;
-            }
-
-            .gallery-grid img:hover {
-                transform: scale(1.05);
-                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
             }
 
             /* Location */
@@ -433,14 +414,6 @@
                     padding: 12px 25px;
                 }
 
-                .gallery-grid {
-                    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-                }
-
-                .gallery-grid img {
-                    height: 150px;
-                }
-
                 .room-location iframe {
                     height: 250px;
                 }
@@ -472,7 +445,6 @@
                 }
             }
         </style>
-        <!-- Include FontAwesome for footer.jsp and icons -->
         <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
     </head>
     <body>
@@ -496,12 +468,27 @@
             <div class="room-details">
                 <!-- Slideshow Gallery -->
                 <div class="room-gallery">
-                    <img id="room-image" src="<%= room.getImageUrl()%>" alt="<%= room.getName()%>">
+                    <%
+                        List<String> detailImages = room.getDetailImages();
+                        if (detailImages == null || detailImages.isEmpty()) {
+                            detailImages = new java.util.ArrayList<>();
+                            detailImages.add(room.getImageUrl()); // Thêm ảnh chính nếu không có ảnh chi tiết
+                        } else if (!detailImages.contains(room.getImageUrl())) {
+                            detailImages.add(0, room.getImageUrl()); // Thêm ảnh chính vào đầu danh sách nếu chưa có
+                        }
+                        for (int i = 0; i < detailImages.size(); i++) {
+                            String imageUrl = detailImages.get(i);
+                            String activeClass = (i == 0) ? "active" : ""; // Ảnh đầu tiên là active
+                    %>
+                    <img src="<%= imageUrl %>" alt="<%= room.getName() %>" class="<%= activeClass %>">
+                    <%
+                        }
+                    %>
                     <button class="prev" onclick="changeImage(-1)">❮</button>
                     <button class="next" onclick="changeImage(1)">❯</button>
                 </div>
 
-                <!-- Room Info and Gallery Details -->
+                <!-- Room Info -->
                 <div class="room-info">
                     <div>
                         <h2><%= room.getName()%></h2>
@@ -510,15 +497,6 @@
                         <p><strong>Tiện nghi:</strong> <%= room.getAmenities()%></p>
                         <p><strong>Đánh giá:</strong> <%= room.getRatings()%> ⭐</p>
                         <a href="booking.jsp?roomId=<%= room.getId()%>" class="btn-book">Đặt ngay</a>
-                    </div>
-
-                    <div class="room-gallery-details">
-                        <h3>Ảnh chi tiết</h3>
-                        <div class="gallery-grid">
-                            <img src="assets/images/br.jpg" alt="Phòng tắm">
-                            <img src="assets/images/q.jpg" alt="Góc làm việc">
-                            <img src="assets/images/window-bay-view.jpg" alt="View từ cửa sổ">
-                        </div>
                     </div>
                 </div>
 
@@ -584,16 +562,43 @@
                         </div>
                     </div>
                 </div>
-                <%
-                    }
-                %>
             </div>
+            <%
+                }
+            %>
         </div>
 
-            <div class="footer-container">
-                <%@include file="footer.jsp" %>
-            </div>
-            <!-- Include FontAwesome for footer.jsp and icons -->
-            <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+        <div class="footer-container">
+            <%@include file="footer.jsp" %>
+        </div>
+
+        <!-- JavaScript để điều khiển slideshow -->
+        <script>
+            let currentIndex = 0;
+            const images = document.querySelectorAll('.room-gallery img');
+
+            function showImage(index) {
+                images.forEach((img, i) => {
+                    img.classList.remove('active');
+                    if (i === index) {
+                        img.classList.add('active');
+                    }
+                });
+            }
+
+            function changeImage(direction) {
+                currentIndex += direction;
+                if (currentIndex < 0) {
+                    currentIndex = images.length - 1; // Quay lại ảnh cuối nếu vượt quá đầu
+                } else if (currentIndex >= images.length) {
+                    currentIndex = 0; // Quay lại ảnh đầu nếu vượt quá cuối
+                }
+                showImage(currentIndex);
+            }
+
+            // Hiển thị ảnh đầu tiên khi tải trang
+            showImage(currentIndex);
+        </script>
+        <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
     </body>
 </html>

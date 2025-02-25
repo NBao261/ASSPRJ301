@@ -67,7 +67,7 @@ public class BookingDAO {
     }
 
     // Lấy danh sách đặt phòng theo userID
-    public List<BookingDTO> getBookingsByUserId(String userID) throws ClassNotFoundException {
+    public List<BookingDTO> getBookingsByUserId(String userID) throws ClassNotFoundException, Exception {
         List<BookingDTO> bookings = new ArrayList<>();
         String sql = "SELECT * FROM bookings WHERE userID = ? ORDER BY created_at DESC";
         try (Connection conn = DBUtils.getConnection();
@@ -85,7 +85,7 @@ public class BookingDAO {
     }
 
     // Lấy danh sách đặt phòng theo room_id
-    public List<BookingDTO> getBookingsByRoomId(int roomId) throws ClassNotFoundException {
+    public List<BookingDTO> getBookingsByRoomId(int roomId) throws ClassNotFoundException, Exception {
         List<BookingDTO> bookings = new ArrayList<>();
         if (roomId <= 0) {
             return bookings;
@@ -104,26 +104,6 @@ public class BookingDAO {
             System.err.println("Error fetching bookings by room ID: " + e.getMessage());
         }
         return bookings;
-    }
-
-    // Cập nhật thông tin đặt phòng
-    public boolean updateBookingDetails(int bookingId, java.util.Date checkIn, java.util.Date checkOut, double totalPrice) throws ClassNotFoundException {
-        if (bookingId <= 0 || checkIn == null || checkOut == null || checkOut.before(checkIn) || totalPrice < 0) {
-            return false;
-        }
-
-        String sql = "UPDATE bookings SET check_in_date = ?, check_out_date = ?, total_price = ? WHERE id = ?";
-        try (Connection conn = DBUtils.getConnection();
-                PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setDate(1, new java.sql.Date(checkIn.getTime()));
-            ps.setDate(2, new java.sql.Date(checkOut.getTime()));
-            ps.setDouble(3, totalPrice);
-            ps.setInt(4, bookingId);
-            return ps.executeUpdate() > 0;
-        } catch (SQLException e) {
-            System.err.println("Error updating booking details: " + e.getMessage());
-            return false;
-        }
     }
 
     // Hủy đặt phòng bằng cách cập nhật trạng thái
@@ -150,7 +130,7 @@ public class BookingDAO {
     }
 
     // Map dữ liệu từ ResultSet sang BookingDTO
-    private BookingDTO mapResultSetToBooking(ResultSet rs) throws SQLException {
+    private BookingDTO mapResultSetToBooking(ResultSet rs) throws SQLException, Exception {
         UserDAO userDAO = new UserDAO();
         UserDTO user = userDAO.readById(rs.getString("userID"));
 
@@ -170,7 +150,7 @@ public class BookingDAO {
     }
 
     // Lấy thông tin đặt phòng theo ID
-    public BookingDTO getBookingById(int bookingId) throws ClassNotFoundException {
+    public BookingDTO getBookingById(int bookingId) throws ClassNotFoundException, Exception {
         if (bookingId <= 0) {
             return null;
         }
@@ -191,7 +171,7 @@ public class BookingDAO {
     }
 
     // Lấy thông tin đặt phòng theo userID và room_id
-    public BookingDTO getBookingByUserAndRoom(String userId, int roomId) throws ClassNotFoundException {
+    public BookingDTO getBookingByUserAndRoom(String userId, int roomId) throws ClassNotFoundException, Exception {
         if (userId == null || userId.trim().isEmpty() || roomId <= 0) {
             return null;
         }

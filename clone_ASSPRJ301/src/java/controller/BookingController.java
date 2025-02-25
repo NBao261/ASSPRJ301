@@ -6,6 +6,7 @@ import dto.BookingDTO;
 import dto.RoomDTO;
 import dto.UserDTO;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.sql.Date;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -17,7 +18,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-@WebServlet(name = "BookingController", urlPatterns = {"/bookRoom", "/viewBookings", "/cancelBooking", "/updateBooking"})
+@WebServlet(name = "BookingController", urlPatterns = {"/bookRoom", "/viewBookings", "/cancelBooking", "/checkAvailability"})
 public class BookingController extends HttpServlet {
 
     private static final String LOGIN_PAGE = "login-regis.jsp";
@@ -32,7 +33,7 @@ public class BookingController extends HttpServlet {
         HttpSession session = request.getSession();
         UserDTO user = (UserDTO) session.getAttribute("user");
 
-        if (user == null) {
+        if (user == null && !action.equals("/checkAvailability")) { // Không yêu cầu đăng nhập cho checkAvailability
             response.sendRedirect(LOGIN_PAGE);
             return;
         }
@@ -48,8 +49,8 @@ public class BookingController extends HttpServlet {
                 case "/cancelBooking":
                     cancelBooking(request, response);
                     return;
-                case "/updateBooking":
-                    updateBooking(request, response);
+                case "/checkAvailability":
+                    checkAvailability(request, response);
                     return;
             }
         } catch (Exception e) {
@@ -60,7 +61,7 @@ public class BookingController extends HttpServlet {
     }
 
     private void handleBooking(HttpServletRequest request, HttpServletResponse response, UserDTO user)
-            throws IOException, ServletException, ClassNotFoundException {
+            throws IOException, ServletException, ClassNotFoundException, Exception {
         String roomIdParam = request.getParameter("roomId");
         String checkInStr = request.getParameter("checkInDate");
         String checkOutStr = request.getParameter("checkOutDate");
@@ -111,7 +112,7 @@ public class BookingController extends HttpServlet {
     }
 
     private void viewBookings(HttpServletRequest request, HttpServletResponse response, UserDTO user)
-            throws ServletException, IOException, ClassNotFoundException {
+            throws ServletException, IOException, ClassNotFoundException, Exception {
         BookingDAO bookingDAO = new BookingDAO();
         List<BookingDTO> bookingList = bookingDAO.getBookingsByUserId(user.getUserID());
         request.setAttribute("bookingList", bookingList);
@@ -131,35 +132,27 @@ public class BookingController extends HttpServlet {
         }
     }
 
-    private void updateBooking(HttpServletRequest request, HttpServletResponse response)
-            throws IOException, ServletException, ClassNotFoundException {
-        int bookingId = Integer.parseInt(request.getParameter("bookingId"));
-        String checkInStr = request.getParameter("checkInDate");
-        String checkOutStr = request.getParameter("checkOutDate");
-        Date checkInDate = Date.valueOf(checkInStr);
-        Date checkOutDate = Date.valueOf(checkOutStr);
-        long days = ChronoUnit.DAYS.between(checkInDate.toLocalDate(), checkOutDate.toLocalDate());
+    private void checkAvailability(HttpServletRequest request, HttpServletResponse response)
+            throws IOException {
+        response.setContentType("application/json");
+        PrintWriter out = response.getWriter();
 
-        if (days <= 0) {
-            request.setAttribute("errorMessage", "Ngày trả phòng phải sau ngày nhận phòng!");
-            request.getRequestDispatcher(BOOKING_LIST_PAGE).forward(request, response);
-            return;
-        }
+        try {
+            int roomId = Integer.parseInt(request.getParameter("roomId"));
+            String checkInDateStr = request.getParameter("checkInDate");
+            String checkOutDateStr = request.getParameter("checkOutDate");
 
-        BookingDAO bookingDAO = new BookingDAO();
-        BookingDTO booking = bookingDAO.getBookingById(bookingId);
-        if (booking == null) {
-            request.setAttribute("errorMessage", "Không tìm thấy đặt phòng!");
-            request.getRequestDispatcher(BOOKING_LIST_PAGE).forward(request, response);
-            return;
-        }
+            Date checkInDate = Date.valueOf(checkInDateStr);
+            Date checkOutDate = Date.valueOf(checkOutDateStr);
 
-        double totalPrice = days * booking.getRoom().getPrice();
-        if (bookingDAO.updateBookingDetails(bookingId, checkInDate, checkOutDate, totalPrice)) {
-            response.sendRedirect("viewBookings");
-        } else {
-            request.setAttribute("errorMessage", "Cập nhật đặt phòng thất bại.");
-            request.getRequestDispatcher(BOOKING_LIST_PAGE).forward(request, response);
+            BookingDAO bookingDAO = new BookingDAO();
+            boolean isAvailable = bookingDAO.isRoomAvailable(roomId, checkInDate, checkOutDate);
+
+            out.print("{\"available\": " + isAvailable + "}");
+        } catch (Exception e) {
+            out.print("{\"error\": \"" + e.getMessage() + "\"}");
+        } finally {
+            out.flush();
         }
     }
 
