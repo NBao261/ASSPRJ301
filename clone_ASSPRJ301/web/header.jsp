@@ -115,6 +115,12 @@
             object-fit: cover; /* Đảm bảo ảnh lấp đầy avatar mà không bị méo */
         }
 
+        .user-avatar span {
+            font-size: 20px;
+            font-weight: 600;
+            color: #5DC1B9;
+        }
+
         .dropdown-menu {
             display: none;
             position: absolute;
@@ -164,6 +170,12 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
+        }
+
+        .dropdown-menu .user-profile .avatar span {
+            font-size: 28px;
+            font-weight: 600;
+            color: #5DC1B9;
         }
 
         .dropdown-menu .user-profile .name {
@@ -295,6 +307,10 @@
                 object-fit: cover;
             }
 
+            .user-avatar span {
+                font-size: 18px;
+            }
+
             .dropdown-menu {
                 display: none;
                 position: static;
@@ -323,6 +339,10 @@
                 width: 100%;
                 height: 100%;
                 object-fit: cover;
+            }
+
+            .dropdown-menu .user-profile .avatar span {
+                font-size: 24px;
             }
 
             .dropdown-menu .user-profile .name {
@@ -368,7 +388,7 @@
                         <% if (user.getAvatarUrl() != null && !user.getAvatarUrl().isEmpty()) { %>
                             <img src="<%= user.getAvatarUrl() %>" alt="Avatar" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
                         <% } else { %>
-                            <%= avatarInitial %>
+                            <span><%= avatarInitial %></span>
                         <% } %>
                     </div>
                     <ul class="dropdown-menu">
@@ -377,7 +397,7 @@
                                 <% if (user.getAvatarUrl() != null && !user.getAvatarUrl().isEmpty()) { %>
                                     <img src="<%= user.getAvatarUrl() %>" alt="Avatar" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
                                 <% } else { %>
-                                    <%= avatarInitial %>
+                                    <span><%= avatarInitial %></span>
                                 <% } %>
                             </div>
                             <span class="name"><%= fullName != null ? fullName : "Người dùng" %></span>
