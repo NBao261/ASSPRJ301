@@ -99,16 +99,20 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 20px;
-            font-weight: 600;
-            color: #5DC1B9;
             cursor: pointer;
             transition: transform 0.3s ease, box-shadow 0.3s ease;
+            overflow: hidden; /* Đảm bảo ảnh không bị tràn ra ngoài */
         }
 
         .user-avatar:hover {
             transform: scale(1.1);
             box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+
+        .user-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Đảm bảo ảnh lấp đầy avatar mà không bị méo */
         }
 
         .dropdown-menu {
@@ -123,7 +127,7 @@
             padding: 15px;
             min-width: 220px;
             z-index: 1001;
-            backdrop-filter: blur(5px); /* Tạo hiệu ứng mờ nhẹ */
+            backdrop-filter: blur(5px);
             border: 1px solid rgba(255, 255, 255, 0.2);
             transition: opacity 0.2s ease-in-out;
             opacity: 0;
@@ -151,11 +155,15 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 28px;
-            font-weight: 600;
-            color: #5DC1B9;
             margin-bottom: 10px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .dropdown-menu .user-profile .avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
 
         .dropdown-menu .user-profile .name {
@@ -279,7 +287,12 @@
             .user-avatar {
                 width: 35px;
                 height: 35px;
-                font-size: 18px;
+            }
+
+            .user-avatar img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
             }
 
             .dropdown-menu {
@@ -304,7 +317,12 @@
             .dropdown-menu .user-profile .avatar {
                 width: 50px;
                 height: 50px;
-                font-size: 24px;
+            }
+
+            .dropdown-menu .user-profile .avatar img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
             }
 
             .dropdown-menu .user-profile .name {
@@ -346,10 +364,22 @@
                         String avatarInitial = fullName != null && !fullName.isEmpty() ? fullName.substring(0, 1).toUpperCase() : "U";
                 %>
                 <div class="user-info">
-                    <div class="user-avatar"><%= avatarInitial %></div>
+                    <div class="user-avatar">
+                        <% if (user.getAvatarUrl() != null && !user.getAvatarUrl().isEmpty()) { %>
+                            <img src="<%= user.getAvatarUrl() %>" alt="Avatar" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+                        <% } else { %>
+                            <%= avatarInitial %>
+                        <% } %>
+                    </div>
                     <ul class="dropdown-menu">
                         <li class="user-profile">
-                            <div class="avatar"><%= avatarInitial %></div>
+                            <div class="avatar">
+                                <% if (user.getAvatarUrl() != null && !user.getAvatarUrl().isEmpty()) { %>
+                                    <img src="<%= user.getAvatarUrl() %>" alt="Avatar" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+                                <% } else { %>
+                                    <%= avatarInitial %>
+                                <% } %>
+                            </div>
                             <span class="name"><%= fullName != null ? fullName : "Người dùng" %></span>
                         </li>
                         <li><a href="viewBookings">Đơn của tôi</a></li>

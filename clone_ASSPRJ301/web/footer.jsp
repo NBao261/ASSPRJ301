@@ -4,7 +4,7 @@
         <p>© 2025 Homestay Booking. Tất cả quyền lợi được bảo vệ.</p>
 
         <!-- Social media icons (FontAwesome) -->
-        <div class="social-links">
+<!--        <div class="social-links">
             <a href="https://www.facebook.com" class="social-icon" title="Facebook" target="_blank" rel="noopener noreferrer">
                 <i class="fab fa-facebook-f"></i>
             </a>
@@ -12,10 +12,10 @@
                 <i class="fab fa-instagram"></i>
             </a>
             <a href="https://zalo.me" class="social-icon" title="Zalo" target="_blank" rel="noopener noreferrer">
-                <i class="fab fa-telegram"></i> <!-- Using Telegram icon as a placeholder for Zalo; you can replace with a custom Zalo icon if available -->
+                <i class="fab fa-zalo"></i> 
             </a>
         </div>
-    </div>
+    </div>-->
     
     <!-- Social media logos (images) -->
     <div class="social-logos">

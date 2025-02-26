@@ -503,9 +503,9 @@
                 <!-- Location -->
                 <div class="room-location">
                     <h3>Vị trí</h3>
-                    <p><strong>Địa chỉ:</strong> 123 Đường ABC, Quận XYZ, Thành phố HCM</p>
+                    <p><strong> Địa chỉ:</strong> <b>S702 Vinhome Grand Park, Quận 9</b></p>
                     <iframe
-                        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3919.1234567890123!2d106.12345678901234!3d10.123456789012345!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMTDCsDA3JzI0LjQiTiAxMDbCsDA3JzI0LjQiRQ!5e0!3m2!1sen!2s!4v1234567890123!5m2!1sen!2s"
+                        src="https://maps.google.com/maps?width=100%25&amp;height=600&amp;hl=en&amp;q=S702%20Vinhomes%20GrandPark,%20Qu%E1%BA%ADn%209+(HomeStay)&amp;t=&amp;z=14&amp;ie=UTF8&amp;iwloc=B&amp;output=embed"
                         allowfullscreen=""
                         loading="lazy">
                     </iframe>
@@ -529,7 +529,7 @@
                         </div>
                         <div class="amenity-item">
                             <i class="fas fa-utensils"></i>
-                            <p>Bữa sáng miễn phí</p>
+                            <p>Nhiều tiện ích xung quanh</p>
                         </div>
                     </div>
                 </div>

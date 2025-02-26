@@ -1,5 +1,5 @@
-
 package controller;
+
 import dao.UserDAO;
 import dto.UserDTO;
 import java.io.IOException;
@@ -24,7 +24,7 @@ public class LoginController extends HttpServlet {
 
     private boolean isValidLogin(String strUserID, String strPassword) {
         UserDTO user = getUser(strUserID);
-        return user != null && user.getPassword().equals(strPassword);
+        return user != null && user.getPassword() != null && user.getPassword().equals(strPassword);
     }
 
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
@@ -40,21 +40,26 @@ public class LoginController extends HttpServlet {
             if (action != null) {
                 switch (action) {
                     case "login":
-                        String strUserID = request.getParameter("txtUsername").trim();
-                        String strPassword = request.getParameter("txtPassword").trim();
-                        if (isValidLogin(strUserID, strPassword)) {
-                            user = getUser(strUserID);
-                            session.setAttribute("user", user); // Lưu user vào session
-                            response.sendRedirect(HOME_PAGE); // Thay đổi URL
-                            return;
+                        String strUserID = request.getParameter("txtUsername");
+                        String strPassword = request.getParameter("txtPassword");
+
+                        if (strUserID != null && strPassword != null && !strUserID.trim().isEmpty() && !strPassword.trim().isEmpty()) {
+                            if (isValidLogin(strUserID.trim(), strPassword.trim())) {
+                                user = getUser(strUserID.trim());
+                                session.setAttribute("user", user);
+                                response.sendRedirect(HOME_PAGE);
+                                return;
+                            } else {
+                                request.setAttribute("errorMessage", "Sai tài khoản hoặc mật khẩu!");
+                            }
                         } else {
-                            request.setAttribute("errorMessage", "Sai tài khoản hoặc mật khẩu!");
+                            request.setAttribute("errorMessage", "Vui lòng nhập tài khoản và mật khẩu!");
                         }
                         break;
 
                     case "logout":
-                        session.invalidate(); // Hủy session
-                        response.sendRedirect(LOGIN_PAGE); // Chuyển hướng về trang đăng nhập
+                        session.invalidate();
+                        response.sendRedirect(LOGIN_PAGE);
                         return;
 
                     case "home":
@@ -67,9 +72,9 @@ public class LoginController extends HttpServlet {
             }
         } catch (Exception e) {
             log("Error in LoginController: " + e.getMessage(), e);
+            request.setAttribute("errorMessage", "Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau!");
         }
 
-        // Chỉ forward nếu cần hiển thị thông báo lỗi
         RequestDispatcher rd = request.getRequestDispatcher(url);
         rd.forward(request, response);
     }

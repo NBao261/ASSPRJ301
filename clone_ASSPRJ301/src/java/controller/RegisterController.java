@@ -25,6 +25,8 @@ public class RegisterController extends HttpServlet {
             String fullName = request.getParameter("txtFullName").trim();
             String newPassword = request.getParameter("txtNewPassword").trim();
             String confirmPassword = request.getParameter("txtConfirmPassword").trim();
+            String gmail = request.getParameter("txtGmail") != null ? request.getParameter("txtGmail").trim() : "";
+            String sdt = request.getParameter("txtSdt") != null ? request.getParameter("txtSdt").trim() : "";
             boolean hasError = false;
 
             // Kiểm tra lỗi nhập liệu
@@ -44,11 +46,19 @@ public class RegisterController extends HttpServlet {
                 request.setAttribute("errorConfirmPassword", "Mật khẩu xác nhận không khớp.");
                 hasError = true;
             }
+            if (!gmail.isEmpty() && !gmail.matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
+                request.setAttribute("errorGmail", "Email không hợp lệ.");
+                hasError = true;
+            }
+            if (!sdt.isEmpty() && !sdt.matches("^\\+?[0-9]{9,12}$")) {
+                request.setAttribute("errorSdt", "Số điện thoại không hợp lệ (9-12 số).");
+                hasError = true;
+            }
 
             // Nếu có lỗi, quay lại trang đăng ký
             if (hasError) {
                 request.setAttribute("showRegisterForm", true);
-                request.getRequestDispatcher("login-regis.jsp").forward(request, response);
+                request.getRequestDispatcher(LOGIN_PAGE).forward(request, response);
                 return;
             }
 
@@ -58,8 +68,8 @@ public class RegisterController extends HttpServlet {
                 request.setAttribute("errorNewUsername", "Tên đăng nhập đã tồn tại.");
                 request.setAttribute("showRegisterForm", true);
             } else {
-                // Tạo user mới và lưu vào database
-                UserDTO newUser = new UserDTO(newUsername, fullName, "US", newPassword);
+                // Tạo user mới với các trường mới và lưu vào database
+                UserDTO newUser = new UserDTO(newUsername, fullName, "US", newPassword, gmail, sdt, null); // avatar_url mặc định là null
                 if (userDao.create(newUser)) {
                     request.setAttribute("successMessage", "Đăng ký thành công! Vui lòng đăng nhập.");
                     request.setAttribute("showRegisterForm", false);
@@ -69,12 +79,12 @@ public class RegisterController extends HttpServlet {
                 }
             }
 
-            request.getRequestDispatcher("login-regis.jsp").forward(request, response);
+            request.getRequestDispatcher(LOGIN_PAGE).forward(request, response);
         } catch (Exception e) {
-            log("Error in RegisterController: " + e.getMessage());
+            log("Error in RegisterController: " + e.getMessage(), e);
             request.setAttribute("errorMessage", "Lỗi hệ thống, vui lòng thử lại sau!");
             request.setAttribute("showRegisterForm", true);
-            request.getRequestDispatcher("login-regis.jsp").forward(request, response);
+            request.getRequestDispatcher(LOGIN_PAGE).forward(request, response);
         }
     }
 
