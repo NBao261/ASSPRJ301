@@ -14,14 +14,17 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.Part;
 
-@WebServlet(name = "UpdateProfileServlet", urlPatterns = {"/updateProfile"})
+@WebServlet(name = "UpdateProfileServlet", urlPatterns = {"/updateProfile", "/external-uploads/avatars/*"})
 @MultipartConfig(fileSizeThreshold = 1024 * 1024 * 2, // 2MB
-        maxFileSize = 1024 * 1024 * 10, // 10MB
-        maxRequestSize = 1024 * 1024 * 50)   // 50MB
+                 maxFileSize = 1024 * 1024 * 10,      // 10MB
+                 maxRequestSize = 1024 * 1024 * 50)   // 50MB
 public class UpdateProfileServlet extends HttpServlet {
 
-    private static final String UPLOAD_DIR = "uploads/avatars";
+    // Đường dẫn linh hoạt sử dụng thư mục home của người dùng
+    private static final String UPLOAD_BASE_DIR = System.getProperty("user.home") + File.separator + "HomestayUploads";
+    private static final String UPLOAD_DIR = UPLOAD_BASE_DIR + File.separator + "avatars";
     private static final String PROFILE_PAGE = "profile.jsp";
+    private static final String AVATAR_URL_BASE = "/external-uploads/avatars/"; // Đường dẫn ảo trong ứng dụng
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
@@ -62,20 +65,47 @@ public class UpdateProfileServlet extends HttpServlet {
         String avatarUrl = user.getAvatarUrl(); // Giữ URL cũ nếu không upload ảnh mới
         if (fileName != null && !fileName.isEmpty()) {
             try {
-                String appPath = request.getServletContext().getRealPath("");
-                String uploadPath = appPath + File.separator + UPLOAD_DIR;
-                File uploadDir = new File(uploadPath);
+                // Đường dẫn tuyệt đối đến thư mục uploads/avatars
+                File uploadDir = new File(UPLOAD_DIR);
+
+                // Tự động tạo thư mục nếu chưa tồn tại
                 if (!uploadDir.exists()) {
-                    uploadDir.mkdirs();
+                    if (!uploadDir.mkdirs()) {
+                        throw new IOException("Không thể tạo thư mục: " + UPLOAD_DIR);
+                    }
+                    // Đặt quyền đọc/ghi/thực thi cho thư mục (hỗ trợ Windows và Linux)
+                    uploadDir.setReadable(true, false);
+                    uploadDir.setWritable(true, false);
+                    uploadDir.setExecutable(true, false);
                 }
 
+                // Tạo tên file duy nhất
                 String uniqueFileName = System.currentTimeMillis() + "_" + fileName;
-                String filePath = uploadPath + File.separator + uniqueFileName;
+                String filePath = UPLOAD_DIR + File.separator + uniqueFileName;
+
+                // Ghi file lên server
                 filePart.write(filePath);
-                avatarUrl = "/" + UPLOAD_DIR + "/" + uniqueFileName;
-            } catch (Exception e) {
-                log("Error uploading avatar: " + e.getMessage(), e);
-                request.setAttribute("errorAvatar", "Không thể tải ảnh lên, vui lòng thử lại.");
+
+                // Tạo URL ảo để hiển thị trong JSP (bao gồm context path)
+                String contextPath = request.getContextPath(); // Lấy context path (/clone_ASSPRJ301)
+                avatarUrl = contextPath + AVATAR_URL_BASE + uniqueFileName;
+
+                // Kiểm tra file đã được tạo chưa
+                File uploadedFile = new File(filePath);
+                if (!uploadedFile.exists()) {
+                    throw new IOException("File không được tạo thành công tại: " + filePath);
+                }
+
+                // Đặt quyền đọc cho file (hỗ trợ Windows và Linux)
+                uploadedFile.setReadable(true, false); // Quyền đọc cho mọi người
+                uploadedFile.setWritable(false, false); // Chỉ cho phép ghi bởi owner
+
+                // Kiểm tra lại file sau khi đặt quyền
+                if (!uploadedFile.canRead()) {
+                    throw new IOException("Không thể đặt quyền đọc cho file: " + filePath);
+                }
+            } catch (IOException e) {
+                request.setAttribute("errorAvatar", "Không thể tải ảnh lên, vui lòng thử lại: " + e.getMessage());
                 hasError = true;
             }
         }
@@ -96,15 +126,48 @@ public class UpdateProfileServlet extends HttpServlet {
         UserDAO userDAO = new UserDAO();
         try {
             if (userDAO.update(user)) {
-                session.setAttribute("user", user); // Cập nhật session
+                session.setAttribute("user", user); // Cập nhật session với avatarUrl mới
                 request.setAttribute("successMessage", "Cập nhật thông tin thành công!");
             } else {
                 request.setAttribute("errorMessage", "Cập nhật thất bại, vui lòng thử lại.");
             }
         } catch (Exception e) {
-            log("Error updating user in database: " + e.getMessage(), e);
-            request.setAttribute("errorMessage", "Lỗi hệ thống khi cập nhật thông tin, vui lòng thử lại.");
+            request.setAttribute("errorMessage", "Lỗi hệ thống khi cập nhật thông tin, vui lòng thử lại: " + e.getMessage());
         }
         request.getRequestDispatcher(PROFILE_PAGE).forward(request, response);
+    }
+
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        String requestURI = request.getRequestURI();
+        String contextPath = request.getContextPath(); // Lấy context path (/clone_ASSPRJ301)
+        if (requestURI != null && requestURI.startsWith(contextPath + "/external-uploads/avatars/")) {
+            String filePath = requestURI.substring((contextPath + "/external-uploads/avatars/").length());
+            String fullFilePath = UPLOAD_DIR + File.separator + filePath;
+
+            File file = new File(fullFilePath);
+            if (file.exists() && file.isFile() && file.canRead()) {
+                // Xác định loại nội dung (content type) của file
+                String mimeType = getServletContext().getMimeType(filePath);
+                if (mimeType == null) {
+                    // Nếu không xác định được, mặc định là image/jpeg
+                    mimeType = "image/jpeg";
+                }
+                response.setContentType(mimeType);
+                response.setHeader("Content-Disposition", "inline; filename=\"" + filePath + "\"");
+                try (java.io.FileInputStream in = new java.io.FileInputStream(file)) {
+                    java.io.OutputStream out = response.getOutputStream();
+                    byte[] buffer = new byte[4096];
+                    int bytesRead;
+                    while ((bytesRead = in.read(buffer)) != -1) {
+                        out.write(buffer, 0, bytesRead);
+                    }
+                    out.flush();
+                }
+                return;
+            }
+        }
+        response.sendError(HttpServletResponse.SC_NOT_FOUND, "File not found");
     }
 }

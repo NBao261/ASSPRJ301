@@ -33,13 +33,12 @@
 
         .footer-container {
             width: 100%;
-            position: relative;
+            position: fixed;
             bottom: 0;
             left: 0;
             z-index: 999;
         }
 
-        /* Nội dung chính (form) */
         .main-content {
             flex: 1;
             display: flex;
@@ -99,7 +98,7 @@
 
         input[type="text"], input[type="email"] {
             width: 100%;
-            padding: 12px 15px 12px 38px; /* Giảm padding-left để icon sát lề hơn */
+            padding: 12px 15px 12px 38px;
             border: 1px solid #e0e0e0;
             border-radius: 8px;
             font-size: 14px;
@@ -126,11 +125,11 @@
 
         .form-group i {
             position: absolute;
-            top: 70%; 
-            left: 12px; 
-            transform: translateY(-50%); 
+            top: 70%;
+            left: 12px;
+            transform: translateY(-50%);
             color: #888;
-            font-size: 16px; 
+            font-size: 16px;
             transition: color 0.3s ease;
         }
 
@@ -179,14 +178,25 @@
         }
 
         .current-avatar {
-            margin-top: 10px;
+            margin-top: 15px;
             text-align: center;
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
         }
 
         .current-avatar img {
             max-width: 80px;
             border-radius: 8px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .current-avatar span {
+            display: block;
+            margin-top: 5px;
+            font-size: 12px;
+            color: #666;
         }
 
         @media (max-width: 768px) {
@@ -203,11 +213,15 @@
             }
             .form-group i {
                 left: 10px;
-                font-size: 14px; 
+                font-size: 14px;
             }
             button {
                 padding: 10px;
                 font-size: 14px;
+            }
+            .current-avatar {
+                margin-top: 10px;
+                padding: 8px;
             }
             .current-avatar img {
                 max-width: 60px;
@@ -269,6 +283,11 @@
                     <% if (user.getAvatarUrl() != null && !user.getAvatarUrl().isEmpty()) { %>
                         <div class="current-avatar">
                             <img src="<%= user.getAvatarUrl() %>" alt="Avatar hiện tại">
+                            <span>Avatar hiện tại</span>
+                        </div>
+                    <% } else { %>
+                        <div class="current-avatar">
+                            <span>Không có avatar</span>
                         </div>
                     <% } %>
                 </div>
