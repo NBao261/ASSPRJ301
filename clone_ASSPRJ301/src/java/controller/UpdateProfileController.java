@@ -18,7 +18,7 @@ import javax.servlet.http.Part;
 @MultipartConfig(fileSizeThreshold = 1024 * 1024 * 2, // 2MB
                  maxFileSize = 1024 * 1024 * 10,      // 10MB
                  maxRequestSize = 1024 * 1024 * 50)   // 50MB
-public class UpdateProfileServlet extends HttpServlet {
+public class UpdateProfileController extends HttpServlet {
 
     // Đường dẫn linh hoạt sử dụng thư mục home của người dùng
     private static final String UPLOAD_BASE_DIR = System.getProperty("user.home") + File.separator + "HomestayUploads";
@@ -96,7 +96,7 @@ public class UpdateProfileServlet extends HttpServlet {
                     throw new IOException("File không được tạo thành công tại: " + filePath);
                 }
 
-                // Đặt quyền đọc cho file (hỗ trợ Windows và Linux)
+                // Đặt quyền đọc cho file (hỗ trợ Windows)
                 uploadedFile.setReadable(true, false); // Quyền đọc cho mọi người
                 uploadedFile.setWritable(false, false); // Chỉ cho phép ghi bởi owner
 
