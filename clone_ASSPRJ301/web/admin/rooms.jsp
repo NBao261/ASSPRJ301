@@ -163,7 +163,7 @@
             font-weight: 600;
         }
 
-        .form-container input, .form-container textarea, .form-container select {
+        .form-container input, .form-container textarea {
             width: 100%;
             padding: 10px;
             margin-bottom: 15px;
@@ -175,6 +175,19 @@
         .form-container textarea {
             height: 100px;
             resize: vertical;
+        }
+
+        .form-container .note {
+            font-size: 12px;
+            color: #777;
+            margin-top: -10px;
+            margin-bottom: 15px;
+        }
+
+        .image-preview {
+            max-width: 100px;
+            height: auto;
+            margin: 5px;
         }
 
         @media (max-width: 768px) {
@@ -200,6 +213,10 @@
                 display: block;
                 overflow-x: auto;
                 white-space: nowrap;
+            }
+
+            .image-preview {
+                max-width: 80px;
             }
         }
     </style>
@@ -243,8 +260,13 @@
                     <label for="addRatings">Đánh giá (0-5):</label>
                     <input type="number" id="addRatings" name="ratings" step="0.1" min="0" max="5" required>
                     
-                    <label for="addImageUrl">URL hình ảnh:</label>
-                    <input type="text" id="addImageUrl" name="imageUrl">
+                    <label for="addImageUrl">URL hình ảnh chính:</label>
+                    <input type="text" id="addImageUrl" name="imageUrl" placeholder="Nhập link ảnh">
+                    <div class="note">Nhập link ảnh bất kỳ</div>
+                    
+                    <label for="addDetailImages">URL ảnh chi tiết (mỗi dòng một URL):</label>
+                    <textarea id="addDetailImages" name="detailImages" placeholder="Nhập các link ảnh, mỗi dòng một link"></textarea>
+                    <div class="note">Nhập từng link ảnh chi tiết trên một dòng</div>
                     
                     <button type="submit" class="btn btn-add">Lưu</button>
                     <button type="button" class="btn btn-delete" onclick="toggleForm('addForm')">Hủy</button>
@@ -255,6 +277,7 @@
             <%
                 RoomDTO editRoom = (RoomDTO) request.getAttribute("editRoom");
                 boolean showEditForm = editRoom != null;
+                String detailImagesText = showEditForm && editRoom.getDetailImages() != null ? String.join("\n", editRoom.getDetailImages()) : "";
             %>
             <div class="form-container <%= showEditForm ? "active" : "" %>" id="editForm">
                 <form action="<%= request.getContextPath() %>/admin/rooms?action=edit" method="post">
@@ -275,8 +298,13 @@
                     <label for="editRatings">Đánh giá (0-5):</label>
                     <input type="number" id="editRatings" name="ratings" step="0.1" min="0" max="5" value="<%= showEditForm ? editRoom.getRatings() : "" %>" required>
                     
-                    <label for="editImageUrl">URL hình ảnh:</label>
-                    <input type="text" id="editImageUrl" name="imageUrl" value="<%= showEditForm && editRoom.getImageUrl() != null ? editRoom.getImageUrl() : "" %>">
+                    <label for="editImageUrl">URL hình ảnh chính:</label>
+                    <input type="text" id="editImageUrl" name="imageUrl" value="<%= showEditForm && editRoom.getImageUrl() != null ? editRoom.getImageUrl() : "" %>" placeholder="Nhập link ảnh">
+                    <div class="note">Nhập link ảnh bất kỳ</div>
+                    
+                    <label for="editDetailImages">URL ảnh chi tiết (mỗi dòng một URL):</label>
+                    <textarea id="editDetailImages" name="detailImages" placeholder="Nhập các link ảnh, mỗi dòng một link"><%= detailImagesText %></textarea>
+                    <div class="note">Nhập từng link ảnh chi tiết trên một dòng</div>
                     
                     <button type="submit" class="btn btn-add">Lưu</button>
                     <button type="button" class="btn btn-delete" onclick="toggleForm('editForm')">Hủy</button>
@@ -300,7 +328,7 @@
                         <th>Giá (VND)</th>
                         <th>Tiện nghi</th>
                         <th>Đánh giá</th>
-                        <th>URL hình ảnh</th>
+                        <th>Hình ảnh chính</th>
                         <th>Hành động</th>
                     </tr>
                 </thead>
@@ -313,7 +341,13 @@
                         <td><%= String.format("%,.0f", room.getPrice()) %></td>
                         <td><%= room.getAmenities() != null ? room.getAmenities() : "Chưa có tiện nghi" %></td>
                         <td><%= room.getRatings() %></td>
-                        <td><%= room.getImageUrl() != null ? room.getImageUrl() : "Chưa có ảnh" %></td>
+                        <td>
+                            <% if (room.getImageUrl() != null && !room.getImageUrl().isEmpty()) { %>
+                                <img src="<%= room.getImageUrl() %>" alt="Hình ảnh chính" class="image-preview" onerror="this.src='<%= request.getContextPath() %>/images/placeholder.jpg';">
+                            <% } else { %>
+                                Chưa có ảnh
+                            <% } %>
+                        </td>
                         <td>
                             <a href="<%= request.getContextPath() %>/admin/rooms?action=edit&roomId=<%= room.getId() %>" class="btn btn-edit">Sửa</a>
                             <button class="btn btn-delete" onclick="confirmDelete('<%= room.getId() %>')">Xóa</button>

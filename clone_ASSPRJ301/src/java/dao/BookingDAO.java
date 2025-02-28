@@ -129,6 +129,24 @@ public class BookingDAO {
         }
     }
 
+    // Xóa đặt phòng hoàn toàn khỏi cơ sở dữ liệu
+    public boolean delete(int bookingId) throws ClassNotFoundException {
+        if (bookingId <= 0) {
+            return false;
+        }
+
+        String sql = "DELETE FROM bookings WHERE id = ?";
+        try (Connection conn = DBUtils.getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, bookingId);
+            int affectedRows = ps.executeUpdate();
+            return affectedRows > 0;
+        } catch (SQLException e) {
+            System.err.println("Error deleting booking: " + e.getMessage());
+            return false;
+        }
+    }
+
     // Map dữ liệu từ ResultSet sang BookingDTO
     private BookingDTO mapResultSetToBooking(ResultSet rs) throws SQLException, Exception {
         UserDAO userDAO = new UserDAO();
@@ -191,5 +209,22 @@ public class BookingDAO {
             System.err.println("Error fetching booking by user and room: " + e.getMessage());
         }
         return null;
+    }
+
+    // Lấy tất cả đặt phòng
+    public List<BookingDTO> getAllBookings() throws ClassNotFoundException, Exception {
+        List<BookingDTO> bookings = new ArrayList<>();
+        String sql = "SELECT * FROM bookings ORDER BY created_at DESC";
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    bookings.add(mapResultSetToBooking(rs));
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error fetching all bookings: " + e.getMessage());
+        }
+        return bookings;
     }
 }

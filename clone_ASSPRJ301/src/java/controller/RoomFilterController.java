@@ -12,7 +12,7 @@ import dao.RoomDAO;
 import dto.RoomDTO;
 
 @WebServlet("/RoomFilterServlet")
-public class RoomFilterServlet extends HttpServlet {
+public class RoomFilterController extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
 
@@ -41,7 +41,7 @@ public class RoomFilterServlet extends HttpServlet {
             out.println("<p>Giá: " + room.getPrice() + " VND</p>");
             out.println("<p>Tiện ích: " + room.getAmenities() + "</p>");
             out.println("<p>Đánh giá: " + room.getRatings() + "/5</p>");
-            out.println("<button onclick='bookRoom(" + room.getId() + ")'>Xem chi tiết</button>");
+            out.println("<button onclick='roomDetails(" + room.getId() + ")'>Xem chi tiết</button>");
             out.println("</div>");
         }
     }

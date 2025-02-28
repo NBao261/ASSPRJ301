@@ -244,7 +244,7 @@
                 <p>Giá: <%= room.getPrice() %> VND</p>
                 <p>Tiện ích: <%= room.getAmenities() %></p>
                 <p>Đánh giá: <%= room.getRatings() %>/5</p>
-                <button onclick="bookRoom(<%= room.getId() %>)">Xem chi tiết</button>
+                <button onclick="roomDetails(<%= room.getId() %>)">Xem chi tiết</button>
             </div>
         <% } %>
     </div>
@@ -274,7 +274,7 @@ $(document).ready(function() {
     });
 });
 
-function bookRoom(roomId) {
+function roomDetails(roomId) {
     window.location.href = "room-details?roomId=" + roomId;
 }
 </script>

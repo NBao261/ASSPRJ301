@@ -246,7 +246,7 @@
         <div class="main-content">
             <div class="container">
                 <h2>Danh sách đặt phòng của bạn</h2>
-                <a href="home.jsp" class="back-link">Quay lại trang chủ</a>
+                <a href="<%= request.getContextPath() %>/home.jsp" class="back-link">Quay lại trang chủ</a>
 
                 <% if (errorMessage != null) {%>
                 <p class="error-message"><%= errorMessage%></p>
@@ -278,29 +278,34 @@
                                 } else if (currentDate.after(booking.getCheckOutDate())) {
                                     statusClass = "completed";
                                     displayStatus = "Đã ở";
+                                } else if ("Confirmed".equals(booking.getStatus())) {
+                                    statusClass = "success";
+                                    displayStatus = "Đã xác nhận";
                                 } else {
                                     statusClass = "success";
-                                    displayStatus = "Thành công";
+                                    displayStatus = "Chờ xác nhận";
                                 }
                         %>
                         <tr>
-                            <td><%= room.getName()%></td>
+                            <td><%= room != null ? room.getName() : "Không xác định" %></td>
                             <td><%= sdf.format(booking.getCheckInDate())%></td>
                             <td><%= sdf.format(booking.getCheckOutDate())%></td>
                             <td class="price"><%= String.format("%,.0f", booking.getTotalPrice())%> VND</td>
                             <td class="status <%= statusClass %>"><%= displayStatus %></td>
                             <td class="actions">
-                                <% if (!"Cancelled".equals(booking.getStatus()) && currentDate.before(booking.getCheckOutDate())) {%>
-                                <form id="cancelForm_<%= booking.getId()%>" action="cancelBooking" method="post" style="display:inline;">
+                                <% if (!"Cancelled".equals(booking.getStatus()) && !"Confirmed".equals(booking.getStatus()) && currentDate.before(booking.getCheckOutDate())) {%>
+                                <form id="cancelForm_<%= booking.getId()%>" action="<%= request.getContextPath() %>/cancelBooking" method="post" style="display:inline;">
                                     <input type="hidden" name="bookingId" value="<%= booking.getId()%>">
                                     <button type="button" class="btn cancel" onclick="confirmCancel('<%= booking.getId()%>')">Hủy</button>
                                 </form>
                                 <% } %>
                                 <!-- Nút Xem -->
-                                <form action="room-details" method="get" style="display:inline;">
+                                <% if (room != null) { %>
+                                <form action="<%= request.getContextPath() %>/room-details" method="get" style="display:inline;">
                                     <input type="hidden" name="roomId" value="<%= room.getId()%>">
                                     <button type="submit" class="btn view">Xem</button>
                                 </form>
+                                <% } %>
                             </td>
                         </tr>
                         <% } %>
