@@ -4,6 +4,7 @@ import dto.RoomDTO;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import utils.DBUtils;
@@ -263,5 +264,57 @@ public class RoomDAO {
         } catch (Exception e) {
             throw new Exception("Error deleting room: " + e.getMessage(), e);
         }
+    }
+
+    public List<RoomDTO> getFilteredRooms(String homestayName, Double maxPrice, String priceFilterType, String amenities) {
+        List<RoomDTO> rooms = new ArrayList<>();
+        String sql = "SELECT * FROM Rooms WHERE 1=1";
+
+        // Xây dựng điều kiện lọc linh hoạt
+        if (homestayName != null && !homestayName.isEmpty()) {
+            sql += " AND LOWER(name) LIKE ?";
+        }
+        if (maxPrice != null) {
+            if ("below".equals(priceFilterType)) {
+                sql += " AND price <= ?";
+            } else if ("above".equals(priceFilterType)) {
+                sql += " AND price >= ?";
+            }
+        }
+        if (amenities != null && !amenities.isEmpty()) {
+            sql += " AND LOWER(amenities) LIKE ?";
+        }
+
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            int index = 1;
+            if (homestayName != null && !homestayName.isEmpty()) {
+                ps.setString(index++, "%" + homestayName.toLowerCase() + "%");
+            }
+            if (maxPrice != null) {
+                ps.setDouble(index++, maxPrice);
+            }
+            if (amenities != null && !amenities.isEmpty()) {
+                ps.setString(index++, "%" + amenities.toLowerCase() + "%");
+            }
+
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                rooms.add(new RoomDTO(
+                        rs.getInt("id"),
+                        rs.getString("name"),
+                        rs.getString("description"),
+                        rs.getDouble("price"),
+                        rs.getString("amenities"),
+                        rs.getFloat("ratings"),
+                        rs.getString("image_url"),
+                        new ArrayList<>()
+                ));
+            }
+        } catch (SQLException | ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+        return rooms;
     }
 }

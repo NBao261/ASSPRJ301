@@ -371,7 +371,7 @@
                 <nav>
                     <ul class="nav-links">
                         <li><a href="<%= request.getContextPath()%>/home.jsp">Trang chủ</a></li>
-                        <li><a href="<%= request.getContextPath()%>/homestay.jsp">Homestay</a></li>
+                        <li><a href="<%= request.getContextPath()%>/search.jsp">Homestay</a></li>
                         <li><a href="<%= request.getContextPath()%>/services.jsp">Dịch vụ</a></li>
                         <li><a href="<%= request.getContextPath()%>/contact.jsp">Liên hệ</a></li>
                             <%
