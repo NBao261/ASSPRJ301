@@ -17,18 +17,20 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import dao.NotificationDAO;
+import dto.NotificationDTO;
 
 @WebServlet(name = "BookingController", urlPatterns = {"/bookRoom", "/viewBookings", "/cancelBooking", "/checkAvailability"})
 public class BookingController extends HttpServlet {
 
     // Các hằng số đường dẫn trang JSP
-    private static final String LOGIN_PAGE = "login-regis.jsp"; 
-    private static final String BOOKING_PAGE = "booking.jsp"; 
-    private static final String BOOKING_LIST_PAGE = "viewBookings.jsp"; 
+    private static final String LOGIN_PAGE = "login-regis.jsp";
+    private static final String BOOKING_PAGE = "booking.jsp";
+    private static final String BOOKING_LIST_PAGE = "viewBookings.jsp";
 
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        response.setContentType("text/html;charset=UTF-8"); 
+        response.setContentType("text/html;charset=UTF-8");
         String action = request.getServletPath(); // Lấy đường dẫn servlet (ví dụ: /bookRoom)
         HttpSession session = request.getSession(); // Lấy phiên làm việc hiện tại
         UserDTO user = (UserDTO) session.getAttribute("user"); // Lấy thông tin người dùng từ session
@@ -41,10 +43,10 @@ public class BookingController extends HttpServlet {
 
         try {
             switch (action) {
-                case "/bookRoom": 
+                case "/bookRoom":
                     handleBooking(request, response, user);
                     break;
-                case "/viewBookings": 
+                case "/viewBookings":
                     viewBookings(request, response, user);
                     break;
                 case "/cancelBooking":
@@ -115,8 +117,14 @@ public class BookingController extends HttpServlet {
 
         // Thêm đặt phòng vào database
         if (bookingDAO.addBooking(booking)) {
+            // Thêm thông báo khi đặt phòng thành công
+            NotificationDAO notificationDAO = new NotificationDAO();
+            NotificationDTO notification = new NotificationDTO(0, user.getUserID(),
+                    "Bạn đã đặt phòng '" + room.getName() + "' thành công! Vui lòng chờ xác nhận.", null, false);
+            notificationDAO.addNotification(notification);
+
             request.setAttribute("successMessage", "Đặt phòng thành công!");
-            viewBookings(request, response, user); // Chuyển hướng về danh sách đặt phòng
+            viewBookings(request, response, user);
         } else {
             request.setAttribute("errorMessage", "Đặt phòng thất bại, vui lòng thử lại.");
             request.getRequestDispatcher(BOOKING_PAGE).forward(request, response);
@@ -138,13 +146,22 @@ public class BookingController extends HttpServlet {
         int bookingId = Integer.parseInt(request.getParameter("bookingId")); // Lấy ID đặt phòng từ request
         BookingDAO bookingDAO = new BookingDAO();
 
-        // Hủy đặt phòng và chuyển hướng
+        HttpSession session = request.getSession();
+        UserDTO user = (UserDTO) session.getAttribute("user");
+
         if (bookingDAO.cancelBooking(bookingId)) {
-            response.sendRedirect(request.getContextPath() + "/viewBookings"); // Chuyển hướng về danh sách nếu thành công
+            // Thêm thông báo khi hủy đặt phòng
+            NotificationDAO notificationDAO = new NotificationDAO();
+            NotificationDTO notification = new NotificationDTO(0, user.getUserID(),
+                    "Đơn đặt phòng ID " + bookingId + " đã được hủy.", null, false);
+            notificationDAO.addNotification(notification);
+
+            response.sendRedirect(request.getContextPath() + "/viewBookings");
         } else {
-            request.setAttribute("errorMessage", "Hủy đặt phòng thất bại."); // Đặt thông báo lỗi nếu thất bại
+            request.setAttribute("errorMessage", "Hủy đặt phòng thất bại.");
             request.getRequestDispatcher(BOOKING_LIST_PAGE).forward(request, response);
         }
+
     }
 
     // Hàm kiểm tra phòng trống (AJAX endpoint)
@@ -183,6 +200,6 @@ public class BookingController extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        processRequest(request, response); 
+        processRequest(request, response);
     }
 }

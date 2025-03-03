@@ -374,6 +374,7 @@
                         <li><a href="<%= request.getContextPath()%>/search.jsp">Homestay</a></li>
                         <li><a href="<%= request.getContextPath()%>/services.jsp">Dịch vụ</a></li>
                         <li><a href="<%= request.getContextPath()%>/contact.jsp">Liên hệ</a></li>
+                        <li><a href="<%= request.getContextPath() %>/notifications.jsp">Thông báo</a></li>
                             <%
                                 UserDTO user = (UserDTO) session.getAttribute("user");
                                 if (user != null && "AD".equals(user.getRoleID())) {

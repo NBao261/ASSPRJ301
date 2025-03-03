@@ -24,26 +24,27 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
+import dao.NotificationDAO;
+import dto.NotificationDTO;
 
 @WebServlet(name = "AdminController", urlPatterns = {
     "/admin/users", "/admin/rooms", "/admin/bookings", "/admin/statistics"
 })
 public class AdminController extends HttpServlet {
 
-    // Các hằng số đường dẫn trang JSP
-    private static final String LOGIN_PAGE = "/login-regis.jsp"; 
-    private static final String ADMIN_USERS_PAGE = "/admin/users.jsp"; 
-    private static final String ADMIN_ROOMS_PAGE = "/admin/rooms.jsp"; 
+    private static final String LOGIN_PAGE = "/login-regis.jsp";
+    private static final String ADMIN_USERS_PAGE = "/admin/users.jsp";
+    private static final String ADMIN_ROOMS_PAGE = "/admin/rooms.jsp";
     private static final String ADMIN_BOOKINGS_PAGE = "/admin/bookings.jsp";
     private static final String ADMIN_STATISTICS_PAGE = "/admin/statistics.jsp";
     private static final String EMAIL_PATTERN = "^[A-Za-z0-9+_.-]+@(.+)$";
-    private static final String PHONE_PATTERN = "^\\+?[0-9]{9,12}$"; 
-    private static final Logger LOGGER = Logger.getLogger(AdminController.class.getName()); 
+    private static final String PHONE_PATTERN = "^\\+?[0-9]{9,12}$";
+    private static final Logger LOGGER = Logger.getLogger(AdminController.class.getName());
 
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException, Exception {
-        request.setCharacterEncoding("UTF-8"); 
-        response.setContentType("text/html;charset=UTF-8"); 
+        request.setCharacterEncoding("UTF-8");
+        response.setContentType("text/html;charset=UTF-8");
 
         // Kiểm tra phiên đăng nhập và quyền admin
         HttpSession session = request.getSession();
@@ -219,8 +220,8 @@ public class AdminController extends HttpServlet {
                             try {
                                 double price = priceStr != null && !priceStr.trim().isEmpty() ? Double.parseDouble(priceStr) : 0;
                                 float ratings = ratingsStr != null && !ratingsStr.trim().isEmpty() ? Float.parseFloat(ratingsStr) : 0;
-                                List<String> detailImages = detailImagesStr != null && !detailImagesStr.trim().isEmpty() ?
-                                        Arrays.asList(detailImagesStr.split("\\r?\\n")) : new ArrayList<>();
+                                List<String> detailImages = detailImagesStr != null && !detailImagesStr.trim().isEmpty()
+                                        ? Arrays.asList(detailImagesStr.split("\\r?\\n")) : new ArrayList<>();
 
                                 // Kiểm tra dữ liệu đầu vào
                                 if (name == null || name.trim().isEmpty()) {
@@ -282,8 +283,8 @@ public class AdminController extends HttpServlet {
                                 int roomId = Integer.parseInt(roomIdStr);
                                 double price = priceStr != null && !priceStr.trim().isEmpty() ? Double.parseDouble(priceStr) : 0;
                                 float ratings = ratingsStr != null && !ratingsStr.trim().isEmpty() ? Float.parseFloat(ratingsStr) : 0;
-                                List<String> detailImages = detailImagesStr != null && !detailImagesStr.trim().isEmpty() ?
-                                        Arrays.asList(detailImagesStr.split("\\r?\\n")) : new ArrayList<>();
+                                List<String> detailImages = detailImagesStr != null && !detailImagesStr.trim().isEmpty()
+                                        ? Arrays.asList(detailImagesStr.split("\\r?\\n")) : new ArrayList<>();
 
                                 RoomDTO updatedRoom = roomDAO.getRoomById(roomId);
                                 if (updatedRoom != null) {
@@ -369,7 +370,14 @@ public class AdminController extends HttpServlet {
                         String confirmBookingIdStr = request.getParameter("bookingId");
                         try {
                             int bookingId = Integer.parseInt(confirmBookingIdStr);
+                            BookingDTO booking = bookingDAO.getBookingById(bookingId); // Giả định có hàm này trong BookingDAO
                             if (bookingDAO.updateBookingStatus(bookingId, BookingDAO.STATUS_CONFIRMED)) {
+                                // Thêm thông báo khi xác nhận
+                                NotificationDAO notificationDAO = new NotificationDAO();
+                                NotificationDTO notification = new NotificationDTO(0, booking.getUser().getUserID(),
+                                        "Đơn đặt phòng ID " + bookingId + " đã được xác nhận.", null, false);
+                                notificationDAO.addNotification(notification);
+
                                 request.setAttribute("successMessage", "Xác nhận đặt phòng thành công!");
                             } else {
                                 request.setAttribute("errorMessage", "Xác nhận đặt phòng thất bại hoặc không tìm thấy đặt phòng!");
