@@ -142,18 +142,19 @@ public class BookingController extends HttpServlet {
 
     // Hàm xử lý hủy đặt phòng
     private void cancelBooking(HttpServletRequest request, HttpServletResponse response)
-            throws IOException, ServletException, ClassNotFoundException {
-        int bookingId = Integer.parseInt(request.getParameter("bookingId")); // Lấy ID đặt phòng từ request
+            throws IOException, ServletException, ClassNotFoundException, Exception {
+        int bookingId = Integer.parseInt(request.getParameter("bookingId"));
         BookingDAO bookingDAO = new BookingDAO();
-
         HttpSession session = request.getSession();
         UserDTO user = (UserDTO) session.getAttribute("user");
 
-        if (bookingDAO.cancelBooking(bookingId)) {
-            // Thêm thông báo khi hủy đặt phòng
+        // Lấy thông tin đặt phòng để lấy tên phòng
+        BookingDTO booking = bookingDAO.getBookingById(bookingId); 
+        if (booking != null && bookingDAO.cancelBooking(bookingId)) {
             NotificationDAO notificationDAO = new NotificationDAO();
-            NotificationDTO notification = new NotificationDTO(0, user.getUserID(),
-                    "Đơn đặt phòng ID " + bookingId + " đã được hủy.", null, false);
+            String roomName = booking.getRoom() != null ? booking.getRoom().getName() : "Không xác định";
+            String message = "Đơn đặt phòng '" + roomName + "' đã được hủy.";
+            NotificationDTO notification = new NotificationDTO(0, user.getUserID(), message, null, false);
             notificationDAO.addNotification(notification);
 
             response.sendRedirect(request.getContextPath() + "/viewBookings");

@@ -370,12 +370,12 @@ public class AdminController extends HttpServlet {
                         String confirmBookingIdStr = request.getParameter("bookingId");
                         try {
                             int bookingId = Integer.parseInt(confirmBookingIdStr);
-                            BookingDTO booking = bookingDAO.getBookingById(bookingId); // Giả định có hàm này trong BookingDAO
-                            if (bookingDAO.updateBookingStatus(bookingId, BookingDAO.STATUS_CONFIRMED)) {
-                                // Thêm thông báo khi xác nhận
+                            BookingDTO booking = bookingDAO.getBookingById(bookingId);
+                            if (booking != null && bookingDAO.updateBookingStatus(bookingId, BookingDAO.STATUS_CONFIRMED)) {
                                 NotificationDAO notificationDAO = new NotificationDAO();
-                                NotificationDTO notification = new NotificationDTO(0, booking.getUser().getUserID(),
-                                        "Đơn đặt phòng ID " + bookingId + " đã được xác nhận.", null, false);
+                                String roomName = booking.getRoom() != null ? booking.getRoom().getName() : "Không xác định";
+                                String message = "Đơn đặt phòng '" + roomName + "' đã được xác nhận.";
+                                NotificationDTO notification = new NotificationDTO(0, booking.getUser().getUserID(), message, null, false);
                                 notificationDAO.addNotification(notification);
 
                                 request.setAttribute("successMessage", "Xác nhận đặt phòng thành công!");
