@@ -9,6 +9,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import utils.DBUtils;
 
@@ -216,7 +217,7 @@ public class BookingDAO {
         List<BookingDTO> bookings = new ArrayList<>();
         String sql = "SELECT * FROM bookings ORDER BY created_at DESC";
         try (Connection conn = DBUtils.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+                PreparedStatement ps = conn.prepareStatement(sql)) {
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     bookings.add(mapResultSetToBooking(rs));
@@ -226,5 +227,30 @@ public class BookingDAO {
             System.err.println("Error fetching all bookings: " + e.getMessage());
         }
         return bookings;
+    }
+
+    // Lấy danh sách đặt phòng trong khoảng thời gian
+    public List<BookingDTO> getBookingsByDateRange(Date startDate, Date endDate) throws Exception {
+        List<BookingDTO> bookingList = new ArrayList<>();
+        if (startDate == null || endDate == null || endDate.before(startDate)) {
+            return bookingList; // Trả về danh sách rỗng nếu tham số không hợp lệ
+        }
+
+        String sql = "SELECT * FROM bookings WHERE created_at BETWEEN ? AND ? ORDER BY created_at DESC";
+        try (Connection conn = DBUtils.getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setTimestamp(1, new Timestamp(startDate.getTime()));
+            ps.setTimestamp(2, new Timestamp(endDate.getTime()));
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    bookingList.add(mapResultSetToBooking(rs));
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error fetching bookings by date range: " + e.getMessage());
+            throw new Exception("Lỗi khi truy vấn dữ liệu đặt phòng theo khoảng thời gian: " + e.getMessage(), e);
+        }
+        return bookingList;
     }
 }

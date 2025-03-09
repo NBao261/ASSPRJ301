@@ -18,7 +18,6 @@ public class RoomDTO {
         this.detailImages = new ArrayList<>(); 
     }
 
-    // Constructor đầy đủ tham số
     public RoomDTO(int id, String name, String description, double price, String amenities, float ratings, String imageUrl, List<String> detailImages) {
         this.id = id;
         this.name = name;
@@ -30,7 +29,6 @@ public class RoomDTO {
         this.detailImages = (detailImages != null) ? detailImages : new ArrayList<>(); 
     }
 
-    // Getters và Setters
     public int getId() {
         return id;
     }
