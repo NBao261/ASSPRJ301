@@ -8,200 +8,211 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Quản lý người dùng - Admin</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
         <style>
             * {
                 margin: 0;
                 padding: 0;
                 box-sizing: border-box;
-                font-family: 'Segoe UI', Arial, sans-serif;
+                font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
             }
-
             body {
-                background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-                color: #333;
+                background: linear-gradient(120deg, #e0eafc 0%, #cfdef3 100%);
+                color: #2c3e50;
                 min-height: 100vh;
                 display: flex;
                 flex-direction: column;
+                overflow-x: hidden;
             }
-
             .main-content {
                 flex: 1;
-                padding: 80px 0;
-                max-width: 1200px;
+                padding: 100px 20px;
+                max-width: 1300px;
                 margin: 0 auto;
-                width: 90%;
+                width: 95%;
             }
-
             .users-container {
-                background: white;
-                border-radius: 15px;
-                box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-                padding: 30px;
-                transition: transform 0.3s ease, box-shadow 0.3s ease;
+                background: #ffffff;
+                border-radius: 20px;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+                padding: 40px;
+                animation: fadeIn 0.5s ease-in;
             }
-
-            .users-container:hover {
-                transform: translateY(-5px);
-                box-shadow: 0 12px 35px rgba(0, 0, 0, 0.15);
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(20px); }
+                to { opacity: 1; transform: translateY(0); }
             }
-
             h1 {
-                font-size: 36px;
+                font-size: 42px;
                 font-weight: 700;
-                color: #2c3e50;
+                color: #1a3c34;
                 margin-bottom: 30px;
                 text-align: center;
+                text-transform: uppercase;
+                letter-spacing: 1px;
             }
-
             .back-link {
-                display: inline-block;
-                color: #3498db;
+                display: inline-flex;
+                align-items: center;
+                color: #1abc9c;
                 text-decoration: none;
                 font-weight: 600;
-                margin-bottom: 20px;
-                transition: color 0.3s ease;
+                margin-bottom: 25px;
+                transition: color 0.3s ease, transform 0.3s ease;
             }
-
             .back-link:hover {
-                color: #2980b9;
+                color: #16a085;
+                transform: translateX(-5px);
             }
-
-            table {
-                width: 100%;
-                border-collapse: collapse;
-                margin-top: 20px;
+            .back-link i {
+                margin-right: 8px;
             }
-
-            th, td {
-                padding: 15px;
-                text-align: left;
-                border-bottom: 1px solid #eee;
-            }
-
-            th {
-                background: linear-gradient(45deg, #5DC1B9, #4ECDC4);
-                color: white;
-                font-weight: 600;
-            }
-
-            tr:hover {
-                background: #f8f9fa;
-            }
-
             .btn {
-                padding: 8px 15px;
+                padding: 10px 18px;
                 border: none;
                 border-radius: 8px;
                 cursor: pointer;
                 font-weight: 600;
-                transition: transform 0.3s ease, background 0.3s ease;
-            }
-
-            .btn-add {
-                background: #2ecc71;
                 color: white;
-                margin-bottom: 20px;
+                transition: transform 0.3s ease, background 0.3s ease;
+                margin-right: 8px;
             }
-
-            .btn-add:hover {
+            .btn-add {
                 background: #27ae60;
+            }
+            .btn-add:hover {
+                background: #219653;
                 transform: scale(1.05);
             }
-
             .btn-edit {
                 background: #3498db;
-                color: white;
             }
-
             .btn-edit:hover {
                 background: #2980b9;
                 transform: scale(1.05);
             }
-
             .btn-delete {
                 background: #e74c3c;
-                color: white;
             }
-
             .btn-delete:hover {
                 background: #c0392b;
                 transform: scale(1.05);
             }
-
-            .message {
-                padding: 10px;
-                border-radius: 8px;
-                margin-bottom: 20px;
-                text-align: center;
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 30px;
+                background: #fff;
+                border-radius: 15px;
+                overflow: hidden;
+                box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
+                table-layout: fixed; /* Cố định chiều rộng cột */
             }
-
+            th, td {
+                padding: 18px;
+                text-align: center; /* Căn giữa nội dung */
+                border-bottom: 1px solid #eee;
+                word-wrap: break-word; /* Ngắt chữ nếu quá dài */
+            }
+            th {
+                background: linear-gradient(45deg, #1abc9c, #16a085);
+                color: white;
+                font-weight: 600;
+                text-transform: uppercase;
+                width: 16.67%; /* Phân bổ đều 6 cột */
+            }
+            tr:hover {
+                background: #f5f7fa;
+                transition: background 0.3s ease;
+            }
+            td.actions {
+                display: flex;
+                justify-content: center; /* Căn giữa nút */
+                gap: 8px;
+                align-items: center;
+            }
+            .message {
+                padding: 15px;
+                border-radius: 10px;
+                margin-bottom: 25px;
+                text-align: center;
+                font-weight: 500;
+            }
             .message.success {
                 background: #e8f5e9;
                 color: #27ae60;
             }
-
             .message.error {
                 background: #ffebee;
                 color: #e74c3c;
             }
-
-            .form-container {
-                background: #f8f9fa;
-                padding: 20px;
-                border-radius: 10px;
-                margin-bottom: 20px;
-                display: none;
+            .no-data {
+                text-align: center;
+                padding: 30px;
+                color: #7f8c8d;
+                font-size: 18px;
             }
-
+            .form-container {
+                background: #f9fbfc;
+                padding: 25px;
+                border-radius: 15px;
+                margin-bottom: 30px;
+                display: none;
+                box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
+            }
             .form-container.active {
                 display: block;
             }
-
             .form-container label {
                 display: block;
-                margin-bottom: 5px;
+                margin-bottom: 8px;
                 font-weight: 600;
+                color: #34495e;
             }
-
             .form-container input, .form-container select {
                 width: 100%;
-                padding: 10px;
+                padding: 12px;
                 margin-bottom: 15px;
                 border: 1px solid #ddd;
                 border-radius: 8px;
                 font-size: 14px;
+                transition: border-color 0.3s ease;
             }
-
+            .form-container input:focus, .form-container select:focus {
+                border-color: #1abc9c;
+                outline: none;
+            }
             .form-container .note {
                 font-size: 12px;
-                color: #777;
+                color: #7f8c8d;
                 margin-top: -10px;
                 margin-bottom: 15px;
             }
-
             @media (max-width: 768px) {
                 .main-content {
                     padding: 60px 15px;
                 }
-
                 h1 {
-                    font-size: 28px;
+                    font-size: 32px;
                 }
-
                 th, td {
-                    padding: 10px;
+                    padding: 12px;
                     font-size: 14px;
                 }
-
                 .btn {
-                    padding: 6px 12px;
+                    padding: 8px 12px;
                     font-size: 14px;
                 }
-
                 table {
                     display: block;
                     overflow-x: auto;
                     white-space: nowrap;
+                }
+                th {
+                    width: auto; /* Tự động điều chỉnh trên mobile */
+                }
+                .form-container {
+                    padding: 15px;
                 }
             }
         </style>
@@ -214,13 +225,14 @@
         <div class="main-content">
             <div class="users-container">
                 <%
-                    if (user == null || !"AD".equals(user.getRoleID())) {
+                    Object userObj = session.getAttribute("user"); // Lấy user từ session
+                    if (userObj == null || !"AD".equals(((dto.UserDTO) userObj).getRoleID())) {
                         response.sendRedirect(request.getContextPath() + "/login-regis.jsp");
                     } else {
                 %>
                 <h1>Quản lý người dùng</h1>
-                <a href="<%= request.getContextPath()%>/admin/dashboard.jsp" class="back-link">← Quay lại Dashboard</a>
-                <button class="btn btn-add" onclick="toggleForm('addForm')">Thêm người dùng</button>
+                <a href="<%= request.getContextPath()%>/admin/dashboard.jsp" class="back-link"><i class="fas fa-arrow-left"></i> Quay lại Dashboard</a>
+                <button class="btn btn-add" onclick="toggleForm('addForm')"><i class="fas fa-plus"></i> Thêm người dùng</button>
 
                 <%
                     String successMessage = (String) request.getAttribute("successMessage");
@@ -298,7 +310,7 @@
                     List<UserDTO> userList = (List<UserDTO>) request.getAttribute("userList");
                     if (userList == null || userList.isEmpty()) {
                 %>
-                <p>Không có người dùng nào trong hệ thống.</p>
+                <p class="no-data">Không có người dùng nào trong hệ thống.</p>
                 <%
                 } else {
                 %>
@@ -321,9 +333,9 @@
                             <td><%= currentUser.getRoleID()%></td>
                             <td><%= currentUser.getGmail() != null ? currentUser.getGmail() : "Chưa cập nhật"%></td>
                             <td><%= currentUser.getSdt() != null ? currentUser.getSdt() : "Chưa cập nhật"%></td>
-                            <td>
-                                <a href="<%= request.getContextPath()%>/admin/users?action=edit&userID=<%= currentUser.getUserID()%>" class="btn btn-edit">Sửa</a>
-                                <button class="btn btn-delete" onclick="confirmDelete('<%= currentUser.getUserID()%>')">Xóa</button>
+                            <td class="actions">
+                                <a href="<%= request.getContextPath()%>/admin/users?action=edit&userID=<%= currentUser.getUserID()%>" class="btn btn-edit"><i class="fas fa-edit"></i> Sửa</a>
+                                <button class="btn btn-delete" onclick="confirmDelete('<%= currentUser.getUserID()%>')"><i class="fas fa-trash"></i> Xóa</button>
                             </td>
                         </tr>
                         <% } %>
