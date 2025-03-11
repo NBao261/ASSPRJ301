@@ -65,16 +65,17 @@ public class UserDAO implements IDAO<UserDTO, String> {
     @Override
     public boolean update(UserDTO user) {
         boolean success = false;
-        String sql = "UPDATE tblUsers SET fullName = ?, roleID = ?, gmail = ?, sdt = ?, avatar_url = ? WHERE userID = ?";
+        String sql = "UPDATE tblUsers SET fullName = ?, roleID = ?, password = ?, gmail = ?, sdt = ?, avatar_url = ? WHERE userID = ?";
 
         try (Connection conn = DBUtils.getConnection();
                 PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, user.getFullName());
-            ps.setString(2, user.getRoleID()); 
-            ps.setString(3, user.getGmail());
-            ps.setString(4, user.getSdt());
-            ps.setString(5, user.getAvatarUrl());
-            ps.setString(6, user.getUserID());
+            ps.setString(2, user.getRoleID());
+            ps.setString(3, user.getPassword()); // Thêm password vào câu lệnh SQL
+            ps.setString(4, user.getGmail());
+            ps.setString(5, user.getSdt());
+            ps.setString(6, user.getAvatarUrl());
+            ps.setString(7, user.getUserID());
 
             success = ps.executeUpdate() > 0;
         } catch (ClassNotFoundException | SQLException ex) {

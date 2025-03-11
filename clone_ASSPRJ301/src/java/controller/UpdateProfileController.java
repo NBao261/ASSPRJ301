@@ -14,17 +14,15 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.Part;
 
-@WebServlet(name = "UpdateProfileServlet", urlPatterns = {"/updateProfile", "/external-uploads/avatars/*"})
+@WebServlet(name = "UpdateProfileController", urlPatterns = {"/updateProfile", "/external-uploads/avatars/*"})
 @MultipartConfig(fileSizeThreshold = 1024 * 1024 * 2, // 2MB
-                 maxFileSize = 1024 * 1024 * 10,      // 10MB
-                 maxRequestSize = 1024 * 1024 * 50)   // 50MB
+        maxFileSize = 1024 * 1024 * 10, // 10MB
+        maxRequestSize = 1024 * 1024 * 50)   // 50MB
 public class UpdateProfileController extends HttpServlet {
 
-    // Đường dẫn linh hoạt sử dụng thư mục home của người dùng
     private static final String UPLOAD_BASE_DIR = System.getProperty("user.home") + File.separator + "HomestayUploads";
     private static final String UPLOAD_DIR = UPLOAD_BASE_DIR + File.separator + "avatars";
-    private static final String PROFILE_PAGE = "profile.jsp";
-    private static final String AVATAR_URL_BASE = "/external-uploads/avatars/"; // Đường dẫn ảo trong ứng dụng
+    private static final String AVATAR_URL_BASE = "/external-uploads/avatars/";
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
@@ -65,42 +63,29 @@ public class UpdateProfileController extends HttpServlet {
         String avatarUrl = user.getAvatarUrl(); // Giữ URL cũ nếu không upload ảnh mới
         if (fileName != null && !fileName.isEmpty()) {
             try {
-                // Đường dẫn tuyệt đối đến thư mục uploads/avatars
                 File uploadDir = new File(UPLOAD_DIR);
-
-                // Tự động tạo thư mục nếu chưa tồn tại
                 if (!uploadDir.exists()) {
                     if (!uploadDir.mkdirs()) {
                         throw new IOException("Không thể tạo thư mục: " + UPLOAD_DIR);
                     }
-                    // Đặt quyền đọc/ghi/thực thi cho thư mục (hỗ trợ Windows và Linux)
                     uploadDir.setReadable(true, false);
                     uploadDir.setWritable(true, false);
                     uploadDir.setExecutable(true, false);
                 }
 
-                // Tạo tên file duy nhất
                 String uniqueFileName = System.currentTimeMillis() + "_" + fileName;
                 String filePath = UPLOAD_DIR + File.separator + uniqueFileName;
-
-                // Ghi file lên server
                 filePart.write(filePath);
 
-                // Tạo URL ảo để hiển thị trong JSP (bao gồm context path)
-                String contextPath = request.getContextPath(); // Lấy context path (/clone_ASSPRJ301)
+                String contextPath = request.getContextPath();
                 avatarUrl = contextPath + AVATAR_URL_BASE + uniqueFileName;
 
-                // Kiểm tra file đã được tạo chưa
                 File uploadedFile = new File(filePath);
                 if (!uploadedFile.exists()) {
                     throw new IOException("File không được tạo thành công tại: " + filePath);
                 }
-
-                // Đặt quyền đọc cho file (hỗ trợ Windows)
-                uploadedFile.setReadable(true, false); // Quyền đọc cho mọi người
-                uploadedFile.setWritable(false, false); // Chỉ cho phép ghi bởi owner
-
-                // Kiểm tra lại file sau khi đặt quyền
+                uploadedFile.setReadable(true, false);
+                uploadedFile.setWritable(false, false);
                 if (!uploadedFile.canRead()) {
                     throw new IOException("Không thể đặt quyền đọc cho file: " + filePath);
                 }
@@ -110,9 +95,9 @@ public class UpdateProfileController extends HttpServlet {
             }
         }
 
-        // Nếu có lỗi, quay lại trang profile
+        // Nếu có lỗi, quay lại trang profile với section=profile
         if (hasError) {
-            request.getRequestDispatcher(PROFILE_PAGE).forward(request, response);
+            request.getRequestDispatcher("/profile?section=profile").forward(request, response);
             return;
         }
 
@@ -126,32 +111,32 @@ public class UpdateProfileController extends HttpServlet {
         UserDAO userDAO = new UserDAO();
         try {
             if (userDAO.update(user)) {
-                session.setAttribute("user", user); // Cập nhật session với avatarUrl mới
+                session.setAttribute("user", user); // Cập nhật session
                 request.setAttribute("successMessage", "Cập nhật thông tin thành công!");
             } else {
                 request.setAttribute("errorMessage", "Cập nhật thất bại, vui lòng thử lại.");
             }
         } catch (Exception e) {
-            request.setAttribute("errorMessage", "Lỗi hệ thống khi cập nhật thông tin, vui lòng thử lại: " + e.getMessage());
+            request.setAttribute("errorMessage", "Lỗi hệ thống khi cập nhật thông tin: " + e.getMessage());
         }
-        request.getRequestDispatcher(PROFILE_PAGE).forward(request, response);
+
+        // Chuyển hướng về profile với section=profile
+        request.getRequestDispatcher("/profile?section=profile").forward(request, response);
     }
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         String requestURI = request.getRequestURI();
-        String contextPath = request.getContextPath(); // Lấy context path (/clone_ASSPRJ301)
+        String contextPath = request.getContextPath();
         if (requestURI != null && requestURI.startsWith(contextPath + "/external-uploads/avatars/")) {
             String filePath = requestURI.substring((contextPath + "/external-uploads/avatars/").length());
             String fullFilePath = UPLOAD_DIR + File.separator + filePath;
 
             File file = new File(fullFilePath);
             if (file.exists() && file.isFile() && file.canRead()) {
-                // Xác định loại nội dung (content type) của file
                 String mimeType = getServletContext().getMimeType(filePath);
                 if (mimeType == null) {
-                    // Nếu không xác định được, mặc định là image/jpeg
                     mimeType = "image/jpeg";
                 }
                 response.setContentType(mimeType);
@@ -169,5 +154,10 @@ public class UpdateProfileController extends HttpServlet {
             }
         }
         response.sendError(HttpServletResponse.SC_NOT_FOUND, "File not found");
+    }
+
+    @Override
+    public String getServletInfo() {
+        return "Update Profile Controller";
     }
 }

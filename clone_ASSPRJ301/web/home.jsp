@@ -6,8 +6,8 @@
     <meta charset="UTF-8">
     <title>Trang chủ - Homestay</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
-        /* Reset CSS */
         * {
             margin: 0;
             padding: 0;
@@ -23,7 +23,6 @@
             flex-direction: column;
         }
 
-        /* Header and Footer Containers */
         .header-container, .footer-container {
             width: 100%;
             z-index: 1000;
@@ -38,107 +37,141 @@
         /* Banner Section */
         .banner {
             background: url('https://acihome.vn/uploads/15/thiet-ke-khu-nghi-duong-homestay-la-gi.jpg') no-repeat center center/cover;
-            height: 500px;
+            height: 600px;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: white;
             text-align: center;
             position: relative;
-            margin-bottom: 40px;
+            margin-bottom: 50px;
+        }
+
+        .banner::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 1;
         }
 
         .banner-content {
-            background: rgba(0, 0, 0, 0.5);
-            padding: 40px;
-            border-radius: 15px;
-            max-width: 900px;
+            position: relative;
+            z-index: 2;
+            padding: 50px;
+            max-width: 1000px;
             width: 90%;
-            backdrop-filter: blur(5px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-
-        .banner-content:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.4);
+            color: white;
         }
 
         .banner h1 {
-            font-size: 48px;
+            font-size: 50px;
             font-weight: 700;
             margin-bottom: 20px;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+            text-shadow: 0 3px 6px rgba(0, 0, 0, 0.5);
+            animation: fadeInDown 1s ease;
         }
 
         .banner p {
-            font-size: 20px;
+            font-size: 22px;
+            font-weight: 300;
             margin-bottom: 30px;
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
         }
 
         .btn-view-details {
-            background: #5DC1B9;
+            background: linear-gradient(45deg, #5DC1B9, #4ECDC4);
             color: white;
-            padding: 10px 20px;
+            padding: 12px 30px;
             text-decoration: none;
-            border-radius: 8px;
-            font-size: 16px;
+            border-radius: 50px;
+            font-size: 18px;
             font-weight: 600;
-            transition: background 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
-            display: inline-block;
-            box-shadow: 0 4px 12px rgba(93, 193, 185, 0.4);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(93, 193, 185, 0.4);
         }
 
         .btn-view-details:hover {
-            background: #4ECDC4;
+            background: linear-gradient(45deg, #4ECDC4, #45b7d1);
             transform: translateY(-3px);
-            box-shadow: 0 6px 15px rgba(93, 193, 185, 0.6);
+            box-shadow: 0 6px 20px rgba(93, 193, 185, 0.6);
         }
 
         /* Intro Section */
         .intro {
-            background: #ffffff;
-            padding: 60px 40px;
+            background: #fff;
+            padding: 80px 40px;
             text-align: center;
-            margin: 0 auto 40px;
-            border-radius: 15px;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            margin: 0 auto 50px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
             max-width: 1200px;
             width: 90%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .intro::before {
+            content: '';
+            position: absolute;
+            top: -50px;
+            left: -50px;
+            width: 150px;
+            height: 150px;
+            background: rgba(93, 193, 185, 0.2);
+            border-radius: 50%;
+            z-index: 0;
         }
 
         .intro h2 {
-            font-size: 36px;
+            font-size: 40px;
             font-weight: 600;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
             color: #2c3e50;
+            position: relative;
+            z-index: 1;
         }
 
         .intro p {
             font-size: 18px;
-            color: #555;
+            color: #666;
             line-height: 1.8;
-            margin-bottom: 30px;
+            max-width: 800px;
+            margin: 0 auto 30px;
+            position: relative;
+            z-index: 1;
         }
 
-        /* Room List Section */
-        .room-list {
+        /* Highlighted Rooms Section */
+        .highlighted-rooms {
             max-width: 1200px;
             width: 90%;
-            margin: 0 auto 40px;
+            margin: 0 auto 50px;
             padding: 0 20px;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 36px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 40px;
+        }
+
+        .room-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
             gap: 30px;
         }
 
         .room {
             background: white;
-            border-radius: 15px;
+            border-radius: 20px;
             overflow: hidden;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            transition: all 0.3s ease;
             display: flex;
             flex-direction: column;
         }
@@ -150,107 +183,118 @@
 
         .room img {
             width: 100%;
+            height: 220px;
             object-fit: cover;
-            height: 250px;
-            border-radius: 15px 15px 0 0;
+            border-radius: 20px 20px 0 0;
         }
 
         .room-info {
             padding: 25px;
-            text-align: center; /* Căn giữa toàn bộ nội dung trong room-info */
+            text-align: center;
             flex-grow: 1;
             display: flex;
             flex-direction: column;
-            justify-content: center; /* Đảm bảo nội dung được căn giữa theo chiều dọc */
-            align-items: center; /* Căn giữa theo chiều ngang */
+            justify-content: space-between;
         }
 
-        .room h2 {
+        .room h3 {
             font-size: 24px;
-            margin-bottom: 15px;
+            font-weight: 600;
             color: #2c3e50;
+            margin-bottom: 15px;
         }
 
         .room p {
             font-size: 16px;
-            color: #555;
-            margin-bottom: 12px;
+            color: #666;
+            margin-bottom: 15px;
             line-height: 1.6;
-            text-align: center; /* Căn giữa từng đoạn văn bản */
         }
 
         .room .price {
             font-size: 22px;
             font-weight: 600;
             color: #5DC1B9;
-            margin: 15px 0;
-        }
-
-        .room .amenities {
-            font-size: 14px;
-            color: #777;
-            margin-bottom: 15px;
-            text-align: center; /* Căn giữa tiện nghi */
-        }
-
-        .room .ratings {
-            font-size: 16px;
-            font-weight: 600;
-            color: #f39c12;
-            margin-bottom: 20px;
+            margin: 10px 0;
         }
 
         .room .btn-container {
-            text-align: center; /* Đảm bảo nút luôn được căn giữa */
             margin-top: 20px;
+        }
+
+        /* More Rooms Link */
+        .more-rooms {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .more-rooms a {
+            color: #5DC1B9;
+            font-size: 18px;
+            font-weight: 600;
+            text-decoration: none;
+            padding: 10px 20px;
+            border: 2px solid #5DC1B9;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+        }
+
+        .more-rooms a:hover {
+            background: #5DC1B9;
+            color: white;
+            box-shadow: 0 4px 15px rgba(93, 193, 185, 0.4);
+        }
+
+        /* Animations */
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         /* Responsive Design */
         @media (max-width: 768px) {
-            .main-content {
-                padding: 60px 0 70px;
-            }
-
             .banner {
-                height: 300px;
+                height: 400px;
             }
 
             .banner-content {
-                padding: 20px;
-                max-width: 85%;
+                padding: 30px;
             }
 
             .banner h1 {
-                font-size: 28px;
+                font-size: 32px;
             }
 
             .banner p {
-                font-size: 16px;
+                font-size: 18px;
             }
 
             .btn-view-details {
-                padding: 8px 18px;
-                font-size: 14px;
+                padding: 10px 25px;
+                font-size: 16px;
             }
 
             .intro {
-                padding: 40px 20px;
-                margin: 0 auto 20px;
+                padding: 50px 20px;
             }
 
             .intro h2 {
-                font-size: 24px;
+                font-size: 28px;
             }
 
             .intro p {
                 font-size: 16px;
             }
 
-            .room img {
-                height: 200px;
+            .section-title {
+                font-size: 28px;
             }
 
-            .room h2 {
+            .room img {
+                height: 180px;
+            }
+
+            .room h3 {
                 font-size: 20px;
             }
 
@@ -258,18 +302,12 @@
                 font-size: 18px;
             }
 
-            .room .btn-view-details {
-                padding: 8px 16px;
-                font-size: 14px;
+            .more-rooms a {
+                font-size: 16px;
+                padding: 8px 18px;
             }
         }
-
-        /* Smooth scrolling */
-        html {
-            scroll-behavior: smooth;
-        }
     </style>
-    <!-- Include FontAwesome for footer.jsp -->
     <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
 </head>
 <body>
@@ -280,86 +318,76 @@
     <div class="main-content">
         <div class="banner">
             <div class="banner-content">
-                <h1>Chào mừng đến với Homestay của chúng tôi!</h1>
-                <p>Trải nghiệm không gian thư giãn và dịch vụ tuyệt vời.</p>
-                <a href="#room-list" class="btn-view-details">Xem chi tiết</a>
+                <h1>Khám phá Homestay tuyệt vời của bạn!</h1>
+                <p>Đặt ngay hôm nay để tận hưởng không gian nghỉ dưỡng đẳng cấp với giá ưu đãi.</p>
+                <a href="#highlighted-rooms" class="btn-view-details">Khám phá ngay</a>
             </div>
         </div>
 
         <section class="intro">
-            <h2>Về chúng tôi</h2>
-            <p>Homestay của chúng tôi mang đến không gian nghỉ dưỡng lý tưởng với các phòng sang trọng, tiện nghi đầy đủ và dịch vụ chu đáo. Chúng tôi cam kết mang lại sự thoải mái, thư giãn tuyệt đối cho quý khách.</p>
+            <h2>Về Homestay của chúng tôi</h2>
+            <p>Chào mừng bạn đến với Homestay của sự thư giãn và đẳng cấp. Chúng tôi mang đến không gian sống ấm cúng, tiện nghi hiện đại và dịch vụ tận tâm, giúp bạn có một kỳ nghỉ đáng nhớ giữa lòng thiên nhiên.</p>
         </section>
 
-        <!-- Room List Section -->
-        <section id="room-list" class="room-list">
-            <!-- Room 1 -->
-            <div class="room">
-                <img src="https://mia.vn/media/uploads/blog-du-lich/top-11-homestay-ba-vi-01-1700960372.jpeg" alt="Phòng Deluxe">
-                <div class="room-info">
-                    <div>
-                        <h2>Phòng Deluxe</h2>
-                        <p>Không gian rộng rãi, đầy đủ tiện nghi, thích hợp cho các cặp đôi hoặc những ai yêu thích sự yên tĩnh.</p>
-                        <p class="price">1.200.000đ / đêm</p>
-                        <p class="amenities">Tiện nghi: Wifi, TV, Điều hòa, Tủ lạnh, Bàn làm việc</p>
-                        <p class="ratings">⭐ 4.5/5 (50 đánh giá)</p>
+        <section id="highlighted-rooms" class="highlighted-rooms">
+            <h2 class="section-title">Phòng nổi bật</h2>
+            <div class="room-grid">
+                <div class="room">
+                    <img src="https://mia.vn/media/uploads/blog-du-lich/top-11-homestay-ba-vi-01-1700960372.jpeg" alt="Phòng Deluxe">
+                    <div class="room-info">
+                        <div>
+                            <h3>Phòng Deluxe</h3>
+                            <p>Không gian ấm cúng, lý tưởng cho các cặp đôi.</p>
+                            <p class="price">1.200.000đ / đêm</p>
+                        </div>
+                        <div class="btn-container">
+                            <% if (user != null) { %>
+                            <a href="room-details?roomId=1" class="btn-view-details">Xem chi tiết</a>
+                            <% } else { %>
+                            <a href="login-regis.jsp" class="btn-view-details">Đăng nhập để đặt</a>
+                            <% } %>
+                        </div>
                     </div>
-                    <div class="btn-container">
-                        <%
-                            if (user != null) {
-                        %>
-                        <a href="room-details?roomId=1" class="btn-view-details">Xem chi tiết</a>
-                        <% } else { %>
-                        <a href="login-regis.jsp" class="btn-view-details">Đăng nhập để đặt</a>
-                        <% } %>
+                </div>
+
+                <div class="room">
+                    <img src="https://dongtiengroup.vn/wp-content/uploads/2024/05/thiet-ke-homestay-nha-vuon-5.jpg" alt="Phòng VIP">
+                    <div class="room-info">
+                        <div>
+                            <h3>Phòng VIP</h3>
+                            <p>Sang trọng với view biển tuyệt đẹp.</p>
+                            <p class="price">1.800.000đ / đêm</p>
+                        </div>
+                        <div class="btn-container">
+                            <% if (user != null) { %>
+                            <a href="room-details?roomId=2" class="btn-view-details">Xem chi tiết</a>
+                            <% } else { %>
+                            <a href="login-regis.jsp" class="btn-view-details">Đăng nhập để đặt</a>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="room">
+                    <img src="https://sakos.vn/wp-content/uploads/2023/05/momo-upload-api-220510091852-637877711328579007.jpeg" alt="Phòng Gia Đình">
+                    <div class="room-info">
+                        <div>
+                            <h3>Phòng Gia Đình</h3>
+                            <p>Rộng rãi, thoáng mát cho cả gia đình.</p>
+                            <p class="price">2.500.000đ / đêm</p>
+                        </div>
+                        <div class="btn-container">
+                            <% if (user != null) { %>
+                            <a href="room-details?roomId=3" class="btn-view-details">Xem chi tiết</a>
+                            <% } else { %>
+                            <a href="login-regis.jsp" class="btn-view-details">Đăng nhập để đặt</a>
+                            <% } %>
+                        </div>
                     </div>
                 </div>
             </div>
-
-            <!-- Room 2 -->
-            <div class="room">
-                <img src="https://dongtiengroup.vn/wp-content/uploads/2024/05/thiet-ke-homestay-nha-vuon-5.jpg" alt="Phòng VIP">
-                <div class="room-info">
-                    <div>
-                        <h2>Phòng VIP</h2>
-                        <p>Thiết kế sang trọng, view biển tuyệt đẹp, phục vụ cho những ai muốn tận hưởng một kỳ nghỉ đặc biệt.</p>
-                        <p class="price">1.800.000đ / đêm</p>
-                        <p class="amenities">Tiện nghi: Wifi, TV, Jacuzzi, Bể bơi riêng, Tủ lạnh</p>
-                        <p class="ratings">⭐ 4.8/5 (120 đánh giá)</p>
-                    </div>
-                    <div class="btn-container">
-                        <%
-                            if (user != null) {
-                        %>
-                        <a href="room-details?roomId=2" class="btn-view-details">Xem chi tiết</a>
-                        <% } else { %>
-                        <a href="login-regis.jsp" class="btn-view-details">Đăng nhập để đặt</a>
-                        <% } %>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Room 3 -->
-            <div class="room">
-                <img src="https://sakos.vn/wp-content/uploads/2023/05/momo-upload-api-220510091852-637877711328579007.jpeg" alt="Phòng Gia Đình">
-                <div class="room-info">
-                    <div>
-                        <h2>Phòng Gia Đình</h2>
-                        <p>Lý tưởng cho gia đình, không gian rộng rãi, thoáng mát, thích hợp cho kỳ nghỉ dài ngày.</p>
-                        <p class="price">2.500.000đ / đêm</p>
-                        <p class="amenities">Tiện nghi: Wifi, TV, Bếp, Điều hòa, Phòng tắm riêng</p>
-                        <p class="ratings">⭐ 4.7/5 (80 đánh giá)</p>
-                    </div>
-                    <div class="btn-container">
-                        <%
-                            if (user != null) {
-                        %>
-                        <a href="room-details?roomId=3" class="btn-view-details">Xem chi tiết</a>
-                        <% } else { %>
-                        <a href="login-regis.jsp" class="btn-view-details">Đăng nhập để đặt</a>
-                        <% } %>
-                    </div>
-                </div>
+            <div class="more-rooms">
+                <a href="<%= request.getContextPath() %>/search.jsp">Xem nhiều phòng khác tại đây</a>
             </div>
         </section>
     </div>
