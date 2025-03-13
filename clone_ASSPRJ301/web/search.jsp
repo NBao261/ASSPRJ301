@@ -194,6 +194,37 @@
                 background: linear-gradient(45deg, #2980b9, #1f6391);
                 transform: scale(1.05);
             }
+            /* Phân trang */
+            .pagination {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                margin-top: 30px;
+                gap: 10px;
+            }
+            .pagination a {
+                padding: 10px 15px;
+                text-decoration: none;
+                font-size: 16px;
+                color: #2c3e50;
+                background: #f9fbfc;
+                border-radius: 5px;
+                transition: background 0.3s ease, color 0.3s ease;
+            }
+            .pagination a:hover {
+                background: #1abc9c;
+                color: white;
+            }
+            .pagination .active {
+                background: #1abc9c;
+                color: white;
+                font-weight: 600;
+            }
+            .pagination .disabled {
+                color: #7f8c8d;
+                background: #f1f3f5;
+                pointer-events: none;
+            }
             @media (max-width: 768px) {
                 .main-content {
                     padding: 60px 15px;
@@ -217,6 +248,10 @@
                 }
                 .room-item img {
                     height: 180px;
+                }
+                .pagination a {
+                    padding: 8px 12px;
+                    font-size: 14px;
                 }
             }
         </style>
@@ -260,8 +295,36 @@
                 <div id="roomList" class="room-list">
                     <%
                         RoomDAO roomDAO = new RoomDAO();
-                        List<RoomDTO> rooms = roomDAO.getAllRooms();
-                        for (RoomDTO room : rooms) {
+                        int roomsPerPage = 6; // Số lượng phòng mỗi trang
+                        int currentPage = 1; // Trang hiện tại (mặc định là 1)
+
+                        // Lấy tham số trang từ URL (nếu có)
+                        String pageParam = request.getParameter("page");
+                        if (pageParam != null && !pageParam.isEmpty()) {
+                            try {
+                                currentPage = Integer.parseInt(pageParam);
+                            } catch (NumberFormatException e) {
+                                currentPage = 1; // Nếu tham số không hợp lệ, mặc định là trang 1
+                            }
+                        }
+
+                        // Tính toán tổng số phòng và tổng số trang
+                        int totalRooms = roomDAO.getTotalRoomCount(); // Cần thêm phương thức này trong RoomDAO
+                        int totalPages = (int) Math.ceil((double) totalRooms / roomsPerPage);
+
+                        // Đảm bảo trang hiện tại nằm trong giới hạn hợp lệ
+                        if (currentPage < 1) {
+                            currentPage = 1;
+                        } else if (currentPage > totalPages) {
+                            currentPage = totalPages;
+                        }
+
+                        // Lấy danh sách phòng cho trang hiện tại
+                        int offset = (currentPage - 1) * roomsPerPage;
+                        List<RoomDTO> rooms = roomDAO.getRoomsByPage(offset, roomsPerPage); // Cần thêm phương thức này trong RoomDAO
+
+                        if (rooms != null && !rooms.isEmpty()) {
+                            for (RoomDTO room : rooms) {
                     %>
                     <div class="room-item">
                         <img src="<%= room.getImageUrl() != null && !room.getImageUrl().isEmpty() ? room.getImageUrl() : request.getContextPath() + "/images/placeholder.jpg"%>" alt="Hình ảnh phòng" onerror="this.src='<%= request.getContextPath() + "/images/placeholder.jpg"%>';">
@@ -272,7 +335,43 @@
                         <p>Đánh giá: <%= room.getRatings()%>/5</p>
                         <button onclick="roomDetails(<%= room.getId()%>)">Xem chi tiết</button>
                     </div>
-                    <% }%>
+                    <% 
+                            }
+                        } else {
+                    %>
+                    <p style="text-align: center; color: #e74c3c;">Không tìm thấy homestay nào!</p>
+                    <% } %>
+                </div>
+
+                <!-- Phân trang -->
+                <div class="pagination">
+                    <% 
+                        // Nút "Trang trước"
+                        if (currentPage > 1) {
+                    %>
+                    <a href="<%= request.getContextPath() %>/search.jsp?page=<%= currentPage - 1 %>">Trang trước</a>
+                    <% } else { %>
+                    <a href="#" class="disabled">Trang trước</a>
+                    <% } %>
+
+                    <% 
+                        // Hiển thị các số trang
+                        int startPage = Math.max(1, currentPage - 2);
+                        int endPage = Math.min(totalPages, currentPage + 2);
+
+                        for (int i = startPage; i <= endPage; i++) {
+                    %>
+                    <a href="<%= request.getContextPath() %>/search.jsp?page=<%= i %>" <%= (i == currentPage) ? "class='active'" : "" %>><%= i %></a>
+                    <% } %>
+
+                    <% 
+                        // Nút "Trang sau"
+                        if (currentPage < totalPages) {
+                    %>
+                    <a href="<%= request.getContextPath() %>/search.jsp?page=<%= currentPage + 1 %>">Trang sau</a>
+                    <% } else { %>
+                    <a href="#" class="disabled">Trang sau</a>
+                    <% } %>
                 </div>
             </div>
         </div>
@@ -284,18 +383,21 @@
                     var maxPrice = $("#maxPrice").val();
                     var priceFilterType = $("input[name='priceFilterType']:checked").val();
                     var amenities = $("#amenities").val();
+                    var currentPage = <%= currentPage %>; // Lấy trang hiện tại
 
                     $.ajax({
-                        url: "RoomFilterServlet",
+                        url: "RoomFilterController",
                         type: "GET",
                         data: {
                             searchName: searchName,
                             maxPrice: maxPrice,
                             priceFilterType: priceFilterType,
-                            amenities: amenities
+                            amenities: amenities,
+                            page: currentPage // Truyền tham số trang để giữ phân trang sau khi lọc
                         },
                         success: function (response) {
                             $("#roomList").html(response); // Cập nhật danh sách phòng sau khi lọc
+                            // Cập nhật lại phân trang nếu cần (có thể cần thêm logic phía server để trả về thông tin phân trang)
                         }
                     });
                 });

@@ -193,7 +193,7 @@ public class AdminController extends HttpServlet {
                                 if (userDAO.delete(deleteUserID)) {
                                     request.setAttribute("successMessage", "Xóa người dùng thành công!");
                                 } else {
-                                    request.setAttribute("errorMessage", "Xóa người dùng thất bại!");
+                                    request.setAttribute("errorMessage", "Xóa người dùng thất bại vì có phòng đặt chưa hoàn tất!");
                                 }
                             } else {
                                 request.setAttribute("errorMessage", errorMsg.toString());
