@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -24,10 +25,9 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import dao.NotificationDAO;
 import dto.NotificationDTO;
-import java.util.Date;
-import java.util.stream.Collectors;
 
 @WebServlet(name = "AdminController", urlPatterns = {
     "/admin/users", "/admin/rooms", "/admin/bookings", "/admin/statistics"
@@ -42,6 +42,7 @@ public class AdminController extends HttpServlet {
     private static final String EMAIL_PATTERN = "^[A-Za-z0-9+_.-]+@(.+)$";
     private static final String PHONE_PATTERN = "^\\+?[0-9]{9,12}$";
     private static final Logger LOGGER = Logger.getLogger(AdminController.class.getName());
+    private final SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy"); // Khai báo sdf ở phạm vi toàn cục
 
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException, Exception {
@@ -168,11 +169,34 @@ public class AdminController extends HttpServlet {
 
                     case "delete": // Xóa người dùng
                         String deleteUserID = request.getParameter("userID");
+                        BookingDAO bookingDAO = new BookingDAO();
+                        List<BookingDTO> userBookings = bookingDAO.getBookingsByUserId(deleteUserID);
+
                         if (userDAO.readById(deleteUserID) != null) {
-                            if (userDAO.delete(deleteUserID)) {
-                                request.setAttribute("successMessage", "Xóa người dùng thành công!");
+                            boolean canDelete = true;
+                            StringBuilder errorMsg = new StringBuilder();
+
+                            if (userBookings != null && !userBookings.isEmpty()) {
+                                Date currentDate = new Date();
+                                for (BookingDTO booking : userBookings) {
+                                    if (!"Cancelled".equals(booking.getStatus()) && currentDate.before(booking.getCheckOutDate())) {
+                                        canDelete = false;
+                                        errorMsg.append("Không thể xóa người dùng vì có đặt phòng chưa hoàn tất (")
+                                                .append(booking.getId()).append(") trong khoảng thời gian từ ")
+                                                .append(sdf.format(booking.getCheckInDate())).append(" đến ")
+                                                .append(sdf.format(booking.getCheckOutDate())).append(". ");
+                                    }
+                                }
+                            }
+
+                            if (canDelete) {
+                                if (userDAO.delete(deleteUserID)) {
+                                    request.setAttribute("successMessage", "Xóa người dùng thành công!");
+                                } else {
+                                    request.setAttribute("errorMessage", "Xóa người dùng thất bại!");
+                                }
                             } else {
-                                request.setAttribute("errorMessage", "Xóa người dùng thất bại!");
+                                request.setAttribute("errorMessage", errorMsg.toString());
                             }
                         } else {
                             request.setAttribute("errorMessage", "Không tìm thấy người dùng để xóa!");
@@ -328,17 +352,48 @@ public class AdminController extends HttpServlet {
 
                     case "delete": // Xóa phòng
                         String deleteRoomIdStr = request.getParameter("roomId");
+                        BookingDAO bookingDAO = new BookingDAO();
                         try {
                             int deleteRoomId = Integer.parseInt(deleteRoomIdStr);
-                            if (roomDAO.delete(deleteRoomId)) {
-                                request.setAttribute("successMessage", "Xóa phòng thành công!");
+                            RoomDTO roomToDelete = roomDAO.getRoomById(deleteRoomId);
+                            if (roomToDelete != null) {
+                                boolean canDelete = true;
+                                StringBuilder errorMsg = new StringBuilder();
+
+                                List<BookingDTO> roomBookings = bookingDAO.getBookingsByRoomId(deleteRoomId);
+                                if (roomBookings != null && !roomBookings.isEmpty()) {
+                                    Date currentDate = new Date();
+                                    for (BookingDTO booking : roomBookings) {
+                                        // Kiểm tra tất cả các booking, không chỉ trạng thái chưa hoàn tất
+                                        errorMsg.append("Phòng này có booking (ID: ").append(booking.getId())
+                                                .append(") từ ").append(sdf.format(booking.getCheckInDate()))
+                                                .append(" đến ").append(sdf.format(booking.getCheckOutDate())).append(". ");
+                                    }
+                                    // Nếu có bất kỳ booking nào, không cho xóa
+                                    canDelete = false;
+                                }
+
+                                if (canDelete) {
+                                    if (roomDAO.delete(deleteRoomId)) {
+                                        request.setAttribute("successMessage", "Xóa phòng thành công!");
+                                    } else {
+                                        request.setAttribute("errorMessage", "Xóa phòng thất bại!");
+                                    }
+                                } else {
+                                    request.setAttribute("errorMessage", "Không thể xóa phòng vì có các booking liên quan: " + errorMsg.toString());
+                                }
                             } else {
-                                request.setAttribute("errorMessage", "Xóa phòng thất bại hoặc không tìm thấy phòng!");
+                                request.setAttribute("errorMessage", "Không tìm thấy phòng để xóa!");
                             }
                         } catch (NumberFormatException e) {
                             request.setAttribute("errorMessage", "ID phòng không hợp lệ!");
                         } catch (Exception e) {
-                            request.setAttribute("errorMessage", "Lỗi hệ thống khi xóa phòng: " + e.getMessage());
+                            // Kiểm tra lỗi ràng buộc khóa ngoại
+                            if (e.getMessage().contains("The DELETE statement conflicted with the REFERENCE constraint")) {
+                                request.setAttribute("errorMessage", "Không thể xóa phòng vì có ràng buộc khóa ngoại với bảng bookings!");
+                            } else {
+                                request.setAttribute("errorMessage", "Lỗi khi xóa phòng: " + e.getMessage());
+                            }
                         }
 
                         List<RoomDTO> roomList = roomDAO.getAllRooms();
@@ -413,10 +468,21 @@ public class AdminController extends HttpServlet {
                         String deleteBookingIdStr = request.getParameter("bookingId");
                         try {
                             int bookingId = Integer.parseInt(deleteBookingIdStr);
-                            if (bookingDAO.delete(bookingId)) {
-                                request.setAttribute("successMessage", "Xóa đặt phòng thành công!");
+                            BookingDTO booking = bookingDAO.getBookingById(bookingId);
+                            if (booking != null) {
+                                Date currentDate = new Date();
+                                if (currentDate.after(booking.getCheckOutDate())) {
+                                    if (bookingDAO.delete(bookingId)) {
+                                        request.setAttribute("successMessage", "Xóa đặt phòng thành công vì đã qua thời gian sử dụng!");
+                                    } else {
+                                        request.setAttribute("errorMessage", "Xóa đặt phòng thất bại!");
+                                    }
+                                } else {
+                                    request.setAttribute("errorMessage", "Không thể xóa đặt phòng (ID: " + bookingId + ") vì vẫn trong thời gian sử dụng từ "
+                                            + sdf.format(booking.getCheckInDate()) + " đến " + sdf.format(booking.getCheckOutDate()) + "!");
+                                }
                             } else {
-                                request.setAttribute("errorMessage", "Xóa đặt phòng thất bại hoặc không tìm thấy đặt phòng!");
+                                request.setAttribute("errorMessage", "Không tìm thấy đặt phòng để xóa!");
                             }
                         } catch (NumberFormatException e) {
                             request.setAttribute("errorMessage", "ID đặt phòng không hợp lệ!");
@@ -441,9 +507,9 @@ public class AdminController extends HttpServlet {
                 System.out.println("Booking list size: " + (bookingList != null ? bookingList.size() : "null"));
 
                 Set<String> timeOptions = new HashSet<>();
-                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM");
+                SimpleDateFormat sdfMonthYear = new SimpleDateFormat("yyyy-MM"); // Định dạng riêng cho timeOptions
                 for (BookingDTO booking : bookingList) {
-                    String monthYear = sdf.format(booking.getCreatedAt());
+                    String monthYear = sdfMonthYear.format(booking.getCreatedAt());
                     timeOptions.add(monthYear);
                 }
                 System.out.println("Time options: " + timeOptions);
@@ -462,7 +528,7 @@ public class AdminController extends HttpServlet {
                 } else if (timeFilter != null && !timeFilter.equals("all")) {
                     List<BookingDTO> filteredList = new ArrayList<>();
                     for (BookingDTO booking : bookingList) {
-                        String bookingMonthYear = sdf.format(booking.getCreatedAt());
+                        String bookingMonthYear = sdfMonthYear.format(booking.getCreatedAt());
                         if (bookingMonthYear.equals(timeFilter)) {
                             filteredList.add(booking);
                         }
@@ -566,7 +632,7 @@ public class AdminController extends HttpServlet {
         }
     }
 
-// Hàm hỗ trợ chuyển hướng về danh sách đặt phòng sau khi thực hiện hành động
+    // Hàm hỗ trợ chuyển hướng về danh sách đặt phòng sau khi thực hiện hành động
     private void redirectToBookingList(BookingDAO bookingDAO, HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         try {
             List<BookingDTO> bookingList = bookingDAO.getAllBookings();

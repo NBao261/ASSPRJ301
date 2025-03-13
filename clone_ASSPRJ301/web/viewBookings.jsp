@@ -4,315 +4,269 @@
 <%@page import="java.util.Date"%>
 <%@page import="dto.BookingDTO"%>
 <%@page import="dto.RoomDTO"%>
+<%@page import="dto.UserDTO"%> <!-- Thêm để sử dụng UserDTO nếu cần -->
 <%
     List<BookingDTO> bookingList = (List<BookingDTO>) request.getAttribute("bookingList");
     String errorMessage = (String) request.getAttribute("errorMessage");
     SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
     Date currentDate = new Date(); // Ngày hiện tại
+    UserDTO user = (UserDTO) session.getAttribute("user"); // Khai báo user từ session
 %>
 <!DOCTYPE html>
 <html lang="vi">
-    <head>
-        <title>Danh sách đặt phòng</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <style>
-            /* Reset CSS */
-            * {
-                margin: 0;
-                padding: 0;
-                box-sizing: border-box;
-                font-family: 'Segoe UI', Arial, sans-serif;
-            }
-
-            body {
-                background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-                color: #333;
-                min-height: 100vh;
-                display: flex;
-                flex-direction: column;
-            }
-
+<head>
+    <title>Danh sách đặt phòng</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
+        }
+        body {
+            background: linear-gradient(120deg, #e0eafc 0%, #cfdef3 100%);
+            color: #2c3e50;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        .main-content {
+            padding: 40px 20px; /* Giảm padding vì không có header/footer */
+            max-width: 1300px;
+            margin: 0 auto;
+            width: 95%;
+        }
+        .container {
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            animation: fadeIn 0.5s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        h2 {
+            font-size: 42px;
+            font-weight: 700;
+            color: #1a3c34;
+            margin-bottom: 30px;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            color: #1abc9c;
+            text-decoration: none;
+            font-weight: 600;
+            margin-bottom: 25px;
+            transition: color 0.3s ease, transform 0.3s ease;
+        }
+        .back-link:hover {
+            color: #16a085;
+            transform: translateX(-5px);
+        }
+        .back-link i {
+            margin-right: 8px;
+        }
+        .error-message {
+            color: #e74c3c;
+            background: #ffebee;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            text-align: center;
+            font-weight: 500;
+        }
+        .no-booking {
+            text-align: center;
+            padding: 30px;
+            color: #7f8c8d;
+            font-size: 18px;
+            background: #f9fbfc;
+            border-radius: 15px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
+        }
+        /* Table Styles */
+        .booking-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 30px;
+            background: #fff;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
+            table-layout: fixed; /* Cố định chiều rộng cột */
+        }
+        .booking-table th, .booking-table td {
+            padding: 18px;
+            text-align: center; /* Căn giữa nội dung */
+            border-bottom: 1px solid #eee;
+            word-wrap: break-word; /* Ngắt chữ nếu quá dài */
+        }
+        .booking-table th {
+            background: linear-gradient(45deg, #1abc9c, #16a085);
+            color: white;
+            font-weight: 600;
+            text-transform: uppercase;
+            width: 16.67%; /* Phân bổ đều 6 cột */
+        }
+        .booking-table tr:hover {
+            background: #f5f7fa;
+            transition: background 0.3s ease;
+        }
+        .booking-table .price {
+            font-weight: 600;
+            color: #1abc9c;
+        }
+        .booking-table .status {
+            font-weight: 500;
+        }
+        .booking-table .status.cancelled {
+            color: #e74c3c;
+        }
+        .booking-table .status.success {
+            color: #27ae60;
+        }
+        .booking-table .status.completed {
+            color: #7f8c8d;
+        }
+        .booking-table .actions {
+            display: flex;
+            justify-content: center; /* Căn giữa nút */
+            gap: 10px;
+        }
+        .btn {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            color: white;
+            transition: transform 0.3s ease, background 0.3s ease;
+        }
+        .btn.cancel {
+            background: #e74c3c;
+        }
+        .btn.cancel:hover {
+            background: #c0392b;
+            transform: scale(1.05);
+        }
+        .btn.view {
+            background: #3498db;
+        }
+        .btn.view:hover {
+            background: #2980b9;
+            transform: scale(1.05);
+        }
+        @media (max-width: 768px) {
             .main-content {
-                flex: 1;
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-                align-items: center;
-                padding: 80px 0 80px;
-                overflow: auto;
-                max-width: 1200px;
-                margin: 0 auto;
-                width: 90%;
+                padding: 20px 15px; /* Giảm padding trên mobile */
             }
-
-            .container {
-                background: white;
-                border-radius: 15px;
-                box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-                padding: 30px;
-                width: 100%;
-                max-width: 1000px;
-                transition: transform 0.3s ease, box-shadow 0.3s ease;
-            }
-
-            .container:hover {
-                transform: translateY(-5px);
-                box-shadow: 0 12px 35px rgba(0, 0, 0, 0.15);
-            }
-
             h2 {
-                color: #2c3e50;
-                font-weight: 700;
-                margin-bottom: 25px;
-                text-align: center;
-                font-size: 2.5rem;
-                text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+                font-size: 32px;
             }
-
-            .back-link {
-                display: inline-flex;
-                align-items: center;
-                color: #3498db;
-                text-decoration: none;
-                font-weight: 600;
-                margin-bottom: 20px;
-                transition: color 0.3s ease, transform 0.3s ease;
-            }
-
-            .back-link:hover {
-                color: #2980b9;
-                transform: translateX(-2px);
-            }
-
-            .back-link::before {
-                content: '←';
-                margin-right: 5px;
-                font-size: 1.1rem;
-            }
-
-            .error-message {
-                color: #e74c3c;
-                background: #ffebee;
-                padding: 12px 18px;
-                border-radius: 10px;
-                margin-bottom: 20px;
-                text-align: center;
-                font-weight: 500;
-                box-shadow: 0 2px 8px rgba(231, 76, 60, 0.1);
-            }
-
-            .no-booking {
-                text-align: center;
-                color: #7f8c8d;
-                font-size: 1.2rem;
-                padding: 25px;
-                background: #f8fafc;
-                border-radius: 10px;
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-            }
-
-            /* Table Styles */
-            .booking-table {
-                width: 100%;
-                border-collapse: collapse;
-                margin-top: 20px;
-                background: white;
-                border-radius: 10px;
-                overflow: hidden;
-                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-            }
-
             .booking-table th, .booking-table td {
-                padding: 15px;
-                text-align: left;
-                font-size: 16px;
-                color: #555;
+                padding: 12px;
+                font-size: 14px;
             }
-
-            .booking-table th {
-                background: linear-gradient(45deg, #5DC1B9, #4ECDC4);
-                color: white;
-                font-weight: 600;
-                text-transform: uppercase;
-                letter-spacing: 0.5px;
-            }
-
-            .booking-table tr {
-                border-bottom: 1px solid #eee;
-                transition: background 0.3s ease;
-            }
-
-            .booking-table tr:hover {
-                background: #f8fafc;
-            }
-
-            .booking-table .price {
-                font-weight: 600;
-                color: #5DC1B9;
-            }
-
-            .booking-table .status {
-                font-weight: 500;
-            }
-
-            .booking-table .status.cancelled {
-                color: #e74c3c;
-            }
-
-            .booking-table .status.success {
-                color: #2ecc71;
-            }
-
-            .booking-table .status.completed {
-                color: #7f8c8d;
-            }
-
-            .booking-table .actions {
-                display: flex;
-                gap: 10px;
-            }
-
             .btn {
-                padding: 8px 18px;
-                border: none;
-                border-radius: 20px;
-                cursor: pointer;
-                font-weight: 600;
-                transition: all 0.3s ease;
-                font-size: 0.9rem;
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                padding: 8px 12px;
+                font-size: 14px;
             }
-
-            .btn.cancel {
-                background: #e74c3c;
-                color: white;
+            .booking-table {
+                display: block;
+                overflow-x: auto;
+                white-space: nowrap;
             }
-
-            .btn.cancel:hover {
-                background: #c0392b;
-                transform: translateY(-2px);
+            th {
+                width: auto; /* Tự động điều chỉnh trên mobile */
             }
-
-            .btn.view {
-                background: linear-gradient(45deg, #3498db, #2980b9);
-                color: white;
+        }
+    </style>
+    <script>
+        function confirmCancel(bookingId) {
+            if (confirm("Bạn có chắc chắn muốn hủy đặt phòng này không?")) {
+                document.getElementById('cancelForm_' + bookingId).submit();
             }
+        }
+    </script>
+</head>
+<body>
+    <div class="main-content">
+        <div class="container">
+            <h2>Danh sách đặt phòng của bạn</h2>
+            <a href="<%= request.getContextPath() %>/home.jsp" class="back-link"><i class="fas fa-arrow-left"></i> Quay lại trang chủ</a>
 
-            .btn.view:hover {
-                background: linear-gradient(45deg, #2980b9, #1f6391);
-                transform: translateY(-2px);
-            }
+            <% if (errorMessage != null) {%>
+            <p class="error-message"><%= errorMessage%></p>
+            <% } %>
 
-            @media (max-width: 768px) {
-                .main-content {
-                    padding: 60px 15px 70px;
-                }
-
-                .container {
-                    padding: 20px;
-                }
-
-                h2 {
-                    font-size: 2rem;
-                }
-
-                .booking-table th, .booking-table td {
-                    font-size: 14px;
-                    padding: 10px;
-                }
-
-                .booking-table {
-                    display: block;
-                    overflow-x: auto; /* Enable horizontal scrolling on mobile */
-                    white-space: nowrap;
-                }
-
-                .btn {
-                    padding: 6px 14px;
-                    font-size: 0.8rem;
-                }
-            }
-        </style>
-        <script>
-            function confirmCancel(bookingId) {
-                if (confirm("Bạn có chắc chắn muốn hủy đặt phòng này không?")) {
-                    document.getElementById('cancelForm_' + bookingId).submit();
-                }
-            }
-        </script>
-        <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
-    </head>
-    <body>
-        <div class="main-content">
-            <div class="container">
-                <h2>Danh sách đặt phòng của bạn</h2>
-                <a href="<%= request.getContextPath() %>/home.jsp" class="back-link">Quay lại trang chủ</a>
-
-                <% if (errorMessage != null) {%>
-                <p class="error-message"><%= errorMessage%></p>
-                <% } %>
-
-                <% if (bookingList == null || bookingList.isEmpty()) { %>
-                <p class="no-booking">Bạn chưa có đặt phòng nào.</p>
-                <% } else { %>
-                <table class="booking-table">
-                    <thead>
-                        <tr>
-                            <th>Tên phòng</th>
-                            <th>Ngày nhận</th>
-                            <th>Ngày trả</th>
-                            <th>Giá</th>
-                            <th>Trạng thái</th>
-                            <th>Hành động</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <% for (BookingDTO booking : bookingList) {
-                                RoomDTO room = booking.getRoom();
-                                String statusClass = "";
-                                String displayStatus = "";
-                                
-                                if ("Cancelled".equals(booking.getStatus())) {
-                                    statusClass = "cancelled";
-                                    displayStatus = "Đã hủy";
-                                } else if (currentDate.after(booking.getCheckOutDate())) {
-                                    statusClass = "completed";
-                                    displayStatus = "Đã ở";
-                                } else if ("Confirmed".equals(booking.getStatus())) {
-                                    statusClass = "success";
-                                    displayStatus = "Đã xác nhận";
-                                } else {
-                                    statusClass = "success";
-                                    displayStatus = "Chờ xác nhận";
-                                }
-                        %>
-                        <tr>
-                            <td><%= room != null ? room.getName() : "Không xác định" %></td>
-                            <td><%= sdf.format(booking.getCheckInDate())%></td>
-                            <td><%= sdf.format(booking.getCheckOutDate())%></td>
-                            <td class="price"><%= String.format("%,.0f", booking.getTotalPrice())%> VND</td>
-                            <td class="status <%= statusClass %>"><%= displayStatus %></td>
-                            <td class="actions">
-                                <% if (!"Cancelled".equals(booking.getStatus()) && !"Confirmed".equals(booking.getStatus()) && currentDate.before(booking.getCheckOutDate())) {%>
-                                <form id="cancelForm_<%= booking.getId()%>" action="<%= request.getContextPath() %>/cancelBooking" method="post" style="display:inline;">
-                                    <input type="hidden" name="bookingId" value="<%= booking.getId()%>">
-                                    <button type="button" class="btn cancel" onclick="confirmCancel('<%= booking.getId()%>')">Hủy</button>
-                                </form>
-                                <% } %>
-                                <!-- Nút Xem -->
-                                <% if (room != null) { %>
-                                <form action="<%= request.getContextPath() %>/room-details" method="get" style="display:inline;">
-                                    <input type="hidden" name="roomId" value="<%= room.getId()%>">
-                                    <button type="submit" class="btn view">Xem</button>
-                                </form>
-                                <% } %>
-                            </td>
-                        </tr>
-                        <% } %>
-                    </tbody>
-                </table>
-                <% }%>
-            </div>
+            <% if (bookingList == null || bookingList.isEmpty()) { %>
+            <p class="no-booking">Bạn chưa có đặt phòng nào.</p>
+            <% } else { %>
+            <table class="booking-table">
+                <thead>
+                    <tr>
+                        <th>Tên phòng</th>
+                        <th>Ngày nhận</th>
+                        <th>Ngày trả</th>
+                        <th>Giá</th>
+                        <th>Trạng thái</th>
+                        <th>Hành động</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% for (BookingDTO booking : bookingList) {
+                            RoomDTO room = booking.getRoom();
+                            String statusClass = "";
+                            String displayStatus = "";
+                            
+                            if ("Cancelled".equals(booking.getStatus())) {
+                                statusClass = "cancelled";
+                                displayStatus = "Đã hủy";
+                            } else if (currentDate.after(booking.getCheckOutDate())) {
+                                statusClass = "completed";
+                                displayStatus = "Đã ở";
+                            } else if ("Confirmed".equals(booking.getStatus())) {
+                                statusClass = "success";
+                                displayStatus = "Đã xác nhận";
+                            } else {
+                                statusClass = "success";
+                                displayStatus = "Chờ xác nhận";
+                            }
+                    %>
+                    <tr>
+                        <td><%= room != null ? room.getName() : "Không xác định" %></td>
+                        <td><%= sdf.format(booking.getCheckInDate())%></td>
+                        <td><%= sdf.format(booking.getCheckOutDate())%></td>
+                        <td class="price"><%= String.format("%,.0f", booking.getTotalPrice())%> VND</td>
+                        <td class="status <%= statusClass %>"><%= displayStatus %></td>
+                        <td class="actions">
+                            <% if (!"Cancelled".equals(booking.getStatus()) && !"Confirmed".equals(booking.getStatus()) && currentDate.before(booking.getCheckOutDate())) {%>
+                            <form id="cancelForm_<%= booking.getId()%>" action="<%= request.getContextPath() %>/cancelBooking" method="post" style="display:inline;">
+                                <input type="hidden" name="bookingId" value="<%= booking.getId()%>">
+                                <button type="button" class="btn cancel" onclick="confirmCancel('<%= booking.getId()%>')"><i class="fas fa-times"></i> Hủy</button>
+                            </form>
+                            <% } %>
+                            <!-- Nút Xem -->
+                            <% if (room != null) { %>
+                            <form action="<%= request.getContextPath() %>/room-details" method="get" style="display:inline;">
+                                <input type="hidden" name="roomId" value="<%= room.getId()%>">
+                                <button type="submit" class="btn view"><i class="fas fa-eye"></i> Xem</button>
+                            </form>
+                            <% } %>
+                        </td>
+                    </tr>
+                    <% } %>
+                </tbody>
+            </table>
+            <% }%>
         </div>
-    </body>
+    </div>
+</body>
 </html>
