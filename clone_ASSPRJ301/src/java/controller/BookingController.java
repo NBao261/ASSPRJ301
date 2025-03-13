@@ -149,7 +149,7 @@ public class BookingController extends HttpServlet {
         UserDTO user = (UserDTO) session.getAttribute("user");
 
         // Lấy thông tin đặt phòng để lấy tên phòng
-        BookingDTO booking = bookingDAO.getBookingById(bookingId); 
+        BookingDTO booking = bookingDAO.getBookingById(bookingId);
         if (booking != null && bookingDAO.cancelBooking(bookingId)) {
             NotificationDAO notificationDAO = new NotificationDAO();
             String roomName = booking.getRoom() != null ? booking.getRoom().getName() : "Không xác định";
