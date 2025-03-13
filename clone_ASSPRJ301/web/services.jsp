@@ -206,8 +206,8 @@
                 display: block; /* Đảm bảo hình ảnh là block để căn giữa */
                 margin: 0 auto; /* Căn giữa hình ảnh */
                 width: 100%;
-                max-width: 600px; /* Giới hạn chiều rộng tối đa của hình ảnh */
-                height: 300px;
+                max-width: 1000px; /* Giới hạn chiều rộng tối đa của hình ảnh */
+                height: 400px;
                 object-fit: cover;
                 border-radius: 15px;
                 box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
@@ -411,21 +411,18 @@
                         <div class="banner-content">
                             <h1>Chào mừng đến với Homestay của chúng tôi!</h1>
                             <p>Trải nghiệm không gian thư giãn và dịch vụ tuyệt vời.</p>
-                            <a href="#room-list" class="btn-view-details">Xem chi tiết</a>
                         </div>
                     </div>
                     <div class="slide">
                         <div class="banner-content">
                             <h1>Khám phá không gian tuyệt đẹp</h1>
                             <p>Thư giãn giữa thiên nhiên xanh mát tại homestay của chúng tôi.</p>
-                            <a href="#room-list" class="btn-view-details">Xem chi tiết</a>
                         </div>
                     </div>
                     <div class="slide">
                         <div class="banner-content">
                             <h1>Dịch vụ cao cấp dành cho bạn</h1>
                             <p>Hưởng thụ sự sang trọng và tiện nghi đỉnh cao.</p>
-                            <a href="#room-list" class="btn-view-details">Xem chi tiết</a>
                         </div>
                     </div>
                 </div>
