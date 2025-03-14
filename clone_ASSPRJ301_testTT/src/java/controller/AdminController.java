@@ -430,16 +430,23 @@ public class AdminController extends HttpServlet {
                         try {
                             int bookingId = Integer.parseInt(confirmBookingIdStr);
                             BookingDTO booking = bookingDAO.getBookingById(bookingId);
-                            if (booking != null && bookingDAO.updateBookingStatus(bookingId, BookingDAO.STATUS_CONFIRMED)) {
-                                NotificationDAO notificationDAO = new NotificationDAO();
-                                String roomName = booking.getRoom() != null ? booking.getRoom().getName() : "Không xác định";
-                                String message = "Đơn đặt phòng '" + roomName + "' đã được xác nhận.";
-                                NotificationDTO notification = new NotificationDTO(0, booking.getUser().getUserID(), message, null, false);
-                                notificationDAO.addNotification(notification);
-
-                                request.setAttribute("successMessage", "Xác nhận đặt phòng thành công!");
+                            if (booking != null) {
+                                if (BookingDAO.STATUS_PAID.equals(booking.getStatus())) { // Chỉ xác nhận khi trạng thái là "Paid"
+                                    if (bookingDAO.updateBookingStatus(bookingId, BookingDAO.STATUS_CONFIRMED)) {
+                                        NotificationDAO notificationDAO = new NotificationDAO();
+                                        String roomName = booking.getRoom() != null ? booking.getRoom().getName() : "Không xác định";
+                                        String message = "Đơn đặt phòng '" + roomName + "' đã được xác nhận.";
+                                        NotificationDTO notification = new NotificationDTO(0, booking.getUser().getUserID(), message, null, false);
+                                        notificationDAO.addNotification(notification);
+                                        request.setAttribute("successMessage", "Xác nhận đặt phòng thành công!");
+                                    } else {
+                                        request.setAttribute("errorMessage", "Cập nhật trạng thái đặt phòng thất bại!");
+                                    }
+                                } else {
+                                    request.setAttribute("errorMessage", "Chỉ có thể xác nhận đặt phòng đã thanh toán!");
+                                }
                             } else {
-                                request.setAttribute("errorMessage", "Xác nhận đặt phòng thất bại hoặc không tìm thấy đặt phòng!");
+                                request.setAttribute("errorMessage", "Không tìm thấy đặt phòng để xác nhận!");
                             }
                         } catch (NumberFormatException e) {
                             request.setAttribute("errorMessage", "ID đặt phòng không hợp lệ!");
@@ -453,10 +460,24 @@ public class AdminController extends HttpServlet {
                         String cancelBookingIdStr = request.getParameter("bookingId");
                         try {
                             int bookingId = Integer.parseInt(cancelBookingIdStr);
-                            if (bookingDAO.cancelBooking(bookingId)) {
-                                request.setAttribute("successMessage", "Hủy đặt phòng thành công!");
+                            BookingDTO booking = bookingDAO.getBookingById(bookingId);
+                            if (booking != null) {
+                                if (!BookingDAO.STATUS_CANCELLED.equals(booking.getStatus())) { // Chỉ hủy khi chưa bị hủy
+                                    if (bookingDAO.cancelBooking(bookingId)) {
+                                        NotificationDAO notificationDAO = new NotificationDAO();
+                                        String roomName = booking.getRoom() != null ? booking.getRoom().getName() : "Không xác định";
+                                        String message = "Đơn đặt phòng '" + roomName + "' đã bị hủy bởi admin.";
+                                        NotificationDTO notification = new NotificationDTO(0, booking.getUser().getUserID(), message, null, false);
+                                        notificationDAO.addNotification(notification);
+                                        request.setAttribute("successMessage", "Hủy đặt phòng thành công!");
+                                    } else {
+                                        request.setAttribute("errorMessage", "Hủy đặt phòng thất bại!");
+                                    }
+                                } else {
+                                    request.setAttribute("errorMessage", "Đặt phòng này đã bị hủy trước đó!");
+                                }
                             } else {
-                                request.setAttribute("errorMessage", "Hủy đặt phòng thất bại hoặc không tìm thấy đặt phòng!");
+                                request.setAttribute("errorMessage", "Không tìm thấy đặt phòng để hủy!");
                             }
                         } catch (NumberFormatException e) {
                             request.setAttribute("errorMessage", "ID đặt phòng không hợp lệ!");
@@ -473,9 +494,9 @@ public class AdminController extends HttpServlet {
                             BookingDTO booking = bookingDAO.getBookingById(bookingId);
                             if (booking != null) {
                                 Date currentDate = new Date();
-                                if (currentDate.after(booking.getCheckOutDate())) {
+                                if (currentDate.after(booking.getCheckOutDate()) || BookingDAO.STATUS_CANCELLED.equals(booking.getStatus())) { // Chỉ xóa khi đã qua thời gian hoặc đã hủy
                                     if (bookingDAO.delete(bookingId)) {
-                                        request.setAttribute("successMessage", "Xóa đặt phòng thành công vì đã qua thời gian sử dụng!");
+                                        request.setAttribute("successMessage", "Xóa đặt phòng thành công!");
                                     } else {
                                         request.setAttribute("errorMessage", "Xóa đặt phòng thất bại!");
                                     }

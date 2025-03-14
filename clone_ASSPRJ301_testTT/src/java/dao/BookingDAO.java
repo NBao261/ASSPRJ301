@@ -16,9 +16,10 @@ import utils.DBUtils;
 public class BookingDAO {
 
     // Hằng số cho các trạng thái đặt phòng
-    public static final String STATUS_PENDING = "Pending";
-    public static final String STATUS_CONFIRMED = "Confirmed";
-    public static final String STATUS_CANCELLED = "Cancelled";
+    public static final String STATUS_PENDING_PAYMENT = "PendingPayment"; // Chờ thanh toán
+    public static final String STATUS_PAID = "Paid";                     // Đã thanh toán
+    public static final String STATUS_CONFIRMED = "Confirmed";           // Đã xác nhận
+    public static final String STATUS_CANCELLED = "Cancelled";           // Đã hủy
 
     // Thêm đặt phòng mới sau khi kiểm tra phòng có sẵn
     public boolean addBooking(BookingDTO booking) throws ClassNotFoundException {
@@ -34,7 +35,7 @@ public class BookingDAO {
             ps.setDate(3, new java.sql.Date(booking.getCheckInDate().getTime()));
             ps.setDate(4, new java.sql.Date(booking.getCheckOutDate().getTime()));
             ps.setDouble(5, booking.getTotalPrice());
-            ps.setString(6, booking.getStatus());
+            ps.setString(6, STATUS_PENDING_PAYMENT); // Mặc định là "PendingPayment" khi tạo mới
             ps.setTimestamp(7, new Timestamp(booking.getCreatedAt().getTime()));
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -233,7 +234,7 @@ public class BookingDAO {
     public List<BookingDTO> getBookingsByDateRange(Date startDate, Date endDate) throws Exception {
         List<BookingDTO> bookingList = new ArrayList<>();
         if (startDate == null || endDate == null || endDate.before(startDate)) {
-            return bookingList; // Trả về danh sách rỗng nếu tham số không hợp lệ
+            return bookingList;
         }
 
         String sql = "SELECT * FROM bookings WHERE created_at BETWEEN ? AND ? ORDER BY created_at DESC";
@@ -253,65 +254,4 @@ public class BookingDAO {
         }
         return bookingList;
     }
-//    // Phương thức lấy tổng số booking của một người dùng
-//
-//    public int getTotalBookingCountByUser(String userId) throws Exception {
-//        String sql = "SELECT COUNT(*) FROM bookings WHERE user_id = ?";
-//        try (Connection conn = utils.DBUtils.getConnection();
-//                PreparedStatement ps = conn.prepareStatement(sql)) {
-//            ps.setString(1, userId);
-//            try (ResultSet rs = ps.executeQuery()) {
-//                if (rs.next()) {
-//                    return rs.getInt(1);
-//                }
-//            }
-//        }
-//        return 0;
-//    }
-//
-//    // Phương thức lấy danh sách booking của một người dùng theo phân trang
-//    public List<BookingDTO> getBookingsByUserId(String userId, int offset, int limit) throws Exception {
-//        List<BookingDTO> bookingList = new ArrayList<>();
-//        String sql = "SELECT b.*, r.id as room_id, r.name as room_name, r.description, r.price as room_price, r.amenities, r.ratings, r.image_url "
-//                + "FROM bookings b "
-//                + "LEFT JOIN rooms r ON b.room_id = r.id "
-//                + "WHERE b.user_id = ? "
-//                + "ORDER BY b.id "
-//                + "OFFSET ? ROWS FETCH NEXT ? ROWS ONLY";
-//        try (Connection conn = utils.DBUtils.getConnection();
-//                PreparedStatement ps = conn.prepareStatement(sql)) {
-//            ps.setString(1, userId);
-//            ps.setInt(2, offset);
-//            ps.setInt(3, limit);
-//            try (ResultSet rs = ps.executeQuery()) {
-//                while (rs.next()) {
-//                    BookingDTO booking = new BookingDTO();
-//                    booking.setId(rs.getInt("id"));
-//                    booking.setCheckInDate(rs.getDate("check_in_date"));
-//                    booking.setCheckOutDate(rs.getDate("check_out_date"));
-//                    booking.setTotalPrice(rs.getDouble("total_price"));
-//                    booking.setStatus(rs.getString("status"));
-//
-//                    // Ánh xạ thông tin phòng
-//                    RoomDTO room = new RoomDTO();
-//                    room.setId(rs.getInt("room_id"));
-//                    room.setName(rs.getString("room_name"));
-//                    room.setDescription(rs.getString("description"));
-//                    room.setPrice(rs.getDouble("room_price"));
-//                    room.setAmenities(rs.getString("amenities"));
-//                    room.setRatings(rs.getFloat("ratings"));
-//                    room.setImageUrl(rs.getString("image_url"));
-//                    booking.setRoom(room);
-//
-//                    // Ánh xạ thông tin người dùng (nếu cần)
-//                    UserDTO user = new UserDTO();
-//                    user.setUserID(userId);
-//                    booking.setUser(user);
-//
-//                    bookingList.add(booking);
-//                }
-//            }
-//        }
-//        return bookingList;
-//    }
 }
