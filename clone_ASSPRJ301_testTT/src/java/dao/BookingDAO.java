@@ -11,6 +11,8 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import utils.DBUtils;
 
 public class BookingDAO {
@@ -254,4 +256,5 @@ public class BookingDAO {
         }
         return bookingList;
     }
+
 }
