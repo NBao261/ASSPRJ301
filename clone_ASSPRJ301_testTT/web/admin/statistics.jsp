@@ -152,7 +152,7 @@
             }
             .stat-value.revenue { color: #1abc9c; }
             .stat-value.pending { color: #e67e22; }
-            .stat-value.confirmed { color: #27ae60; }
+            .stat-value.paid { color: #27ae60; }
             .stat-value.cancelled { color: #e74c3c; }
             .chart-container {
                 margin: 50px auto;
@@ -218,7 +218,7 @@
 
             // Lấy các biến từ request
             Integer pendingCount = (Integer) request.getAttribute("pendingCount");
-            Integer confirmedCount = (Integer) request.getAttribute("confirmedCount");
+            Integer paidCount = (Integer) request.getAttribute("paidCount");
             Integer cancelledCount = (Integer) request.getAttribute("cancelledCount");
             Double totalRevenue = (Double) request.getAttribute("totalRevenue");
             Integer activeUserCount = (Integer) request.getAttribute("activeUserCount");
@@ -229,9 +229,9 @@
             String errorMessage = (String) request.getAttribute("errorMessage");
 
             // Tính tỷ lệ phần trăm cho biểu đồ tròn
-            int totalBookings = (pendingCount != null ? pendingCount : 0) + (confirmedCount != null ? confirmedCount : 0) + (cancelledCount != null ? cancelledCount : 0);
+            int totalBookings = (pendingCount != null ? pendingCount : 0) + (paidCount != null ? paidCount : 0) + (cancelledCount != null ? cancelledCount : 0);
             double pendingPercent = totalBookings > 0 ? (double) (pendingCount != null ? pendingCount : 0) / totalBookings * 100 : 0;
-            double confirmedPercent = totalBookings > 0 ? (double) (confirmedCount != null ? confirmedCount : 0) / totalBookings * 100 : 0;
+            double paidPercent = totalBookings > 0 ? (double) (paidCount != null ? paidCount : 0) / totalBookings * 100 : 0;
             double cancelledPercent = totalBookings > 0 ? (double) (cancelledCount != null ? cancelledCount : 0) / totalBookings * 100 : 0;
         %>
 
@@ -277,13 +277,13 @@
                     </div>
                     <div class="stat-item">
                         <i class="fas fa-hourglass-half"></i>
-                        <div class="stat-label">Chờ xác nhận</div>
+                        <div class="stat-label">Chưa thanh toán</div>
                         <div class="stat-value pending"><%= pendingCount != null ? pendingCount : "0"%></div>
                     </div>
                     <div class="stat-item">
                         <i class="fas fa-check-circle"></i>
-                        <div class="stat-label">Đã xác nhận</div>
-                        <div class="stat-value confirmed"><%= confirmedCount != null ? confirmedCount : "0"%></div>
+                        <div class="stat-label">Đã thanh toán</div>
+                        <div class="stat-value paid"><%= paidCount != null ? paidCount : "0"%></div>
                     </div>
                     <div class="stat-item">
                         <i class="fas fa-times-circle"></i>
@@ -301,6 +301,7 @@
                         <div class="stat-value"><%= mostBookedRoom != null ? mostBookedRoom.getName() + " (" + (mostBookedCount != null ? mostBookedCount : 0) + ")" : "Chưa có"%></div>
                     </div>
                 </div>
+
                 <!-- Biểu đồ số lượng đặt phòng -->
                 <div class="chart-container">
                     <h2>Số lượng đặt phòng</h2>
@@ -389,13 +390,13 @@
             const bookingChart = new Chart(ctxBar, {
                 type: 'bar',
                 data: {
-                    labels: ['Chờ xác nhận', 'Đã xác nhận', 'Đã hủy'],
+                    labels: ['Chưa thanh toán', 'Đã thanh toán', 'Đã hủy'],
                     datasets: [{
                             label: 'Số lượng đặt phòng',
                             data: [
-            <%= pendingCount != null ? pendingCount : 0%>,
-            <%= confirmedCount != null ? confirmedCount : 0%>,
-            <%= cancelledCount != null ? cancelledCount : 0%>
+                                <%= pendingCount != null ? pendingCount : 0%>,
+                                <%= paidCount != null ? paidCount : 0%>,
+                                <%= cancelledCount != null ? cancelledCount : 0%>
                             ],
                             backgroundColor: ['rgba(230, 126, 34, 0.8)', 'rgba(39, 174, 96, 0.8)', 'rgba(231, 76, 60, 0.8)'],
                             borderColor: ['#e67e22', '#27ae60', '#e74c3c'],
@@ -431,12 +432,12 @@
             const statusPieChart = new Chart(ctxPie, {
                 type: 'pie',
                 data: {
-                    labels: ['Chờ xác nhận', 'Đã xác nhận', 'Đã hủy'],
+                    labels: ['Chưa thanh toán', 'Đã thanh toán', 'Đã hủy'],
                     datasets: [{
                             data: [
-            <%= pendingPercent%>,
-            <%= confirmedPercent%>,
-            <%= cancelledPercent%>
+                                <%= pendingPercent%>,
+                                <%= paidPercent%>,
+                                <%= cancelledPercent%>
                             ],
                             backgroundColor: ['#e67e22', '#27ae60', '#e74c3c'],
                             borderColor: '#fff',

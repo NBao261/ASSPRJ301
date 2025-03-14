@@ -520,139 +520,140 @@ public class AdminController extends HttpServlet {
                         break;
                 }
             }
-        } else if ("/admin/statistics".equals(path)) {
-            BookingDAO bookingDAO = new BookingDAO();
-            RoomDAO roomDAO = new RoomDAO();
-            UserDAO userDAO = new UserDAO();
-            try {
-                System.out.println("Starting statistics processing...");
-                List<BookingDTO> bookingList = bookingDAO.getAllBookings();
-                System.out.println("Booking list size: " + (bookingList != null ? bookingList.size() : "null"));
+        }else if ("/admin/statistics".equals(path)) {
+    BookingDAO bookingDAO = new BookingDAO();
+    RoomDAO roomDAO = new RoomDAO();
+    UserDAO userDAO = new UserDAO();
+    try {
+        System.out.println("Starting statistics processing...");
+        List<BookingDTO> bookingList = bookingDAO.getAllBookings();
+        System.out.println("Booking list size: " + (bookingList != null ? bookingList.size() : "null"));
 
-                Set<String> timeOptions = new HashSet<>();
-                SimpleDateFormat sdfMonthYear = new SimpleDateFormat("yyyy-MM"); // Định dạng riêng cho timeOptions
-                for (BookingDTO booking : bookingList) {
-                    String monthYear = sdfMonthYear.format(booking.getCreatedAt());
-                    timeOptions.add(monthYear);
-                }
-                System.out.println("Time options: " + timeOptions);
-
-                // Lọc theo khoảng thời gian tùy chỉnh
-                String startDateStr = request.getParameter("startDate");
-                String endDateStr = request.getParameter("endDate");
-                String timeFilter = request.getParameter("time");
-                System.out.println("StartDate: " + startDateStr + ", EndDate: " + endDateStr + ", TimeFilter: " + timeFilter);
-                if (startDateStr != null && endDateStr != null && !startDateStr.isEmpty() && !endDateStr.isEmpty()) {
-                    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-                    Date startDate = dateFormat.parse(startDateStr);
-                    Date endDate = dateFormat.parse(endDateStr);
-                    bookingList = bookingDAO.getBookingsByDateRange(startDate, endDate);
-                    System.out.println("Filtered by date range, new size: " + (bookingList != null ? bookingList.size() : "null"));
-                } else if (timeFilter != null && !timeFilter.equals("all")) {
-                    List<BookingDTO> filteredList = new ArrayList<>();
-                    for (BookingDTO booking : bookingList) {
-                        String bookingMonthYear = sdfMonthYear.format(booking.getCreatedAt());
-                        if (bookingMonthYear.equals(timeFilter)) {
-                            filteredList.add(booking);
-                        }
-                    }
-                    bookingList = filteredList;
-                    System.out.println("Filtered by month, new size: " + (bookingList != null ? bookingList.size() : "null"));
-                }
-
-                // Kiểm tra null cho bookingList
-                if (bookingList == null) {
-                    LOGGER.log(Level.WARNING, "Booking list is null");
-                    bookingList = new ArrayList<>(); // Gán danh sách rỗng để tiếp tục
-                }
-
-                // Tính toán thống kê
-                double totalRevenue = 0;
-                int pendingCount = 0, confirmedCount = 0, cancelledCount = 0;
-                Map<String, Integer> activeUsers = new HashMap<>();
-                Map<Integer, Double> revenueByRoom = new HashMap<>();
-                Map<Integer, Integer> roomBookingCount = new HashMap<>();
-                Map<Integer, Integer> roomCancelCount = new HashMap<>();
-                Map<String, Integer> userBookingCount = new HashMap<>();
-                Map<String, Double> userTotalSpent = new HashMap<>();
-
-                for (BookingDTO booking : bookingList) {
-                    if (booking.getUser() == null || booking.getRoom() == null) {
-                        LOGGER.log(Level.WARNING, "Booking ID {0} has null user or room", booking.getId());
-                        continue; // Bỏ qua nếu user hoặc room là null
-                    }
-                    String userId = booking.getUser().getUserID();
-                    int roomId = booking.getRoom().getId();
-                    switch (booking.getStatus()) {
-                        case "Pending":
-                            pendingCount++;
-                            roomBookingCount.put(roomId, roomBookingCount.getOrDefault(roomId, 0) + 1);
-                            userBookingCount.put(userId, userBookingCount.getOrDefault(userId, 0) + 1);
-                            break;
-                        case "Confirmed":
-                            confirmedCount++;
-                            totalRevenue += booking.getTotalPrice();
-                            activeUsers.put(userId, 1);
-                            revenueByRoom.put(roomId, revenueByRoom.getOrDefault(roomId, 0.0) + booking.getTotalPrice());
-                            roomBookingCount.put(roomId, roomBookingCount.getOrDefault(roomId, 0) + 1);
-                            userBookingCount.put(userId, userBookingCount.getOrDefault(userId, 0) + 1);
-                            userTotalSpent.put(userId, userTotalSpent.getOrDefault(userId, 0.0) + booking.getTotalPrice());
-                            break;
-                        case "Cancelled":
-                            cancelledCount++;
-                            roomCancelCount.put(roomId, roomCancelCount.getOrDefault(roomId, 0) + 1);
-                            userBookingCount.put(userId, userBookingCount.getOrDefault(userId, 0) + 1);
-                            break;
-                    }
-                }
-                System.out.println("Total revenue: " + totalRevenue + ", Pending: " + pendingCount + ", Confirmed: " + confirmedCount + ", Cancelled: " + cancelledCount);
-
-                // Phòng được đặt nhiều nhất
-                int mostBookedRoomId = -1;
-                int maxBookings = 0;
-                for (Map.Entry<Integer, Integer> entry : roomBookingCount.entrySet()) {
-                    if (entry.getValue() > maxBookings) {
-                        mostBookedRoomId = entry.getKey();
-                        maxBookings = entry.getValue();
-                    }
-                }
-                RoomDTO mostBookedRoom = mostBookedRoomId != -1 ? roomDAO.getRoomById(mostBookedRoomId) : null;
-                System.out.println("Most booked room: " + (mostBookedRoom != null ? mostBookedRoom.getName() : "null"));
-
-                // Top 5 người dùng đặt nhiều nhất
-                List<Map.Entry<String, Integer>> topUsersByBookings = userBookingCount.entrySet().stream()
-                        .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
-                        .limit(5).collect(Collectors.toList());
-                System.out.println("Top users size: " + topUsersByBookings.size());
-
-                // Đặt dữ liệu vào request
-                request.setAttribute("totalRevenue", totalRevenue);
-                request.setAttribute("pendingCount", pendingCount);
-                request.setAttribute("confirmedCount", confirmedCount);
-                request.setAttribute("cancelledCount", cancelledCount);
-                request.setAttribute("activeUserCount", activeUsers.size());
-                request.setAttribute("revenueByRoom", revenueByRoom);
-                request.setAttribute("roomBookingCount", roomBookingCount);
-                request.setAttribute("roomCancelCount", roomCancelCount);
-                request.setAttribute("mostBookedRoom", mostBookedRoom);
-                request.setAttribute("mostBookedCount", maxBookings);
-                request.setAttribute("roomDAO", roomDAO);
-                request.setAttribute("timeOptions", timeOptions);
-                request.setAttribute("topUsersByBookings", topUsersByBookings);
-                request.setAttribute("userTotalSpent", userTotalSpent);
-                request.setAttribute("userDAO", userDAO);
-
-                System.out.println("Forwarding to statistics.jsp...");
-                request.getRequestDispatcher(ADMIN_STATISTICS_PAGE).forward(request, response);
-            } catch (Exception e) {
-                LOGGER.log(Level.SEVERE, "Error retrieving statistics: " + e.getMessage(), e);
-                request.setAttribute("errorMessage", "Lỗi khi lấy dữ liệu thống kê: " + e.getMessage());
-                System.out.println("Error occurred, forwarding with error: " + e.getMessage());
-                request.getRequestDispatcher(ADMIN_STATISTICS_PAGE).forward(request, response);
-            }
-        } else {
-            response.sendError(HttpServletResponse.SC_NOT_FOUND, "Page not found"); // Xử lý đường dẫn không hợp lệ
+        Set<String> timeOptions = new HashSet<>();
+        SimpleDateFormat sdfMonthYear = new SimpleDateFormat("yyyy-MM");
+        for (BookingDTO booking : bookingList) {
+            String monthYear = sdfMonthYear.format(booking.getCreatedAt());
+            timeOptions.add(monthYear);
         }
+        System.out.println("Time options: " + timeOptions);
+
+        // Lọc theo khoảng thời gian tùy chỉnh
+        String startDateStr = request.getParameter("startDate");
+        String endDateStr = request.getParameter("endDate");
+        String timeFilter = request.getParameter("time");
+        System.out.println("StartDate: " + startDateStr + ", EndDate: " + endDateStr + ", TimeFilter: " + timeFilter);
+        if (startDateStr != null && endDateStr != null && !startDateStr.isEmpty() && !endDateStr.isEmpty()) {
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+            Date startDate = dateFormat.parse(startDateStr);
+            Date endDate = dateFormat.parse(endDateStr);
+            bookingList = bookingDAO.getBookingsByDateRange(startDate, endDate);
+            System.out.println("Filtered by date range, new size: " + (bookingList != null ? bookingList.size() : "null"));
+        } else if (timeFilter != null && !timeFilter.equals("all")) {
+            List<BookingDTO> filteredList = new ArrayList<>();
+            for (BookingDTO booking : bookingList) {
+                String bookingMonthYear = sdfMonthYear.format(booking.getCreatedAt());
+                if (bookingMonthYear.equals(timeFilter)) {
+                    filteredList.add(booking);
+                }
+            }
+            bookingList = filteredList;
+            System.out.println("Filtered by month, new size: " + (bookingList != null ? bookingList.size() : "null"));
+        }
+
+        // Kiểm tra null cho bookingList
+        if (bookingList == null) {
+            LOGGER.log(Level.WARNING, "Booking list is null");
+            bookingList = new ArrayList<>();
+        }
+
+        // Tính toán thống kê
+        double totalRevenue = 0;
+        int paidCount = 0, pendingCount = 0, cancelledCount = 0;
+        Map<String, Integer> activeUsers = new HashMap<>();
+        Map<Integer, Double> revenueByRoom = new HashMap<>();
+        Map<Integer, Integer> roomBookingCount = new HashMap<>();
+        Map<Integer, Integer> roomCancelCount = new HashMap<>();
+        Map<String, Integer> userBookingCount = new HashMap<>();
+        Map<String, Double> userTotalSpent = new HashMap<>();
+
+        for (BookingDTO booking : bookingList) {
+            if (booking.getUser() == null || booking.getRoom() == null) {
+                LOGGER.log(Level.WARNING, "Booking ID {0} has null user or room", booking.getId());
+                continue;
+            }
+            String userId = booking.getUser().getUserID();
+            int roomId = booking.getRoom().getId();
+            switch (booking.getStatus()) {
+                case "PendingPayment": // Chưa thanh toán
+                    pendingCount++;
+                    roomBookingCount.put(roomId, roomBookingCount.getOrDefault(roomId, 0) + 1);
+                    userBookingCount.put(userId, userBookingCount.getOrDefault(userId, 0) + 1);
+                    break;
+                case "Paid": // Đã thanh toán
+                case "Confirmed": // Coi Confirmed cũng là đã thanh toán
+                    paidCount++;
+                    totalRevenue += booking.getTotalPrice();
+                    activeUsers.put(userId, 1);
+                    revenueByRoom.put(roomId, revenueByRoom.getOrDefault(roomId, 0.0) + booking.getTotalPrice());
+                    roomBookingCount.put(roomId, roomBookingCount.getOrDefault(roomId, 0) + 1);
+                    userBookingCount.put(userId, userBookingCount.getOrDefault(userId, 0) + 1);
+                    userTotalSpent.put(userId, userTotalSpent.getOrDefault(userId, 0.0) + booking.getTotalPrice());
+                    break;
+                case "Cancelled": // Đã hủy
+                    cancelledCount++;
+                    roomCancelCount.put(roomId, roomCancelCount.getOrDefault(roomId, 0) + 1);
+                    userBookingCount.put(userId, userBookingCount.getOrDefault(userId, 0) + 1);
+                    break;
+            }
+        }
+        System.out.println("Total revenue: " + totalRevenue + ", Paid: " + paidCount + ", Pending: " + pendingCount + ", Cancelled: " + cancelledCount);
+
+        // Phòng được đặt nhiều nhất
+        int mostBookedRoomId = -1;
+        int maxBookings = 0;
+        for (Map.Entry<Integer, Integer> entry : roomBookingCount.entrySet()) {
+            if (entry.getValue() > maxBookings) {
+                mostBookedRoomId = entry.getKey();
+                maxBookings = entry.getValue();
+            }
+        }
+        RoomDTO mostBookedRoom = mostBookedRoomId != -1 ? roomDAO.getRoomById(mostBookedRoomId) : null;
+        System.out.println("Most booked room: " + (mostBookedRoom != null ? mostBookedRoom.getName() : "null"));
+
+        // Top 5 người dùng đặt nhiều nhất
+        List<Map.Entry<String, Integer>> topUsersByBookings = userBookingCount.entrySet().stream()
+                .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
+                .limit(5).collect(Collectors.toList());
+        System.out.println("Top users size: " + topUsersByBookings.size());
+
+        // Đặt dữ liệu vào request
+        request.setAttribute("totalRevenue", totalRevenue);
+        request.setAttribute("paidCount", paidCount);
+        request.setAttribute("pendingCount", pendingCount);
+        request.setAttribute("cancelledCount", cancelledCount);
+        request.setAttribute("activeUserCount", activeUsers.size());
+        request.setAttribute("revenueByRoom", revenueByRoom);
+        request.setAttribute("roomBookingCount", roomBookingCount);
+        request.setAttribute("roomCancelCount", roomCancelCount);
+        request.setAttribute("mostBookedRoom", mostBookedRoom);
+        request.setAttribute("mostBookedCount", maxBookings);
+        request.setAttribute("roomDAO", roomDAO);
+        request.setAttribute("timeOptions", timeOptions);
+        request.setAttribute("topUsersByBookings", topUsersByBookings);
+        request.setAttribute("userTotalSpent", userTotalSpent);
+        request.setAttribute("userDAO", userDAO);
+
+        System.out.println("Forwarding to statistics.jsp...");
+        request.getRequestDispatcher(ADMIN_STATISTICS_PAGE).forward(request, response);
+    } catch (Exception e) {
+        LOGGER.log(Level.SEVERE, "Error retrieving statistics: " + e.getMessage(), e);
+        request.setAttribute("errorMessage", "Lỗi khi lấy dữ liệu thống kê: " + e.getMessage());
+        System.out.println("Error occurred, forwarding with error: " + e.getMessage());
+        request.getRequestDispatcher(ADMIN_STATISTICS_PAGE).forward(request, response);
+    }
+} else {
+    response.sendError(HttpServletResponse.SC_NOT_FOUND, "Page not found");
+}
     }
 
 // Hàm hỗ trợ chuyển hướng về danh sách đặt phòng sau khi thực hiện hành động
