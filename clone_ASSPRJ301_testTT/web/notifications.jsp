@@ -22,7 +22,7 @@
                 background: linear-gradient(120deg, #e0eafc 0%, #cfdef3 100%);
                 color: #2c3e50;
                 min-height: 100vh;
-                padding-top: 80px; /* Tránh header che mất */
+                padding-top: 80px;
                 overflow-x: hidden;
             }
             .main-content {
@@ -79,6 +79,9 @@
                 border-radius: 15px;
                 box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
                 transition: transform 0.3s ease, box-shadow 0.3s ease;
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
             }
             .notification-item:hover {
                 transform: translateY(-5px);
@@ -86,13 +89,18 @@
             }
             .notification-item.unread {
                 background: #e8f5e9;
+                border-left: 5px solid #27ae60; /* Đánh dấu thông báo chưa đọc */
             }
             .notification-item p {
-                margin: 5px 0;
+                margin: 0;
                 font-size: 16px;
                 color: #34495e;
+                line-height: 1.5;
             }
-            .notification-item small {
+            .notification-item .message {
+                font-weight: 500;
+            }
+            .notification-item .timestamp {
                 font-size: 14px;
                 color: #7f8c8d;
             }
@@ -106,6 +114,7 @@
                 font-weight: 600;
                 cursor: pointer;
                 transition: transform 0.3s ease, background 0.3s ease;
+                align-self: flex-start;
                 margin-top: 10px;
             }
             .btn-mark-read:hover {
@@ -117,6 +126,9 @@
                 padding: 30px;
                 color: #7f8c8d;
                 font-size: 18px;
+                background: #f9fbfc;
+                border-radius: 15px;
+                box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
             }
             @media (max-width: 768px) {
                 .main-content {
@@ -131,68 +143,70 @@
                 .btn-mark-read {
                     padding: 8px 15px;
                 }
-            </style>
-        </head>
-        <body>
-            <div class="header-container">
-                <%@include file="header.jsp" %>
-            </div>
+            }
+        </style>
+    </head>
+    <body>
+        <div class="header-container">
+            <%@include file="header.jsp" %>
+        </div>
 
-            <div class="main-content">
-                <div class="notifications-container">
-                    <h2>Thông báo</h2>
-                    <a href="<%= request.getContextPath()%>/home.jsp" class="back-link"><i class="fas fa-arrow-left"></i> Quay lại trang chủ</a>
+        <div class="main-content">
+            <div class="notifications-container">
+                <h2>Thông báo</h2>
+                <a href="<%= request.getContextPath()%>/home.jsp" class="back-link"><i class="fas fa-arrow-left"></i> Quay lại trang chủ</a>
 
-                    <%
-                        if (user == null) {
-                    %>
-                    <p class="no-notifications">Vui lòng đăng nhập để xem thông báo!</p>
-                    <%
-                    } else {
-                        NotificationDAO notificationDAO = new NotificationDAO();
-                        List<NotificationDTO> notifications = notificationDAO.getNotificationsByUserId(user.getUserID());
-                        SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
-                        if (notifications.isEmpty()) {
-                    %>
-                    <p class="no-notifications">Bạn chưa có thông báo nào.</p>
-                    <%
-                    } else {
-                    %>
-                    <div class="notification-list">
-                        <% for (NotificationDTO notification : notifications) {%>
-                        <div class="notification-item <%= notification.isIsRead() ? "" : "unread"%>">
-                            <p><%= notification.getMessage()%></p>
-                            <p><small><%= dateFormat.format(notification.getCreatedAt())%></small></p>
-                            <% if (!notification.isIsRead()) {%>
-                            <button class="btn-mark-read" onclick="markAsRead(<%= notification.getNotificationId()%>)">Đánh dấu đã đọc</button>
-                            <% } %>
-                        </div>
+                <%
+                    if (user == null) {
+                %>
+                <p class="no-notifications">Vui lòng đăng nhập để xem thông báo!</p>
+                <%
+                } else {
+                    NotificationDAO notificationDAO = new NotificationDAO();
+                    List<NotificationDTO> notifications = notificationDAO.getNotificationsByUserId(user.getUserID());
+                    SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+                    if (notifications.isEmpty()) {
+                %>
+                <p class="no-notifications">Bạn chưa có thông báo nào.</p>
+                <%
+                } else {
+                %>
+                <div class="notification-list">
+                    <% for (NotificationDTO notification : notifications) {%>
+                    <div class="notification-item <%= notification.isIsRead() ? "" : "unread"%>">
+                        <p class="message"><%= notification.getMessage()%></p>
+                        <p class="timestamp"><small><%= dateFormat.format(notification.getCreatedAt())%></small></p>
+                                <% if (!notification.isIsRead()) {%>
+                        <button class="btn-mark-read" onclick="markAsRead(<%= notification.getNotificationId()%>)">Đánh dấu đã đọc</button>
                         <% } %>
                     </div>
-                    <%
-                            }
-                        }
-                    %>
+                    <% } %>
                 </div>
-            </div>
-
-            <div class="footer-container">
-                <%@include file="footer.jsp" %>
-            </div>
-            <script>
-                function markAsRead(notificationId) {
-                    $.ajax({
-                        url: '<%= request.getContextPath()%>/markNotificationAsRead',
-                        type: 'POST',
-                        data: {notificationId: notificationId},
-                        success: function (response) {
-                            location.reload(); // Làm mới trang để cập nhật giao diện
-                        },
-                        error: function () {
-                            alert('Có lỗi xảy ra khi đánh dấu đã đọc.');
+                <%
                         }
-                    });
-                }
-            </script>
-        </body>
-    </html>
+                    }
+                %>
+            </div>
+        </div>
+
+        <div class="footer-container">
+            <%@include file="footer.jsp" %>
+        </div>
+
+        <script>
+            function markAsRead(notificationId) {
+                $.ajax({
+                    url: '<%= request.getContextPath()%>/markNotificationAsRead',
+                    type: 'POST',
+                    data: {notificationId: notificationId},
+                    success: function (response) {
+                        location.reload(); // Làm mới trang để cập nhật giao diện
+                    },
+                    error: function () {
+                        alert('Có lỗi xảy ra khi đánh dấu đã đọc.');
+                    }
+                });
+            }
+        </script>
+    </body>
+</html>
