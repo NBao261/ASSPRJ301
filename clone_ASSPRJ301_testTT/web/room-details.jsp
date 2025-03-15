@@ -13,7 +13,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chi tiết phòng</title>
     <style>
-        /* CSS từ đoạn mã mới, điều chỉnh để tương thích */
+        /* CSS giữ nguyên từ trước, chỉ thêm .contact-info vào */
         * {
             margin: 0;
             padding: 0;
@@ -53,7 +53,6 @@
             gap: 20px;
         }
 
-        /* Phần Gallery */
         .room-gallery-section {
             width: 350px;
             background: white;
@@ -106,7 +105,6 @@
         .prev { left: 20px; }
         .next { right: 20px; }
 
-        /* Phần giữa (Thông tin chi tiết) */
         .scrollable-content {
             flex: 1;
             background: white;
@@ -281,7 +279,6 @@
             font-weight: 600;
         }
 
-        /* Phần hành động */
         .action-info-section {
             width: 300px;
             background: white;
@@ -327,6 +324,7 @@
             text-align: center;
             transition: background 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
             box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);
+            margin-bottom: 25px; /* Thêm margin để cách phần liên hệ */
         }
 
         .btn-book:hover {
@@ -335,7 +333,56 @@
             box-shadow: 0 6px 20px rgba(231, 76, 60, 0.6);
         }
 
-        /* Phần bản đồ */
+        /* Thêm CSS cho phần thông tin liên hệ */
+        .contact-info {
+            text-align: left;
+            font-size: 15px;
+            color: #666;
+        }
+
+        .contact-info h4 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #5DC1B9;
+            padding-bottom: 5px;
+            display: inline-block;
+        }
+
+        .contact-info p {
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .contact-info i {
+            color: #5DC1B9;
+            font-size: 18px;
+        }
+
+        .btn-contact {
+            display: block;
+            padding: 12px 0;
+            background: linear-gradient(45deg, #5DC1B9, #4ECDC4);
+            color: white;
+            text-decoration: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            text-align: center;
+            transition: background 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+            box-shadow: 0 4px 15px rgba(93, 193, 185, 0.4);
+            margin-bottom: 10px;
+        }
+
+        .btn-contact:hover {
+            background: linear-gradient(45deg, #4ECDC4, #45b7d1);
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(93, 193, 185, 0.6);
+        }
+
         .room-location {
             width: 100%;
             margin-top: 30px;
@@ -379,7 +426,6 @@
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
         }
 
-        /* Responsive Design */
         @media (max-width: 1024px) {
             .room-layout {
                 flex-direction: column;
@@ -548,6 +594,21 @@
                     Đánh giá: <%= room.getRatings() %> <span class="stars">⭐</span> (<%= room.getRatings() %>/5)
                 </div>
                 <a href="booking.jsp?roomId=<%= room.getId() %>" class="btn-book">Đặt ngay</a>
+                <!-- Tích hợp phần thông tin liên hệ -->
+                <div class="contact-info">
+                    <h4>Liên hệ nhanh</h4>
+                    <p><i class="fas fa-phone-alt"></i> 0909 123 456</p>
+                    <p><i class="fas fa-envelope"></i> homestay@example.com</p>
+                    <a href="https://facebook.com/yourpage" target="_blank" class="btn-contact" style="background: linear-gradient(45deg, #1877F2, #3B5998);">
+                        <i class="fab fa-facebook-f"></i> Liên hệ qua Facebook
+                    </a>
+                    <a href="https://instagram.com/yourpage" target="_blank" class="btn-contact" style="background: linear-gradient(45deg, #C13584, #E1306C, #F77737);">
+                        <i class="fab fa-instagram"></i> Liên hệ qua Instagram
+                    </a>
+                    <a href="https://zalo.me/0909123456" target="_blank" class="btn-contact" style="background: linear-gradient(45deg, #00A2FF, #0078D4);">
+                        <i class="fas fa-comment-dots"></i> Liên hệ qua Zalo
+                    </a>
+                </div>
             </div>
         </div>
 
