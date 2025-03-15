@@ -66,9 +66,10 @@ public class ChangePasswordController extends HttpServlet {
             return;
         }
 
-        // Cập nhật mật khẩu mới (plaintext, để UserDAO.update mã hóa)
-        dbUser.setPassword(newPassword);
-        if (userDAO.update(dbUser)) {
+        // Cập nhật mật khẩu mới bằng phương thức updatePassword
+        if (userDAO.updatePassword(userId, newPassword)) {
+            // Cập nhật lại user trong session (lấy lại từ DB để đảm bảo đồng bộ)
+            dbUser = userDAO.readById(userId);
             session.setAttribute("user", dbUser);
             request.setAttribute("changePassSuccess", "Đổi mật khẩu thành công!");
         } else {

@@ -443,7 +443,7 @@
                                 for (ReviewDTO review : reviews) {
                                     UserDTO reviewer = userDAO.readById(review.getUserId());
                                     String reviewerName = reviewer != null ? reviewer.getFullName() : review.getUserId();
-                                    // Tạo chuỗi sao bằng StringBuilder thay vì repeat()
+                                    // Tạo chuỗi sao bằng StringBuilder
                                     StringBuilder stars = new StringBuilder();
                                     int rating = (int) review.getRating();
                                     for (int i = 0; i < rating; i++) {

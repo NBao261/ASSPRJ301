@@ -67,17 +67,33 @@ public class UserDAO implements IDAO<UserDTO, String> {
     @Override
     public boolean update(UserDTO user) {
         boolean success = false;
-        String sql = "UPDATE tblUsers SET fullName = ?, roleID = ?, password = ?, gmail = ?, sdt = ?, avatar_url = ? WHERE userID = ?";
+        String sql = "UPDATE tblUsers SET fullName = ?, roleID = ?, gmail = ?, sdt = ?, avatar_url = ? WHERE userID = ?";
 
         try (Connection conn = DBUtils.getConnection();
                 PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, user.getFullName());
             ps.setString(2, user.getRoleID());
-            ps.setString(3, PasswordUtils.hashPassword(user.getPassword())); // Mã hóa mật khẩu
-            ps.setString(4, user.getGmail());
-            ps.setString(5, user.getSdt());
-            ps.setString(6, user.getAvatarUrl());
-            ps.setString(7, user.getUserID());
+            ps.setString(3, user.getGmail());
+            ps.setString(4, user.getSdt());
+            ps.setString(5, user.getAvatarUrl());
+            ps.setString(6, user.getUserID());
+
+            success = ps.executeUpdate() > 0;
+        } catch (ClassNotFoundException | SQLException ex) {
+            Logger.getLogger(UserDAO.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return success;
+    }
+
+    // Phương thức mới để đổi mật khẩu
+    public boolean updatePassword(String userId, String newPassword) {
+        boolean success = false;
+        String sql = "UPDATE tblUsers SET password = ? WHERE userID = ?";
+
+        try (Connection conn = DBUtils.getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, PasswordUtils.hashPassword(newPassword));
+            ps.setString(2, userId);
 
             success = ps.executeUpdate() > 0;
         } catch (ClassNotFoundException | SQLException ex) {
