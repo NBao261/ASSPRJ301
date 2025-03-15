@@ -266,7 +266,7 @@ public class RoomDAO {
         }
     }
 
-    public List<RoomDTO> getFilteredRooms(String homestayName, Double maxPrice, String priceFilterType, String amenities) {
+    public List<RoomDTO> getFilteredRooms(String homestayName, double minPrice, double maxPrice, String amenities) {
         List<RoomDTO> rooms = new ArrayList<>();
         String sql = "SELECT * FROM Rooms WHERE 1=1";
 
@@ -274,13 +274,8 @@ public class RoomDAO {
         if (homestayName != null && !homestayName.isEmpty()) {
             sql += " AND LOWER(name) LIKE ?";
         }
-        if (maxPrice != null) {
-            if ("below".equals(priceFilterType)) {
-                sql += " AND price <= ?";
-            } else if ("above".equals(priceFilterType)) {
-                sql += " AND price >= ?";
-            }
-        }
+        // Lọc theo khoảng giá từ minPrice đến maxPrice
+        sql += " AND price BETWEEN ? AND ?";
         if (amenities != null && !amenities.isEmpty()) {
             sql += " AND LOWER(amenities) LIKE ?";
         }
@@ -292,9 +287,9 @@ public class RoomDAO {
             if (homestayName != null && !homestayName.isEmpty()) {
                 ps.setString(index++, "%" + homestayName.toLowerCase() + "%");
             }
-            if (maxPrice != null) {
-                ps.setDouble(index++, maxPrice);
-            }
+            // Thiết lập giá trị minPrice và maxPrice
+            ps.setDouble(index++, minPrice);
+            ps.setDouble(index++, maxPrice);
             if (amenities != null && !amenities.isEmpty()) {
                 ps.setString(index++, "%" + amenities.toLowerCase() + "%");
             }
@@ -318,92 +313,5 @@ public class RoomDAO {
         return rooms;
     }
 
-    // Phương thức lấy tổng số phòng
-    public int getTotalRoomCount() throws Exception {
-        String sql = "SELECT COUNT(*) FROM rooms";
-        try (Connection conn = utils.DBUtils.getConnection();
-                PreparedStatement ps = conn.prepareStatement(sql);
-                ResultSet rs = ps.executeQuery()) {
-            if (rs.next()) {
-                return rs.getInt(1);
-            }
-        }
-        return 0;
-    }
-
-    // Phương thức lấy danh sách phòng theo trang
-    public List<RoomDTO> getRoomsByPage(int offset, int limit) throws Exception {
-        List<RoomDTO> roomList = new ArrayList<>();
-        String sql = "SELECT * FROM rooms ORDER BY id OFFSET ? ROWS FETCH NEXT ? ROWS ONLY";
-        try (Connection conn = utils.DBUtils.getConnection();
-                PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, offset);
-            ps.setInt(2, limit);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    RoomDTO room = new RoomDTO();
-                    room.setId(rs.getInt("id"));
-                    room.setName(rs.getString("name"));
-                    room.setDescription(rs.getString("description"));
-                    room.setPrice(rs.getDouble("price"));
-                    room.setAmenities(rs.getString("amenities"));
-                    room.setRatings(rs.getFloat("ratings"));
-                    room.setImageUrl(rs.getString("image_url"));
-                    // Ánh xạ các cột khác nếu cần
-                    roomList.add(room);
-                }
-            }
-        }
-        return roomList;
-    }
-
-    public List<RoomDTO> filterRooms(String searchName, Double maxPrice, String priceFilterType, String amenities, int offset, int limit) throws Exception {
-        List<RoomDTO> roomList = new ArrayList<>();
-        StringBuilder sql = new StringBuilder("SELECT * FROM rooms WHERE 1=1");
-
-        // Xây dựng điều kiện lọc
-        List<Object> params = new ArrayList<>();
-        if (searchName != null && !searchName.trim().isEmpty()) {
-            sql.append(" AND name LIKE ?");
-            params.add("%" + searchName + "%");
-        }
-        if (maxPrice != null) {
-            if ("below".equals(priceFilterType)) {
-                sql.append(" AND price <= ?");
-            } else {
-                sql.append(" AND price >= ?");
-            }
-            params.add(maxPrice);
-        }
-        if (amenities != null && !amenities.trim().isEmpty()) {
-            sql.append(" AND amenities LIKE ?");
-            params.add("%" + amenities + "%");
-        }
-
-        // Thêm phân trang
-        sql.append(" ORDER BY id OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
-        params.add(offset);
-        params.add(limit);
-
-        try (Connection conn = utils.DBUtils.getConnection();
-                PreparedStatement ps = conn.prepareStatement(sql.toString())) {
-            for (int i = 0; i < params.size(); i++) {
-                ps.setObject(i + 1, params.get(i));
-            }
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    RoomDTO room = new RoomDTO();
-                    room.setId(rs.getInt("id"));
-                    room.setName(rs.getString("name"));
-                    room.setDescription(rs.getString("description"));
-                    room.setPrice(rs.getDouble("price"));
-                    room.setAmenities(rs.getString("amenities"));
-                    room.setRatings(rs.getFloat("ratings"));
-                    room.setImageUrl(rs.getString("image_url"));
-                    roomList.add(room);
-                }
-            }
-        }
-        return roomList;
-    }
+    // Các phương thức khác như getAllRooms nếu có
 }
