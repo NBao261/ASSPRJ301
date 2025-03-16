@@ -142,15 +142,15 @@
             if (userObj == null || !"AD".equals(((dto.UserDTO) userObj).getRoleID())) {
                 response.sendRedirect(request.getContextPath() + "/login-regis.jsp");
             } else {
-                // Không khai báo lại biến user, giả định user đã được khai báo trong header.jsp
         %>
         <div class="dashboard-container">
-            <h1>Chào mừng Admin: <%= user.getFullName() %></h1>
+            <h1>Chào mừng Admin: <%= ((UserDTO) userObj).getFullName() %></h1>
             <div class="menu">
                 <a href="<%= request.getContextPath() %>/admin/users" class="menu-item"><i class="fas fa-users"></i> Quản lý người dùng</a>
                 <a href="<%= request.getContextPath() %>/admin/rooms" class="menu-item"><i class="fas fa-bed"></i> Quản lý phòng</a>
                 <a href="<%= request.getContextPath() %>/admin/bookings" class="menu-item"><i class="fas fa-calendar-check"></i> Quản lý đặt phòng</a>
                 <a href="<%= request.getContextPath() %>/admin/statistics" class="menu-item"><i class="fas fa-chart-bar"></i> Thống kê</a>
+                <a href="<%= request.getContextPath() %>/admin/messages" class="menu-item"><i class="fas fa-envelope"></i> Quản lý tin nhắn</a>
             </div>
             <a href="<%= request.getContextPath() %>/login?action=logout" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a>
         </div>

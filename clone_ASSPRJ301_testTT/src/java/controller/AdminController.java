@@ -1,9 +1,11 @@
 package controller;
 
 import dao.BookingDAO;
+import dao.ContactDAO;
 import dao.RoomDAO;
 import dao.UserDAO;
 import dto.BookingDTO;
+import dto.ContactMessageDTO;
 import dto.RoomDTO;
 import dto.UserDTO;
 import javax.servlet.ServletException;
@@ -26,12 +28,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import dao.NotificationDAO;
-import dto.NotificationDTO;
-import utils.PasswordUtils;
 
 @WebServlet(name = "AdminController", urlPatterns = {
-    "/admin/users", "/admin/rooms", "/admin/bookings", "/admin/statistics"
+    "/admin/users", "/admin/rooms", "/admin/bookings", "/admin/statistics", "/admin/messages"
 })
 public class AdminController extends HttpServlet {
 
@@ -40,6 +39,7 @@ public class AdminController extends HttpServlet {
     private static final String ADMIN_ROOMS_PAGE = "/admin/rooms.jsp";
     private static final String ADMIN_BOOKINGS_PAGE = "/admin/bookings.jsp";
     private static final String ADMIN_STATISTICS_PAGE = "/admin/statistics.jsp";
+    private static final String ADMIN_MESSAGES_PAGE = "/admin/messages.jsp"; // Trang mới cho tin nhắn
     private static final String EMAIL_PATTERN = "^[A-Za-z0-9+_.-]+@(.+)$";
     private static final String PHONE_PATTERN = "^\\+?[0-9]{9,12}$";
     private static final Logger LOGGER = Logger.getLogger(AdminController.class.getName());
@@ -187,7 +187,7 @@ public class AdminController extends HttpServlet {
 
                             if (canDelete) {
                                 if (userDAO.delete(deleteUserID)) {
-                                    request.setAttribute("successMessage", "Xóa người dùng thành công! Các đặt phòng liên quan (nếu có) cũng đã được xóa.");
+                                    request.setAttribute("successMessage", "Xóa người dùng thành công! Các đặt phòng và tin nhắn liên quan (nếu có) cũng đã được xóa.");
                                 } else {
                                     request.setAttribute("errorMessage", "Xóa người dùng thất bại!");
                                 }
@@ -422,11 +422,6 @@ public class AdminController extends HttpServlet {
                             if (booking != null) {
                                 if (BookingDAO.STATUS_PAID.equals(booking.getStatus())) {
                                     if (bookingDAO.updateBookingStatus(bookingId, BookingDAO.STATUS_CONFIRMED)) {
-                                        NotificationDAO notificationDAO = new NotificationDAO();
-                                        String roomName = booking.getRoom() != null ? booking.getRoom().getName() : "Không xác định";
-                                        String message = "Đơn đặt phòng '" + roomName + "' đã được xác nhận.";
-                                        NotificationDTO notification = new NotificationDTO(0, booking.getUser().getUserID(), message, null, false);
-                                        notificationDAO.addNotification(notification);
                                         request.setAttribute("successMessage", "Xác nhận đặt phòng thành công!");
                                     } else {
                                         request.setAttribute("errorMessage", "Cập nhật trạng thái đặt phòng thất bại!");
@@ -453,11 +448,6 @@ public class AdminController extends HttpServlet {
                             if (booking != null) {
                                 if (!BookingDAO.STATUS_CANCELLED.equals(booking.getStatus())) {
                                     if (bookingDAO.cancelBooking(bookingId)) {
-                                        NotificationDAO notificationDAO = new NotificationDAO();
-                                        String roomName = booking.getRoom() != null ? booking.getRoom().getName() : "Không xác định";
-                                        String message = "Đơn đặt phòng '" + roomName + "' đã bị hủy bởi admin.";
-                                        NotificationDTO notification = new NotificationDTO(0, booking.getUser().getUserID(), message, null, false);
-                                        notificationDAO.addNotification(notification);
                                         request.setAttribute("successMessage", "Hủy đặt phòng thành công!");
                                     } else {
                                         request.setAttribute("errorMessage", "Hủy đặt phòng thất bại!");
@@ -514,28 +504,22 @@ public class AdminController extends HttpServlet {
             RoomDAO roomDAO = new RoomDAO();
             UserDAO userDAO = new UserDAO();
             try {
-                System.out.println("Starting statistics processing...");
                 List<BookingDTO> bookingList = bookingDAO.getAllBookings();
-                System.out.println("Booking list size: " + (bookingList != null ? bookingList.size() : "null"));
-
                 Set<String> timeOptions = new HashSet<>();
                 SimpleDateFormat sdfMonthYear = new SimpleDateFormat("yyyy-MM");
                 for (BookingDTO booking : bookingList) {
                     String monthYear = sdfMonthYear.format(booking.getCreatedAt());
                     timeOptions.add(monthYear);
                 }
-                System.out.println("Time options: " + timeOptions);
 
                 String startDateStr = request.getParameter("startDate");
                 String endDateStr = request.getParameter("endDate");
                 String timeFilter = request.getParameter("time");
-                System.out.println("StartDate: " + startDateStr + ", EndDate: " + endDateStr + ", TimeFilter: " + timeFilter);
                 if (startDateStr != null && endDateStr != null && !startDateStr.isEmpty() && !endDateStr.isEmpty()) {
                     SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
                     Date startDate = dateFormat.parse(startDateStr);
                     Date endDate = dateFormat.parse(endDateStr);
                     bookingList = bookingDAO.getBookingsByDateRange(startDate, endDate);
-                    System.out.println("Filtered by date range, new size: " + (bookingList != null ? bookingList.size() : "null"));
                 } else if (timeFilter != null && !timeFilter.equals("all")) {
                     List<BookingDTO> filteredList = new ArrayList<>();
                     for (BookingDTO booking : bookingList) {
@@ -545,7 +529,6 @@ public class AdminController extends HttpServlet {
                         }
                     }
                     bookingList = filteredList;
-                    System.out.println("Filtered by month, new size: " + (bookingList != null ? bookingList.size() : "null"));
                 }
 
                 if (bookingList == null) {
@@ -592,7 +575,6 @@ public class AdminController extends HttpServlet {
                             break;
                     }
                 }
-                System.out.println("Total revenue: " + totalRevenue + ", Paid: " + paidCount + ", Pending: " + pendingCount + ", Cancelled: " + cancelledCount);
 
                 int mostBookedRoomId = -1;
                 int maxBookings = 0;
@@ -603,12 +585,10 @@ public class AdminController extends HttpServlet {
                     }
                 }
                 RoomDTO mostBookedRoom = mostBookedRoomId != -1 ? roomDAO.getRoomById(mostBookedRoomId) : null;
-                System.out.println("Most booked room: " + (mostBookedRoom != null ? mostBookedRoom.getName() : "null"));
 
                 List<Map.Entry<String, Integer>> topUsersByBookings = userBookingCount.entrySet().stream()
                         .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
                         .limit(5).collect(Collectors.toList());
-                System.out.println("Top users size: " + topUsersByBookings.size());
 
                 request.setAttribute("totalRevenue", totalRevenue);
                 request.setAttribute("paidCount", paidCount);
@@ -626,13 +606,48 @@ public class AdminController extends HttpServlet {
                 request.setAttribute("userTotalSpent", userTotalSpent);
                 request.setAttribute("userDAO", userDAO);
 
-                System.out.println("Forwarding to statistics.jsp...");
                 request.getRequestDispatcher(ADMIN_STATISTICS_PAGE).forward(request, response);
             } catch (Exception e) {
                 LOGGER.log(Level.SEVERE, "Error retrieving statistics: " + e.getMessage(), e);
                 request.setAttribute("errorMessage", "Lỗi khi lấy dữ liệu thống kê: " + e.getMessage());
-                System.out.println("Error occurred, forwarding with error: " + e.getMessage());
                 request.getRequestDispatcher(ADMIN_STATISTICS_PAGE).forward(request, response);
+            }
+        } else if ("/admin/messages".equals(path)) {
+            ContactDAO contactDAO = new ContactDAO();
+            if (action == null || action.isEmpty()) {
+                try {
+                    List<ContactMessageDTO> messageList = contactDAO.getAllMessages();
+                    LOGGER.log(Level.INFO, "Retrieved {0} messages from database", messageList.size());
+                    request.setAttribute("messageList", messageList);
+                    if (messageList.isEmpty()) {
+                        request.setAttribute("infoMessage", "Không có tin nhắn nào từ người dùng!");
+                    }
+                } catch (Exception e) {
+                    LOGGER.log(Level.SEVERE, "Error retrieving messages: " + e.getMessage(), e);
+                    request.setAttribute("errorMessage", "Lỗi khi lấy danh sách tin nhắn: " + e.getMessage());
+                }
+                request.getRequestDispatcher(ADMIN_MESSAGES_PAGE).forward(request, response);
+            } else if ("markAsRead".equals(action)) {
+                String messageIdStr = request.getParameter("messageId");
+                try {
+                    int messageId = Integer.parseInt(messageIdStr);
+                    if (contactDAO.markAsRead(messageId)) {
+                        request.setAttribute("successMessage", "Đã đánh dấu tin nhắn là đã đọc!");
+                    } else {
+                        request.setAttribute("errorMessage", "Không thể đánh dấu tin nhắn!");
+                    }
+                } catch (NumberFormatException e) {
+                    request.setAttribute("errorMessage", "ID tin nhắn không hợp lệ!");
+                } catch (Exception e) {
+                    LOGGER.log(Level.SEVERE, "Error marking message as read: " + e.getMessage(), e);
+                    request.setAttribute("errorMessage", "Lỗi khi đánh dấu tin nhắn: " + e.getMessage());
+                }
+                // Cập nhật lại danh sách tin nhắn
+                List<ContactMessageDTO> updatedMessageList = contactDAO.getAllMessages();
+                request.setAttribute("messageList", updatedMessageList);
+                request.getRequestDispatcher(ADMIN_MESSAGES_PAGE).forward(request, response);
+            } else {
+                response.sendError(HttpServletResponse.SC_NOT_FOUND, "Action not supported");
             }
         } else {
             response.sendError(HttpServletResponse.SC_NOT_FOUND, "Page not found");
@@ -672,6 +687,6 @@ public class AdminController extends HttpServlet {
 
     @Override
     public String getServletInfo() {
-        return "Admin Controller for managing users, rooms, bookings, and statistics";
+        return "Admin Controller for managing users, rooms, bookings, statistics, and messages";
     }
 }
