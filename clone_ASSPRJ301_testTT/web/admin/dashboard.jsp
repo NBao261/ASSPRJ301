@@ -1,5 +1,7 @@
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%@page import="dto.UserDTO"%>
+<%@page import="dao.ContactDAO"%>
+
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -69,6 +71,7 @@
             align-items: center;
             justify-content: center;
             gap: 10px;
+            position: relative; /* Để định vị số đếm đỏ */
         }
         .menu-item i {
             font-size: 24px;
@@ -76,6 +79,24 @@
         .menu-item:hover {
             transform: scale(1.05);
             box-shadow: 0 8px 25px rgba(26, 188, 156, 0.6);
+        }
+        /* Số tin nhắn chưa đọc */
+        .message-count {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            min-width: 20px;
+            height: 20px;
+            background: #e74c3c;
+            color: white;
+            font-size: 12px;
+            font-weight: 600;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2px;
+            border: 2px solid #fff; /* Viền trắng để nổi bật */
         }
         .logout-btn {
             display: block;
@@ -128,6 +149,13 @@
             .menu {
                 gap: 15px;
             }
+            .message-count {
+                top: 8px;
+                right: 8px;
+                min-width: 18px;
+                height: 18px;
+                font-size: 10px;
+            }
         }
     </style>
 </head>
@@ -142,6 +170,8 @@
             if (userObj == null || !"AD".equals(((dto.UserDTO) userObj).getRoleID())) {
                 response.sendRedirect(request.getContextPath() + "/login-regis.jsp");
             } else {
+                ContactDAO contactDAO = new ContactDAO();
+                int unreadMessageCount = contactDAO.getUnreadMessageCount();
         %>
         <div class="dashboard-container">
             <h1>Chào mừng Admin: <%= ((UserDTO) userObj).getFullName() %></h1>
@@ -150,7 +180,12 @@
                 <a href="<%= request.getContextPath() %>/admin/rooms" class="menu-item"><i class="fas fa-bed"></i> Quản lý phòng</a>
                 <a href="<%= request.getContextPath() %>/admin/bookings" class="menu-item"><i class="fas fa-calendar-check"></i> Quản lý đặt phòng</a>
                 <a href="<%= request.getContextPath() %>/admin/statistics" class="menu-item"><i class="fas fa-chart-bar"></i> Thống kê</a>
-                <a href="<%= request.getContextPath() %>/admin/messages" class="menu-item"><i class="fas fa-envelope"></i> Quản lý tin nhắn</a>
+                <a href="<%= request.getContextPath() %>/admin/messages" class="menu-item">
+                    <i class="fas fa-envelope"></i> Quản lý tin nhắn
+                    <% if (unreadMessageCount > 0) { %>
+                    <span class="message-count"><%= unreadMessageCount %></span>
+                    <% } %>
+                </a>
             </div>
             <a href="<%= request.getContextPath() %>/login?action=logout" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a>
         </div>

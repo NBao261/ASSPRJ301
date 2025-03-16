@@ -8,6 +8,8 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import utils.DBUtils;
 
 public class ContactDAO {
@@ -54,5 +56,18 @@ public class ContactDAO {
             ps.setInt(1, messageId);
             return ps.executeUpdate() > 0;
         }
+    }
+    public int getUnreadMessageCount() {
+        String sql = "SELECT COUNT(*) FROM contact_messages WHERE is_read = 0";
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (ClassNotFoundException | SQLException ex) {
+            Logger.getLogger(ContactDAO.class.getName()).log(Level.SEVERE, "Error counting unread messages", ex);
+        }
+        return 0;
     }
 }

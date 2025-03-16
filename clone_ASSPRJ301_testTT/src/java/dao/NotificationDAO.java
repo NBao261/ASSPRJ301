@@ -64,4 +64,19 @@ public class NotificationDAO {
         }
         return false;
     }
+    public int getUnreadCount(String userId) {
+        String sql = "SELECT COUNT(*) FROM notifications WHERE user_id = ? AND is_read = 0";
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        } catch (ClassNotFoundException | SQLException ex) {
+            Logger.getLogger(NotificationDAO.class.getName()).log(Level.SEVERE, "Error counting unread notifications", ex);
+        }
+        return 0;
+    }
 }   

@@ -1,5 +1,6 @@
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%@page import="dto.UserDTO"%>
+<%@page import="dao.NotificationDAO"%>
 
 <!DOCTYPE html>
 <html>
@@ -62,6 +63,7 @@
 
             .nav-links li {
                 margin: 0 15px;
+                position: relative; /* Để định vị số thông báo */
             }
 
             .nav-links a {
@@ -77,6 +79,25 @@
             .nav-links a:hover, .nav-links a:focus {
                 background: rgba(255, 255, 255, 0.15);
                 transform: translateY(-2px);
+            }
+
+            /* Số thông báo chưa đọc */
+            .notification-count {
+                position: absolute;
+                top: 2px;
+                right: 2px;
+                min-width: 16px;
+                height: 16px;
+                background: #e74c3c;
+                color: white;
+                font-size: 10px;
+                font-weight: 600;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 2px;
+                border: 2px solid #4ECDC4; /* Viền khớp màu header */
             }
 
             .header-right {
@@ -362,9 +383,13 @@
                     height: 50px;
                 }
 
+                /* Điều chỉnh số thông báo trên mobile */
+                .notification-count {
+                    top: 5px;
+                    right: 8px;
+                }
             }
         </style>
-
     </head>
     <body>
         <header>
@@ -376,13 +401,24 @@
                         <li><a href="<%= request.getContextPath()%>/search.jsp">Homestay</a></li>
                         <li><a href="<%= request.getContextPath()%>/services.jsp">Dịch vụ</a></li>
                         <li><a href="<%= request.getContextPath()%>/contact.jsp">Liên hệ</a></li>
-                        <li><a href="<%= request.getContextPath()%>/notifications.jsp">Thông báo</a></li>
-                            <%
-                                UserDTO user = (UserDTO) session.getAttribute("user");
-                                if (user != null && "AD".equals(user.getRoleID())) {
-                            %>
+                        <%
+                            UserDTO user = (UserDTO) session.getAttribute("user");
+                            NotificationDAO notificationDAO = new NotificationDAO();
+                            int unreadCount = (user != null) ? notificationDAO.getUnreadCount(user.getUserID()) : 0;
+                        %>
+                        <li>
+                            <a href="<%= request.getContextPath()%>/notifications.jsp">
+                                Thông báo
+                                <% if (unreadCount > 0) { %>
+                                <span class="notification-count"><%= unreadCount %></span>
+                                <% } %>
+                            </a>
+                        </li>
+                        <%
+                            if (user != null && "AD".equals(user.getRoleID())) {
+                        %>
                         <li><a href="<%= request.getContextPath()%>/admin/dashboard.jsp">Admin Dashboard</a></li>
-                            <% } %>
+                        <% } %>
                     </ul>
                 </nav>
                 <div class="header-right">
@@ -446,5 +482,4 @@
             });
         </script>
     </body>
-</body>
 </html>

@@ -189,7 +189,6 @@
                 <p class="no-notifications">Vui lòng đăng nhập để xem thông báo!</p>
                 <%
                 } else {
-                    NotificationDAO notificationDAO = new NotificationDAO();
                     List<NotificationDTO> notifications = notificationDAO.getNotificationsByUserId(user.getUserID());
                     SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
                     if (notifications.isEmpty()) {
