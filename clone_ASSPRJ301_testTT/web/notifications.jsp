@@ -82,6 +82,7 @@
                 display: flex;
                 flex-direction: column;
                 gap: 8px;
+                position: relative; /* Để thêm hiệu ứng động */
             }
             .notification-item:hover {
                 transform: translateY(-5px);
@@ -113,7 +114,7 @@
                 font-size: 14px;
                 font-weight: 600;
                 cursor: pointer;
-                transition: transform 0.3s ease, background 0.3s ease;
+                transition: transform 0.3s ease, background 0.3s ease, opacity 0.3s ease;
                 align-self: flex-start;
                 margin-top: 10px;
             }
@@ -129,6 +130,32 @@
                 background: #f9fbfc;
                 border-radius: 15px;
                 box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
+            }
+            /* Thông báo tạm thời */
+            .temp-message {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 15px 25px;
+                border-radius: 8px;
+                color: white;
+                font-weight: 500;
+                z-index: 1000;
+                animation: slideIn 0.5s ease-out, fadeOut 0.5s ease-out 2.5s forwards;
+            }
+            .temp-message.success {
+                background: #27ae60;
+            }
+            .temp-message.error {
+                background: #e74c3c;
+            }
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes fadeOut {
+                from { opacity: 1; }
+                to { opacity: 0; }
             }
             @media (max-width: 768px) {
                 .main-content {
@@ -173,10 +200,10 @@
                 %>
                 <div class="notification-list">
                     <% for (NotificationDTO notification : notifications) {%>
-                    <div class="notification-item <%= notification.isIsRead() ? "" : "unread"%>">
+                    <div class="notification-item <%= notification.isIsRead() ? "" : "unread"%>" id="notification-<%= notification.getNotificationId()%>">
                         <p class="message"><%= notification.getMessage()%></p>
                         <p class="timestamp"><small><%= dateFormat.format(notification.getCreatedAt())%></small></p>
-                                <% if (!notification.isIsRead()) {%>
+                        <% if (!notification.isIsRead()) {%>
                         <button class="btn-mark-read" onclick="markAsRead(<%= notification.getNotificationId()%>)">Đánh dấu đã đọc</button>
                         <% } %>
                     </div>
@@ -200,12 +227,28 @@
                     type: 'POST',
                     data: {notificationId: notificationId},
                     success: function (response) {
-                        location.reload(); // Làm mới trang để cập nhật giao diện
+                        // Cập nhật giao diện mà không cần reload
+                        const notificationItem = $('#notification-' + notificationId);
+                        notificationItem.removeClass('unread');
+                        notificationItem.find('.btn-mark-read').fadeOut(300, function() {
+                            $(this).remove();
+                        });
+                        // Hiển thị thông báo tạm thời
+                        showTempMessage('Thông báo đã được đánh dấu là đã đọc!', 'success');
                     },
                     error: function () {
-                        alert('Có lỗi xảy ra khi đánh dấu đã đọc.');
+                        showTempMessage('Có lỗi xảy ra khi đánh dấu đã đọc.', 'error');
                     }
                 });
+            }
+
+            function showTempMessage(message, type) {
+                const tempMessage = $('<div/>', {
+                    class: 'temp-message ' + type,
+                    text: message
+                });
+                $('body').append(tempMessage);
+                setTimeout(() => tempMessage.remove(), 3000); // Xóa sau 3 giây
             }
         </script>
     </body>

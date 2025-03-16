@@ -147,4 +147,28 @@ public class UserDAO implements IDAO<UserDTO, String> {
         }
         return userList;
     }
+
+    public List<UserDTO> getAllAdmins() {
+        List<UserDTO> admins = new ArrayList<>();
+        String sql = "SELECT userID, fullName, roleID, password, gmail, sdt FROM tblUsers WHERE roleID = 'AD'";
+        try (Connection conn = DBUtils.getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                UserDTO admin = new UserDTO(
+                        rs.getString("userID"),
+                        rs.getString("fullName"),
+                        rs.getString("roleID"),
+                        rs.getString("password"),
+                        rs.getString("gmail"),
+                        rs.getString("sdt"),
+                        null // avatar nếu có
+                );
+                admins.add(admin);
+            }
+        } catch (ClassNotFoundException | SQLException ex) {
+            Logger.getLogger(UserDAO.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return admins;
+    }
 }
