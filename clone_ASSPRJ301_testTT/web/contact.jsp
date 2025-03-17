@@ -1,4 +1,6 @@
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
+<%@page import="dto.UserDTO"%>
+
 <!DOCTYPE html>
 <html lang="vi">
     <head>
@@ -142,6 +144,10 @@
             .message.error {
                 background: #ffebee;
                 color: #e74c3c;
+            }
+            .message.info {
+                background: #e8eaf6;
+                color: #3498db;
             }
 
             /* Phần .social-links */
@@ -322,19 +328,29 @@
             <div class="contact-form">
                 <h3>Gửi tin nhắn cho chúng tôi</h3>
                 <%
-                    String userId = user != null ? user.getUserID() : null;
-                    String fullName = user != null ? user.getFullName() : "";
-                    String email = user != null ? user.getGmail() : "";
-                    String phone = user != null ? user.getSdt() : "";
+                    if (user != null) {
+                        String userId = user.getUserID();
+                        String fullName = user.getFullName();
+                        String email = user.getGmail();
+                        String phone = user.getSdt();
                 %>
                 <form id="contactForm" action="<%=request.getContextPath()%>/ContactController" method="post">
                     <input type="hidden" name="userId" value="<%=userId%>">
-                    <input type="text" name="fullName" placeholder="Họ và tên" value="<%=fullName%>" required>
-                    <input type="email" name="email" placeholder="Email" value="<%=email%>" required>
-                    <input type="tel" name="phone" placeholder="Số điện thoại" value="<%=phone%>">
+                    <input type="text" name="fullName" placeholder="Họ và tên" value="<%=fullName%>" readonly required>
+                    <input type="email" name="email" placeholder="Email" value="<%=email%>" readonly required>
+                    <input type="tel" name="phone" placeholder="Số điện thoại" value="<%=phone%>" readonly>
                     <textarea name="message" placeholder="Nội dung tin nhắn" rows="5" required></textarea>
                     <button type="submit">Gửi</button>
                 </form>
+                <%
+                    } else {
+                %>
+                <div class="message info">
+                    Vui lòng <a href="<%=request.getContextPath()%>/login-regis.jsp" style="color: #3498db; text-decoration: underline;">đăng nhập</a> để gửi tin nhắn!
+                </div>
+                <%
+                    }
+                %>
             </div>
 
             <div class="social-links">

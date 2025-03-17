@@ -25,8 +25,7 @@ public class LoginController extends HttpServlet {
 
     private boolean isValidLogin(String strUserID, String strPassword) {
         UserDTO user = getUser(strUserID);
-        if (user != null && user.getPassword() != null) {
-            // strPassword là plaintext, user.getPassword() là hash từ database
+        if (user != null && user.getPassword() != null && user.isIsVerified()) { // Kiểm tra isVerified
             return PasswordUtils.checkPassword(strPassword, user.getPassword());
         }
         return false;
@@ -35,6 +34,7 @@ public class LoginController extends HttpServlet {
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         response.setContentType("text/html;charset=UTF-8");
+        request.setCharacterEncoding("UTF-8");
         String url = LOGIN_PAGE;
 
         try {
@@ -47,25 +47,39 @@ public class LoginController extends HttpServlet {
                     case "login":
                         String strUserID = request.getParameter("txtUsername");
                         String strPassword = request.getParameter("txtPassword");
+                        boolean hasError = false;
 
-                        if (strUserID != null && strPassword != null && !strUserID.trim().isEmpty() && !strPassword.trim().isEmpty()) {
+                        if (strUserID == null || strUserID.trim().isEmpty()) {
+                            request.setAttribute("errorUsername", "Tên đăng nhập không được để trống!");
+                            hasError = true;
+                        }
+                        if (strPassword == null || strPassword.trim().isEmpty()) {
+                            request.setAttribute("errorPassword", "Mật khẩu không được để trống!");
+                            hasError = true;
+                        }
+
+                        if (!hasError) {
                             if (isValidLogin(strUserID.trim(), strPassword.trim())) {
                                 user = getUser(strUserID.trim());
                                 session.setAttribute("user", user);
                                 response.sendRedirect(HOME_PAGE);
                                 return;
                             } else {
-                                request.setAttribute("errorMessage", "Sai tài khoản hoặc mật khẩu!");
+                                UserDTO userCheck = getUser(strUserID.trim());
+                                if (userCheck != null && !userCheck.isIsVerified()) {
+                                    request.setAttribute("errorMessage", "Tài khoản chưa được xác thực! Vui lòng kiểm tra email để xác thực.");
+                                } else {
+                                    request.setAttribute("errorMessage", "Tên đăng nhập hoặc mật khẩu không đúng!");
+                                }
                             }
-                        } else {
-                            request.setAttribute("errorMessage", "Vui lòng nhập tài khoản và mật khẩu!");
                         }
                         break;
 
                     case "logout":
                         session.invalidate();
-                        response.sendRedirect(LOGIN_PAGE);
-                        return;
+                        request.setAttribute("successMessage", "Đăng xuất thành công!");
+                        url = LOGIN_PAGE;
+                        break;
 
                     case "home":
                         if (user != null) {

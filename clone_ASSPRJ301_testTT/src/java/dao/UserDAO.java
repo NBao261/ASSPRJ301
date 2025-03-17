@@ -16,8 +16,7 @@ public class UserDAO implements IDAO<UserDTO, String> {
 
     @Override
     public UserDTO readById(String id) {
-        // Không thay đổi, mật khẩu đã hash từ DB sẽ được trả về nguyên trạng
-        String sql = "SELECT [userID], [fullName], [roleID], [password], [gmail], [sdt], [avatar_url] "
+        String sql = "SELECT [userID], [fullName], [roleID], [password], [gmail], [sdt], [avatar_url], [token], [isVerified] "
                 + "FROM [tblUsers] WHERE userID = ?";
         try (Connection conn = DBUtils.getConnection();
                 PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -28,10 +27,12 @@ public class UserDAO implements IDAO<UserDTO, String> {
                             rs.getString("userID"),
                             rs.getString("fullName"),
                             rs.getString("roleID"),
-                            rs.getString("password"), // Mật khẩu đã hash
+                            rs.getString("password"),
                             rs.getString("gmail"),
                             rs.getString("sdt"),
-                            rs.getString("avatar_url")
+                            rs.getString("avatar_url"),
+                            rs.getString("token"), 
+                            rs.getBoolean("isVerified") 
                     );
                 }
             }
@@ -44,18 +45,20 @@ public class UserDAO implements IDAO<UserDTO, String> {
     @Override
     public boolean create(UserDTO user) {
         boolean success = false;
-        String sql = "INSERT INTO tblUsers (userID, fullName, roleID, password, gmail, sdt, avatar_url) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO tblUsers (userID, fullName, roleID, password, gmail, sdt, avatar_url, token, isVerified) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = DBUtils.getConnection();
                 PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, user.getUserID());
             ps.setString(2, user.getFullName());
             ps.setString(3, user.getRoleID());
-            ps.setString(4, PasswordUtils.hashPassword(user.getPassword())); // Mã hóa mật khẩu
+            ps.setString(4, PasswordUtils.hashPassword(user.getPassword()));
             ps.setString(5, user.getGmail());
             ps.setString(6, user.getSdt());
             ps.setString(7, user.getAvatarUrl());
+            ps.setString(8, user.getToken());
+            ps.setBoolean(9, user.isIsVerified());
 
             success = ps.executeUpdate() > 0;
         } catch (ClassNotFoundException | SQLException ex) {
@@ -67,7 +70,7 @@ public class UserDAO implements IDAO<UserDTO, String> {
     @Override
     public boolean update(UserDTO user) {
         boolean success = false;
-        String sql = "UPDATE tblUsers SET fullName = ?, roleID = ?, gmail = ?, sdt = ?, avatar_url = ? WHERE userID = ?";
+        String sql = "UPDATE tblUsers SET fullName = ?, roleID = ?, gmail = ?, sdt = ?, avatar_url = ?, token = ?, isVerified = ? WHERE userID = ?";
 
         try (Connection conn = DBUtils.getConnection();
                 PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -76,7 +79,9 @@ public class UserDAO implements IDAO<UserDTO, String> {
             ps.setString(3, user.getGmail());
             ps.setString(4, user.getSdt());
             ps.setString(5, user.getAvatarUrl());
-            ps.setString(6, user.getUserID());
+            ps.setString(6, user.getToken());
+            ps.setBoolean(7, user.isIsVerified());
+            ps.setString(8, user.getUserID());
 
             success = ps.executeUpdate() > 0;
         } catch (ClassNotFoundException | SQLException ex) {
@@ -85,7 +90,6 @@ public class UserDAO implements IDAO<UserDTO, String> {
         return success;
     }
 
-    // Phương thức mới để đổi mật khẩu
     public boolean updatePassword(String userId, String newPassword) {
         boolean success = false;
         String sql = "UPDATE tblUsers SET password = ? WHERE userID = ?";
@@ -125,7 +129,7 @@ public class UserDAO implements IDAO<UserDTO, String> {
     @Override
     public List<UserDTO> readAll() {
         List<UserDTO> userList = new ArrayList<>();
-        String sql = "SELECT [userID], [fullName], [roleID], [password], [gmail], [sdt], [avatar_url] "
+        String sql = "SELECT [userID], [fullName], [roleID], [password], [gmail], [sdt], [avatar_url], [token], [isVerified] "
                 + "FROM [tblUsers]";
         try (Connection conn = DBUtils.getConnection();
                 PreparedStatement ps = conn.prepareStatement(sql);
@@ -138,7 +142,9 @@ public class UserDAO implements IDAO<UserDTO, String> {
                         rs.getString("password"),
                         rs.getString("gmail"),
                         rs.getString("sdt"),
-                        rs.getString("avatar_url")
+                        rs.getString("avatar_url"),
+                        rs.getString("token"),
+                        rs.getBoolean("isVerified")
                 );
                 userList.add(user);
             }
@@ -150,7 +156,8 @@ public class UserDAO implements IDAO<UserDTO, String> {
 
     public List<UserDTO> getAllAdmins() {
         List<UserDTO> admins = new ArrayList<>();
-        String sql = "SELECT userID, fullName, roleID, password, gmail, sdt FROM tblUsers WHERE roleID = 'AD'";
+        String sql = "SELECT [userID], [fullName], [roleID], [password], [gmail], [sdt], [avatar_url], [token], [isVerified] "
+                + "FROM tblUsers WHERE roleID = 'AD'";
         try (Connection conn = DBUtils.getConnection();
                 PreparedStatement ps = conn.prepareStatement(sql);
                 ResultSet rs = ps.executeQuery()) {
@@ -162,7 +169,9 @@ public class UserDAO implements IDAO<UserDTO, String> {
                         rs.getString("password"),
                         rs.getString("gmail"),
                         rs.getString("sdt"),
-                        null // avatar nếu có
+                        rs.getString("avatar_url"),
+                        rs.getString("token"),
+                        rs.getBoolean("isVerified")
                 );
                 admins.add(admin);
             }
@@ -170,5 +179,36 @@ public class UserDAO implements IDAO<UserDTO, String> {
             Logger.getLogger(UserDAO.class.getName()).log(Level.SEVERE, null, ex);
         }
         return admins;
+    }
+
+    // Phương thức mới để kiểm tra email đã tồn tại hay chưa
+    public boolean isEmailExists(String email) {
+        String sql = "SELECT COUNT(*) FROM tblUsers WHERE gmail = ?";
+        try (Connection conn = DBUtils.getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, email);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0; // Trả về true nếu email đã tồn tại
+                }
+            }
+        } catch (ClassNotFoundException | SQLException ex) {
+            Logger.getLogger(UserDAO.class.getName()).log(Level.SEVERE, "Error checking email existence", ex);
+        }
+        return false;
+    }
+
+    // Phương thức mới để xác thực token
+    public boolean verifyUser(String token) {
+        boolean success = false;
+        String sql = "UPDATE tblUsers SET isVerified = 1, token = NULL WHERE token = ? AND isVerified = 0";
+        try (Connection conn = DBUtils.getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, token);
+            success = ps.executeUpdate() > 0;
+        } catch (ClassNotFoundException | SQLException ex) {
+            Logger.getLogger(UserDAO.class.getName()).log(Level.SEVERE, "Error verifying user", ex);
+        }
+        return success;
     }
 }

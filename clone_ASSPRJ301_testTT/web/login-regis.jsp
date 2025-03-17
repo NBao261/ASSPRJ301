@@ -150,18 +150,30 @@
             display: none;
         }
 
+        .message {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
         .error-message {
+            background: #ffebee;
+            color: #e74c3c;
+        }
+
+        .success-message {
+            background: #e8f5e9;
+            color: #27ae60;
+        }
+
+        .form-group .error {
             color: #e74c3c;
             font-size: 14px;
             margin-top: 5px;
             text-align: left;
-        }
-
-        .success-message {
-            color: #27ae60;
-            font-size: 14px;
-            margin-top: 5px;
-            text-align: center;
         }
     </style>
 </head>
@@ -170,93 +182,96 @@
 
     <div class="login-container">
         <!-- Form đăng nhập -->
-        <div class="form-wrapper" id="loginForm">
+        <div class="form-wrapper" id="loginForm" style="<%= request.getAttribute("showRegisterForm") != null && (boolean) request.getAttribute("showRegisterForm") ? "display: none;" : ""%>">
             <h2 class="form-title">Đăng nhập</h2>
+            <% if (request.getAttribute("errorMessage") != null) { %>
+                <div class="message error-message"><%= request.getAttribute("errorMessage") %></div>
+            <% } %>
+            <% if (request.getAttribute("successMessage") != null) { %>
+                <div class="message success-message"><%= request.getAttribute("successMessage") %></div>
+            <% } %>
             <form action="login" method="post">
                 <input type="hidden" name="action" value="login" />
                 <div class="form-group">
                     <label for="userId">Tên đăng nhập</label>
-                    <input type="text" id="userId" name="txtUsername" required />
+                    <input type="text" id="userId" name="txtUsername" value="<%= request.getParameter("txtUsername") != null ? request.getParameter("txtUsername") : ""%>" required />
                     <i class="fas fa-user"></i>
-                    <% if (request.getAttribute("errorUsername") != null) {%>
-                        <p class="error-message"><%= request.getAttribute("errorUsername")%></p>
+                    <% if (request.getAttribute("errorUsername") != null) { %>
+                        <p class="error"><%= request.getAttribute("errorUsername") %></p>
                     <% } %>
                 </div>
                 <div class="form-group">
                     <label for="password">Mật khẩu</label>
                     <input type="password" id="password" name="txtPassword" required />
                     <i class="fas fa-lock"></i>
-                    <% if (request.getAttribute("errorPassword") != null) {%>
-                        <p class="error-message"><%= request.getAttribute("errorPassword")%></p>
+                    <% if (request.getAttribute("errorPassword") != null) { %>
+                        <p class="error"><%= request.getAttribute("errorPassword") %></p>
                     <% } %>
                 </div>
                 <button type="submit" class="submit-btn">Đăng nhập</button>
-                <% if (request.getAttribute("errorMessage") != null) {%>
-                    <p class="error-message"><%= request.getAttribute("errorMessage")%></p>
-                <% } %>
             </form>
             <p class="switch-form">Chưa có tài khoản? <a href="#" onclick="showRegister()">Đăng ký ngay</a></p>
         </div>
 
         <!-- Form đăng ký -->
-        <div class="form-wrapper <%= request.getAttribute("showRegisterForm") != null && (boolean) request.getAttribute("showRegisterForm") ? "" : "hidden"%>" id="registerForm">
+        <div class="form-wrapper" id="registerForm" style="<%= request.getAttribute("showRegisterForm") != null && (boolean) request.getAttribute("showRegisterForm") ? "" : "display: none;"%>">
             <h2 class="form-title">Đăng ký</h2>
+            <% if (request.getAttribute("errorMessage") != null && request.getAttribute("showRegisterForm") != null && (boolean) request.getAttribute("showRegisterForm")) { %>
+                <div class="message error-message"><%= request.getAttribute("errorMessage") %></div>
+            <% } %>
+            <% if (request.getAttribute("successMessage") != null && (request.getAttribute("showRegisterForm") == null || !(boolean) request.getAttribute("showRegisterForm"))) { %>
+                <div class="message success-message"><%= request.getAttribute("successMessage") %></div>
+            <% } %>
             <form action="register" method="post">
                 <div class="form-group">
                     <label for="newUsername">Tên đăng nhập</label>
                     <input type="text" id="newUsername" name="txtNewUsername" value="<%= request.getParameter("txtNewUsername") != null ? request.getParameter("txtNewUsername") : ""%>" required />
                     <i class="fas fa-user"></i>
-                    <% if (request.getAttribute("errorNewUsername") != null) {%>
-                        <p class="error-message"><%= request.getAttribute("errorNewUsername")%></p>
+                    <% if (request.getAttribute("errorNewUsername") != null) { %>
+                        <p class="error"><%= request.getAttribute("errorNewUsername") %></p>
                     <% } %>
                 </div>
                 <div class="form-group">
                     <label for="fullName">Họ và tên</label>
                     <input type="text" id="fullName" name="txtFullName" value="<%= request.getParameter("txtFullName") != null ? request.getParameter("txtFullName") : ""%>" required />
                     <i class="fas fa-id-card"></i>
-                    <% if (request.getAttribute("errorFullName") != null) {%>
-                        <p class="error-message"><%= request.getAttribute("errorFullName")%></p>
+                    <% if (request.getAttribute("errorFullName") != null) { %>
+                        <p class="error"><%= request.getAttribute("errorFullName") %></p>
                     <% } %>
                 </div>
                 <div class="form-group">
                     <label for="gmail">Gmail</label>
-                    <input type="email" id="gmail" name="txtGmail" value="<%= request.getParameter("txtGmail") != null ? request.getParameter("txtGmail") : ""%>" />
+                    <input type="email" id="gmail" name="txtGmail" value="<%= request.getParameter("txtGmail") != null ? request.getParameter("txtGmail") : ""%>" required />
                     <i class="fas fa-envelope"></i>
-                    <% if (request.getAttribute("errorGmail") != null) {%>
-                        <p class="error-message"><%= request.getAttribute("errorGmail")%></p>
+                    <% if (request.getAttribute("errorGmail") != null) { %>
+                        <p class="error"><%= request.getAttribute("errorGmail") %></p>
                     <% } %>
                 </div>
                 <div class="form-group">
                     <label for="sdt">Số điện thoại</label>
                     <input type="text" id="sdt" name="txtSdt" value="<%= request.getParameter("txtSdt") != null ? request.getParameter("txtSdt") : ""%>" />
                     <i class="fas fa-phone"></i>
-                    <% if (request.getAttribute("errorSdt") != null) {%>
-                        <p class="error-message"><%= request.getAttribute("errorSdt")%></p>
+                    <% if (request.getAttribute("errorSdt") != null) { %>
+                        <p class="error"><%= request.getAttribute("errorSdt") %></p>
                     <% } %>
                 </div>
                 <div class="form-group">
                     <label for="newPassword">Mật khẩu</label>
                     <input type="password" id="newPassword" name="txtNewPassword" required />
                     <i class="fas fa-lock"></i>
-                    <% if (request.getAttribute("errorNewPassword") != null) {%>
-                        <p class="error-message"><%= request.getAttribute("errorNewPassword")%></p>
+                    <% if (request.getAttribute("errorNewPassword") != null) { %>
+                        <p class="error"><%= request.getAttribute("errorNewPassword") %></p>
                     <% } %>
                 </div>
                 <div class="form-group">
                     <label for="confirmPassword">Nhập lại mật khẩu</label>
                     <input type="password" id="confirmPassword" name="txtConfirmPassword" required />
                     <i class="fas fa-lock"></i>
-                    <% if (request.getAttribute("errorConfirmPassword") != null) {%>
-                        <p class="error-message"><%= request.getAttribute("errorConfirmPassword")%></p>
+                    <% if (request.getAttribute("errorConfirmPassword") != null) { %>
+                        <p class="error"><%= request.getAttribute("errorConfirmPassword") %></p>
                     <% } %>
                 </div>
                 <button type="submit" class="submit-btn">Đăng ký</button>
-                <% if (request.getAttribute("errorMessage") != null) {%>
-                    <p class="error-message"><%= request.getAttribute("errorMessage")%></p>
-                <% } %>
-                <% if (request.getAttribute("successMessage") != null) {%>
-                    <p class="success-message"><%= request.getAttribute("successMessage")%></p>
-                <% } %>
             </form>
             <p class="switch-form">Đã có tài khoản? <a href="#" onclick="showLogin()">Đăng nhập</a></p>
         </div>
@@ -266,13 +281,13 @@
 
     <script>
         function showRegister() {
-            document.getElementById("loginForm").classList.add("hidden");
-            document.getElementById("registerForm").classList.remove("hidden");
+            document.getElementById("loginForm").style.display = "none";
+            document.getElementById("registerForm").style.display = "block";
         }
 
         function showLogin() {
-            document.getElementById("registerForm").classList.add("hidden");
-            document.getElementById("loginForm").classList.remove("hidden");
+            document.getElementById("registerForm").style.display = "none";
+            document.getElementById("loginForm").style.display = "block";
         }
 
         window.onload = function () {
