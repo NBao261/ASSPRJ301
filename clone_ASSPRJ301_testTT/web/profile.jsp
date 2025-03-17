@@ -289,6 +289,18 @@
                     font-size: 14px;
                 }
             }
+            .verified-indicator {
+                display: inline-block;
+                margin-left: 10px;
+                font-size: 12px;
+                color: #27ae60;
+                font-weight: 500;
+            }
+            input[disabled] {
+                background: #f0f0f0;
+                color: #888;
+                cursor: not-allowed;
+            }
         </style>
     </head>
     <body>
@@ -298,9 +310,8 @@
 
         <div class="main-content">
             <%
-                // Lấy user từ session
                 if (user == null) {
-                    response.sendRedirect("login-regis.jsp"); // Chuyển hướng tới login-regis.jsp theo Servlet
+                    response.sendRedirect("login-regis.jsp");
                     return;
                 }
                 String section = request.getParameter("section") != null ? request.getParameter("section") : "profile";
@@ -341,8 +352,12 @@
                         </div>
                         <div class="form-group">
                             <label for="gmail">Gmail:</label>
-                            <input type="email" id="gmail" name="gmail" value="<%= user.getGmail() != null ? user.getGmail() : ""%>">
+                            <input type="email" id="gmail" name="gmail" value="<%= user.getGmail() != null ? user.getGmail() : ""%>"
+                                   <%= user.isIsVerified() ? "readonly" : ""%>> <!-- Vô hiệu hóa nếu đã xác thực -->
                             <i class="fas fa-envelope"></i>
+                            <% if (user.isIsVerified()) { %>
+                            <span class="verified-indicator">Email đã được xác nhận</span>
+                            <% } %>
                             <% if (request.getAttribute("errorGmail") != null) {%>
                             <div class="message error"><%= request.getAttribute("errorGmail")%></div>
                             <% }%>
