@@ -18,10 +18,10 @@ import utils.DBUtils;
 public class BookingDAO {
 
     // Hằng số cho các trạng thái đặt phòng
-    public static final String STATUS_PENDING_PAYMENT = "PendingPayment"; // Chờ thanh toán
-    public static final String STATUS_PAID = "Paid";                     // Đã thanh toán
-    public static final String STATUS_CONFIRMED = "Confirmed";           // Đã xác nhận
-    public static final String STATUS_CANCELLED = "Cancelled";           // Đã hủy
+    public static final String STATUS_PENDING_PAYMENT = "PendingPayment"; 
+    public static final String STATUS_PAID = "Paid";                     
+    public static final String STATUS_CONFIRMED = "Confirmed";          
+    public static final String STATUS_CANCELLED = "Cancelled";           
 
     // Thêm đặt phòng mới sau khi kiểm tra phòng có sẵn
     public boolean addBooking(BookingDTO booking) throws ClassNotFoundException {
@@ -37,7 +37,7 @@ public class BookingDAO {
             ps.setDate(3, new java.sql.Date(booking.getCheckInDate().getTime()));
             ps.setDate(4, new java.sql.Date(booking.getCheckOutDate().getTime()));
             ps.setDouble(5, booking.getTotalPrice());
-            ps.setString(6, STATUS_PENDING_PAYMENT); // Mặc định là "PendingPayment" khi tạo mới
+            ps.setString(6, STATUS_PENDING_PAYMENT); 
             ps.setTimestamp(7, new Timestamp(booking.getCreatedAt().getTime()));
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -257,4 +257,18 @@ public class BookingDAO {
         return bookingList;
     }
 
+    // Lấy ID của đặt phòng vừa được thêm vào
+    public int getLastInsertedBookingId() throws ClassNotFoundException {
+        String sql = "SELECT MAX(id) FROM bookings";
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            System.err.println("Error fetching last inserted booking ID: " + e.getMessage());
+        }
+        return -1; // Trả về -1 nếu có lỗi hoặc không tìm thấy
+    }
 }

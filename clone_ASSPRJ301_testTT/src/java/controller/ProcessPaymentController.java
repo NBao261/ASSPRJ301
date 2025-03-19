@@ -14,7 +14,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-@WebServlet("/processPayment")
+@WebServlet(urlPatterns = {"/processPayment", "/ipn"})
 public class ProcessPaymentController extends HttpServlet {
 
     private static final String PARTNER_CODE = "MOMOBKUN20180529";
@@ -26,6 +26,23 @@ public class ProcessPaymentController extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        String path = request.getServletPath();
+        switch (path) {
+            case "/processPayment":
+                processPaymentRequest(request, response);
+                break;
+            case "/ipn":
+                handleIpnCallback(request, response);
+                break;
+            default:
+                response.sendError(HttpServletResponse.SC_NOT_FOUND, "Action not supported");
+                break;
+        }
+    }
+
+    // Xử lý yêu cầu thanh toán (gửi đến MoMo)
+    private void processPaymentRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         try {
             String bookingId = request.getParameter("bookingId");
@@ -41,20 +58,20 @@ public class ProcessPaymentController extends HttpServlet {
 
             String requestId = UUID.randomUUID().toString();
             String orderId = bookingId + "_" + System.currentTimeMillis();
-            String orderInfo = "Thanh toán đặt phòng #" + bookingId; 
+            String orderInfo = "Thanh toán đặt phòng #" + bookingId;
             String extraData = "";
 
             // Tạo rawData cho signature (không mã hóa URL)
-            String rawData = "accessKey=" + ACCESS_KEY +
-                            "&amount=" + amount +
-                            "&extraData=" + extraData +
-                            "&ipnUrl=" + IPN_URL +
-                            "&orderId=" + orderId +
-                            "&orderInfo=" + orderInfo + 
-                            "&partnerCode=" + PARTNER_CODE +
-                            "&redirectUrl=" + REDIRECT_URL +
-                            "&requestId=" + requestId +
-                            "&requestType=captureWallet";
+            String rawData = "accessKey=" + ACCESS_KEY
+                    + "&amount=" + amount
+                    + "&extraData=" + extraData
+                    + "&ipnUrl=" + IPN_URL
+                    + "&orderId=" + orderId
+                    + "&orderInfo=" + orderInfo
+                    + "&partnerCode=" + PARTNER_CODE
+                    + "&redirectUrl=" + REDIRECT_URL
+                    + "&requestId=" + requestId
+                    + "&requestType=captureWallet";
 
             String signature = HmacSHA256(rawData, SECRET_KEY);
 
@@ -83,6 +100,54 @@ public class ProcessPaymentController extends HttpServlet {
         } catch (Exception e) {
             e.printStackTrace();
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Payment processing failed: " + e.getMessage());
+        }
+    }
+
+    // Xử lý callback từ MoMo (IPN - Instant Payment Notification)
+    private void handleIpnCallback(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        try {
+            // Đọc dữ liệu từ request body
+            StringBuilder jsonStr = new StringBuilder();
+            try (BufferedReader reader = request.getReader()) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    jsonStr.append(line);
+                }
+            }
+
+            // Parse JSON từ MoMo
+            MoMoCallback callback = new Gson().fromJson(jsonStr.toString(), MoMoCallback.class);
+            System.out.println("IPN Callback: " + jsonStr.toString());
+
+            // Kiểm tra signature để đảm bảo tính xác thực
+            String rawData = "partnerCode=" + callback.getPartnerCode()
+                    + "&orderId=" + callback.getOrderId()
+                    + "&requestId=" + callback.getRequestId()
+                    + "&amount=" + callback.getAmount()
+                    + "&orderInfo=" + callback.getOrderInfo()
+                    + "&orderType=" + callback.getOrderType()
+                    + "&transId=" + callback.getTransId()
+                    + "&resultCode=" + callback.getResultCode()
+                    + "&message=" + callback.getMessage()
+                    + "&payType=" + callback.getPayType()
+                    + "&responseTime=" + callback.getResponseTime()
+                    + "&extraData=" + callback.getExtraData();
+            String expectedSignature = HmacSHA256(rawData, SECRET_KEY);
+
+            if (!expectedSignature.equals(callback.getSignature())) {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                response.getWriter().write("{\"message\": \"Invalid signature\"}");
+                return;
+            }
+
+            // Phản hồi cho MoMo
+            response.setStatus(HttpServletResponse.SC_OK);
+            response.getWriter().write("{\"message\": \"Success\"}");
+        } catch (Exception e) {
+            e.printStackTrace();
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            response.getWriter().write("{\"message\": \"Error processing IPN: " + e.getMessage() + "\"}");
         }
     }
 
@@ -141,7 +206,9 @@ public class ProcessPaymentController extends HttpServlet {
         return result.toString();
     }
 
+    // Class đại diện cho yêu cầu gửi đến MoMo
     public static class MoMoRequest {
+
         public String partnerCode;
         public String orderId;
         public String requestId;
@@ -154,7 +221,7 @@ public class ProcessPaymentController extends HttpServlet {
         public String signature;
 
         public MoMoRequest(String partnerCode, String orderId, String requestId, long amount, String orderInfo,
-                           String redirectUrl, String ipnUrl, String requestType, String extraData, String signature) {
+                String redirectUrl, String ipnUrl, String requestType, String extraData, String signature) {
             this.partnerCode = partnerCode;
             this.orderId = orderId;
             this.requestId = requestId;
@@ -168,11 +235,84 @@ public class ProcessPaymentController extends HttpServlet {
         }
     }
 
+    // Class đại diện cho phản hồi từ MoMo
     public static class MoMoResponse {
+
         private String payUrl;
 
         public String getPayUrl() {
             return payUrl;
+        }
+    }
+
+    // Class đại diện cho callback từ MoMo
+    public static class MoMoCallback {
+
+        private String partnerCode;
+        private String orderId;
+        private String requestId;
+        private long amount;
+        private String orderInfo;
+        private String orderType;
+        private long transId;
+        private int resultCode;
+        private String message;
+        private String payType;
+        private long responseTime;
+        private String extraData;
+        private String signature;
+
+        // Getters
+        public String getPartnerCode() {
+            return partnerCode;
+        }
+
+        public String getOrderId() {
+            return orderId;
+        }
+
+        public String getRequestId() {
+            return requestId;
+        }
+
+        public long getAmount() {
+            return amount;
+        }
+
+        public String getOrderInfo() {
+            return orderInfo;
+        }
+
+        public String getOrderType() {
+            return orderType;
+        }
+
+        public long getTransId() {
+            return transId;
+        }
+
+        public int getResultCode() {
+            return resultCode;
+        }
+
+        public String getMessage() {
+            return message;
+        }
+
+        public String getPayType() {
+            return payType;
+        }
+
+        public long getResponseTime() {
+            return responseTime;
+        }
+
+        public String getExtraData() {
+            return extraData;
+        }
+
+        public String getSignature() {
+            return signature;
         }
     }
 }

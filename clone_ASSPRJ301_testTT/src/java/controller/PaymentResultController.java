@@ -10,6 +10,7 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import utils.EmailUtils; // Thêm import để sử dụng EmailUtils
 
 @WebServlet("/paymentResult")
 public class PaymentResultController extends HttpServlet {
@@ -22,7 +23,7 @@ public class PaymentResultController extends HttpServlet {
             throws ServletException, IOException {
         String resultCode = request.getParameter("resultCode");
         String orderId = request.getParameter("orderId");
-        String amount = request.getParameter("amount"); // Thêm để lấy số tiền thanh toán
+        String amount = request.getParameter("amount"); // Số tiền thanh toán
 
         if ("0".equals(resultCode)) { // Thanh toán thành công
             String bookingId = orderId.split("_")[0]; // Tách bookingId từ orderId
@@ -31,7 +32,6 @@ public class PaymentResultController extends HttpServlet {
                 BookingDTO booking = bookingDAO.getBookingById(bookingIdInt);
                 if (booking != null && BookingDAO.STATUS_PENDING_PAYMENT.equals(booking.getStatus())) {
                     // Cập nhật trạng thái booking thành "Paid"
-                    booking.setStatus(BookingDAO.STATUS_PAID);
                     bookingDAO.updateBookingStatus(bookingIdInt, BookingDAO.STATUS_PAID);
 
                     // Tạo thông báo cho người dùng
@@ -41,6 +41,18 @@ public class PaymentResultController extends HttpServlet {
                             + String.format("%,.0f", Double.parseDouble(amount)) + " VND.";
                     NotificationDTO notification = new NotificationDTO(0, userId, message, null, false);
                     notificationDAO.addNotification(notification);
+
+                    // Gửi email thông báo thanh toán thành công
+                    boolean emailSent = EmailUtils.sendPaymentSuccessEmail(
+                            booking.getUser().getGmail(),
+                            booking.getUser().getFullName(),
+                            String.valueOf(bookingIdInt),
+                            amount,
+                            new java.util.Date().toString()
+                    );
+                    if (!emailSent) {
+                        log("Failed to send payment success email to: " + booking.getUser().getGmail());
+                    }
 
                     // Gửi thông báo thành công tới giao diện
                     request.setAttribute("message", "Thanh toán thành công cho đơn đặt phòng #" + bookingId);

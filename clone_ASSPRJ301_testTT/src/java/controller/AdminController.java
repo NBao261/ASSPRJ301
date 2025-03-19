@@ -4,10 +4,12 @@ import dao.BookingDAO;
 import dao.ContactDAO;
 import dao.RoomDAO;
 import dao.UserDAO;
+import dao.NotificationDAO; // Thêm import cho NotificationDAO
 import dto.BookingDTO;
 import dto.ContactMessageDTO;
 import dto.RoomDTO;
 import dto.UserDTO;
+import dto.NotificationDTO; // Thêm import cho NotificationDTO
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -28,6 +30,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import utils.EmailUtils;
 
 @WebServlet(name = "AdminController", urlPatterns = {
     "/admin/users", "/admin/rooms", "/admin/bookings", "/admin/statistics", "/admin/messages"
@@ -39,7 +42,7 @@ public class AdminController extends HttpServlet {
     private static final String ADMIN_ROOMS_PAGE = "/admin/rooms.jsp";
     private static final String ADMIN_BOOKINGS_PAGE = "/admin/bookings.jsp";
     private static final String ADMIN_STATISTICS_PAGE = "/admin/statistics.jsp";
-    private static final String ADMIN_MESSAGES_PAGE = "/admin/messages.jsp"; // Trang mới cho tin nhắn
+    private static final String ADMIN_MESSAGES_PAGE = "/admin/messages.jsp";
     private static final String EMAIL_PATTERN = "^[A-Za-z0-9+_.-]+@(.+)$";
     private static final String PHONE_PATTERN = "^\\+?[0-9]{9,12}$";
     private static final Logger LOGGER = Logger.getLogger(AdminController.class.getName());
@@ -399,6 +402,7 @@ public class AdminController extends HttpServlet {
             }
         } else if ("/admin/bookings".equals(path)) {
             BookingDAO bookingDAO = new BookingDAO();
+            NotificationDAO notificationDAO = new NotificationDAO(); // Khởi tạo NotificationDAO
             if (action == null || action.isEmpty()) {
                 try {
                     List<BookingDTO> bookingList = bookingDAO.getAllBookings();
@@ -422,6 +426,30 @@ public class AdminController extends HttpServlet {
                             if (booking != null) {
                                 if (BookingDAO.STATUS_PAID.equals(booking.getStatus())) {
                                     if (bookingDAO.updateBookingStatus(bookingId, BookingDAO.STATUS_CONFIRMED)) {
+                                        // Gửi email thông báo xác nhận đặt phòng
+                                        boolean emailSent = EmailUtils.sendAdminConfirmationEmail(
+                                                booking.getUser().getGmail(),
+                                                booking.getUser().getFullName(),
+                                                String.valueOf(bookingId),
+                                                booking.getRoom().getName(),
+                                                sdf.format(booking.getCheckInDate()),
+                                                sdf.format(booking.getCheckOutDate())
+                                        );
+                                        if (!emailSent) {
+                                            LOGGER.log(Level.WARNING, "Failed to send confirmation email to: " + booking.getUser().getGmail());
+                                        }
+
+                                        // Gửi thông báo qua hệ thống cho người dùng
+                                        String userMessage = "Đặt phòng '" + booking.getRoom().getName() + "' (ID: " + bookingId + ") của bạn đã được xác nhận từ " +
+                                                sdf.format(booking.getCheckInDate()) + " đến " + sdf.format(booking.getCheckOutDate()) + ".";
+                                        NotificationDTO userNotification = new NotificationDTO(0, booking.getUser().getUserID(), userMessage, null, false);
+                                        notificationDAO.addNotification(userNotification);
+
+                                        // Gửi thông báo qua hệ thống cho admin
+                                        String adminMessage = "Bạn đã xác nhận đặt phòng (ID: " + bookingId + ") cho phòng '" + booking.getRoom().getName() + "'.";
+                                        NotificationDTO adminNotification = new NotificationDTO(0, user.getUserID(), adminMessage, null, false);
+                                        notificationDAO.addNotification(adminNotification);
+
                                         request.setAttribute("successMessage", "Xác nhận đặt phòng thành công!");
                                     } else {
                                         request.setAttribute("errorMessage", "Cập nhật trạng thái đặt phòng thất bại!");

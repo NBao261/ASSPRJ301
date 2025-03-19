@@ -18,6 +18,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import dao.NotificationDAO;
 import dto.NotificationDTO;
+import utils.EmailUtils;
 
 @WebServlet(name = "BookingController", urlPatterns = {"/bookRoom", "/viewBookings", "/cancelBooking", "/checkAvailability"})
 public class BookingController extends HttpServlet {
@@ -109,10 +110,32 @@ public class BookingController extends HttpServlet {
         BookingDTO booking = new BookingDTO(0, user, room, checkInDate, checkOutDate, totalPrice, BookingDAO.STATUS_PENDING_PAYMENT, new java.util.Date());
 
         if (bookingDAO.addBooking(booking)) {
+            // Lấy bookingId sau khi thêm vào DB
+            int bookingId = bookingDAO.getLastInsertedBookingId();
+            if (bookingId == -1) {
+                request.setAttribute("errorMessage", "Đặt phòng thành công nhưng không thể lấy ID đặt phòng để gửi thông báo!");
+                viewBookings(request, response, user);
+                return;
+            }
+
+            // Gửi thông báo qua hệ thống
             NotificationDAO notificationDAO = new NotificationDAO();
             NotificationDTO notification = new NotificationDTO(0, user.getUserID(),
                     "Bạn đã đặt phòng '" + room.getName() + "' thành công! Vui lòng thanh toán để hoàn tất.", null, false);
             notificationDAO.addNotification(notification);
+
+            // Gửi email thông báo đặt phòng thành công
+            boolean emailSent = EmailUtils.sendBookingSuccessEmail(
+                    user.getGmail(),
+                    user.getFullName(),
+                    String.valueOf(bookingId),
+                    room.getName(),
+                    checkInDate.toString(),
+                    checkOutDate.toString()
+            );
+            if (!emailSent) {
+                log("Failed to send booking success email to: " + user.getGmail());
+            }
 
             request.setAttribute("successMessage", "Đặt phòng thành công! Vui lòng thanh toán để hoàn tất.");
             viewBookings(request, response, user); // Chuyển đến danh sách đặt phòng

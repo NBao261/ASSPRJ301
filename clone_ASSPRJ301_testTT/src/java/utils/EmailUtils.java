@@ -20,6 +20,7 @@ public class EmailUtils {
     // URL cơ sở dựa trên context path thực tế
     private static final String BASE_URL = "http://localhost:8080/clone_ASSPRJ301_testTT";
     
+    // Email gửi khi đăng ký thành công
     public static boolean sendRegistrationEmail(String toEmail, String fullName, String userID) {
         try {
             Properties props = new Properties();
@@ -90,6 +91,7 @@ public class EmailUtils {
                 + "</html>";
     }
     
+    // Email gửi khi cần xác thực tài khoản
     public static boolean sendVerificationEmail(String toEmail, String fullName, String token) {
         try {
             Properties props = new Properties();
@@ -110,7 +112,6 @@ public class EmailUtils {
             message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(toEmail));
             message.setSubject("Account Verification Required");
             
-            // Sử dụng BASE_URL để tạo verificationLink
             String verificationLink = BASE_URL + "/verify?token=" + token;
             String htmlContent = createVerificationEmailContent(fullName, verificationLink);
             message.setContent(htmlContent, "text/html; charset=utf-8");
@@ -151,6 +152,226 @@ public class EmailUtils {
                 + "            <p><a href=\"" + verificationLink + "\">" + verificationLink + "</a></p>\n"
                 + "            <p>This verification link will expire in 24 hours.</p>\n"
                 + "            <p>If you did not sign up for an account, please ignore this email.</p>\n"
+                + "            <p>Best regards,<br>The Team</p>\n"
+                + "        </div>\n"
+                + "        <div class=\"footer\">\n"
+                + "            <p>This is an automated message, please do not reply to this email.</p>\n"
+                + "            <p>© 2025 Your Company. All rights reserved.</p>\n"
+                + "        </div>\n"
+                + "    </div>\n"
+                + "</body>\n"
+                + "</html>";
+    }
+
+    // Email gửi khi đặt phòng thành công
+    public static boolean sendBookingSuccessEmail(String toEmail, String fullName, String bookingId, String roomDetails, String checkInDate, String checkOutDate) {
+        try {
+            Properties props = new Properties();
+            props.put("mail.smtp.auth", "true");
+            props.put("mail.smtp.starttls.enable", "true");
+            props.put("mail.smtp.host", SMTP_HOST);
+            props.put("mail.smtp.port", SMTP_PORT);
+            
+            Session session = Session.getInstance(props, new Authenticator() {
+                @Override
+                protected PasswordAuthentication getPasswordAuthentication() {
+                    return new PasswordAuthentication(EMAIL_USERNAME, EMAIL_PASSWORD);
+                }
+            });
+            
+            Message message = new MimeMessage(session);
+            message.setFrom(new InternetAddress(EMAIL_USERNAME));
+            message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(toEmail));
+            message.setSubject("Booking Confirmation - Your Room Has Been Reserved!");
+            
+            String htmlContent = createBookingSuccessEmailContent(fullName, bookingId, roomDetails, checkInDate, checkOutDate);
+            message.setContent(htmlContent, "text/html; charset=utf-8");
+            
+            Transport.send(message);
+            return true;
+        } catch (MessagingException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    private static String createBookingSuccessEmailContent(String fullName, String bookingId, String roomDetails, String checkInDate, String checkOutDate) {
+        return "<!DOCTYPE html>\n"
+                + "<html>\n"
+                + "<head>\n"
+                + "    <meta charset=\"UTF-8\">\n"
+                + "    <title>Booking Confirmation</title>\n"
+                + "    <style>\n"
+                + "        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }\n"
+                + "        .container { max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9; }\n"
+                + "        .header { background-color: #4a90e2; color: white; padding: 20px; text-align: center; }\n"
+                + "        .content { padding: 20px; background-color: white; border-radius: 5px; }\n"
+                + "        .button { display: inline-block; padding: 10px 20px; background-color: #4a90e2; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }\n"
+                + "        .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #666; }\n"
+                + "    </style>\n"
+                + "</head>\n"
+                + "<body>\n"
+                + "    <div class=\"container\">\n"
+                + "        <div class=\"header\">\n"
+                + "            <h1>Booking Confirmation</h1>\n"
+                + "        </div>\n"
+                + "        <div class=\"content\">\n"
+                + "            <h2>Hello, " + fullName + "!</h2>\n"
+                + "            <p>We are pleased to inform you that your booking has been successfully reserved.</p>\n"
+                + "            <p><strong>Booking Details:</strong></p>\n"
+                + "            <p>Booking ID: <strong>" + bookingId + "</strong></p>\n"
+                + "            <p>Room: <strong>" + roomDetails + "</strong></p>\n"
+                + "            <p>Check-in Date: <strong>" + checkInDate + "</strong></p>\n"
+                + "            <p>Check-out Date: <strong>" + checkOutDate + "</strong></p>\n"
+                + "            <p>Please proceed with the payment to confirm your booking.</p>\n"
+                + "            <a href=\"" + BASE_URL + "/viewBookings\" class=\"button\">View Your Bookings</a>\n"
+                + "            <p>If you have any questions, feel free to contact our support team.</p>\n"
+                + "            <p>Best regards,<br>The Team</p>\n"
+                + "        </div>\n"
+                + "        <div class=\"footer\">\n"
+                + "            <p>This is an automated message, please do not reply to this email.</p>\n"
+                + "            <p>© 2025 Your Company. All rights reserved.</p>\n"
+                + "        </div>\n"
+                + "    </div>\n"
+                + "</body>\n"
+                + "</html>";
+    }
+
+    // Email gửi khi thanh toán thành công
+    public static boolean sendPaymentSuccessEmail(String toEmail, String fullName, String bookingId, String amount, String paymentDate) {
+        try {
+            Properties props = new Properties();
+            props.put("mail.smtp.auth", "true");
+            props.put("mail.smtp.starttls.enable", "true");
+            props.put("mail.smtp.host", SMTP_HOST);
+            props.put("mail.smtp.port", SMTP_PORT);
+            
+            Session session = Session.getInstance(props, new Authenticator() {
+                @Override
+                protected PasswordAuthentication getPasswordAuthentication() {
+                    return new PasswordAuthentication(EMAIL_USERNAME, EMAIL_PASSWORD);
+                }
+            });
+            
+            Message message = new MimeMessage(session);
+            message.setFrom(new InternetAddress(EMAIL_USERNAME));
+            message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(toEmail));
+            message.setSubject("Payment Confirmation - Your Payment Was Successful!");
+            
+            String htmlContent = createPaymentSuccessEmailContent(fullName, bookingId, amount, paymentDate);
+            message.setContent(htmlContent, "text/html; charset=utf-8");
+            
+            Transport.send(message);
+            return true;
+        } catch (MessagingException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    private static String createPaymentSuccessEmailContent(String fullName, String bookingId, String amount, String paymentDate) {
+        return "<!DOCTYPE html>\n"
+                + "<html>\n"
+                + "<head>\n"
+                + "    <meta charset=\"UTF-8\">\n"
+                + "    <title>Payment Confirmation</title>\n"
+                + "    <style>\n"
+                + "        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }\n"
+                + "        .container { max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9; }\n"
+                + "        .header { background-color: #4a90e2; color: white; padding: 20px; text-align: center; }\n"
+                + "        .content { padding: 20px; background-color: white; border-radius: 5px; }\n"
+                + "        .button { display: inline-block; padding: 10px 20px; background-color: #4a90e2; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }\n"
+                + "        .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #666; }\n"
+                + "    </style>\n"
+                + "</head>\n"
+                + "<body>\n"
+                + "    <div class=\"container\">\n"
+                + "        <div class=\"header\">\n"
+                + "            <h1>Payment Confirmation</h1>\n"
+                + "        </div>\n"
+                + "        <div class=\"content\">\n"
+                + "            <h2>Hello, " + fullName + "!</h2>\n"
+                + "            <p>We are pleased to inform you that your payment has been successfully processed.</p>\n"
+                + "            <p><strong>Payment Details:</strong></p>\n"
+                + "            <p>Booking ID: <strong>" + bookingId + "</strong></p>\n"
+                + "            <p>Amount: <strong>" + amount + "</strong></p>\n"
+                + "            <p>Payment Date: <strong>" + paymentDate + "</strong></p>\n"
+                + "            <p>Your booking is now confirmed, pending final approval from our admin team.</p>\n"
+                + "            <a href=\"" + BASE_URL + "/viewBookings\" class=\"button\">View Your Bookings</a>\n"
+                + "            <p>If you have any questions, feel free to contact our support team.</p>\n"
+                + "            <p>Best regards,<br>The Team</p>\n"
+                + "        </div>\n"
+                + "        <div class=\"footer\">\n"
+                + "            <p>This is an automated message, please do not reply to this email.</p>\n"
+                + "            <p>© 2025 Your Company. All rights reserved.</p>\n"
+                + "        </div>\n"
+                + "    </div>\n"
+                + "</body>\n"
+                + "</html>";
+    }
+
+    // Email gửi khi admin xác nhận thành công
+    public static boolean sendAdminConfirmationEmail(String toEmail, String fullName, String bookingId, String roomDetails, String checkInDate, String checkOutDate) {
+        try {
+            Properties props = new Properties();
+            props.put("mail.smtp.auth", "true");
+            props.put("mail.smtp.starttls.enable", "true");
+            props.put("mail.smtp.host", SMTP_HOST);
+            props.put("mail.smtp.port", SMTP_PORT);
+            
+            Session session = Session.getInstance(props, new Authenticator() {
+                @Override
+                protected PasswordAuthentication getPasswordAuthentication() {
+                    return new PasswordAuthentication(EMAIL_USERNAME, EMAIL_PASSWORD);
+                }
+            });
+            
+            Message message = new MimeMessage(session);
+            message.setFrom(new InternetAddress(EMAIL_USERNAME));
+            message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(toEmail));
+            message.setSubject("Booking Approved - Your Booking Has Been Confirmed!");
+            
+            String htmlContent = createAdminConfirmationEmailContent(fullName, bookingId, roomDetails, checkInDate, checkOutDate);
+            message.setContent(htmlContent, "text/html; charset=utf-8");
+            
+            Transport.send(message);
+            return true;
+        } catch (MessagingException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    private static String createAdminConfirmationEmailContent(String fullName, String bookingId, String roomDetails, String checkInDate, String checkOutDate) {
+        return "<!DOCTYPE html>\n"
+                + "<html>\n"
+                + "<head>\n"
+                + "    <meta charset=\"UTF-8\">\n"
+                + "    <title>Booking Approved</title>\n"
+                + "    <style>\n"
+                + "        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }\n"
+                + "        .container { max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9; }\n"
+                + "        .header { background-color: #4a90e2; color: white; padding: 20px; text-align: center; }\n"
+                + "        .content { padding: 20px; background-color: white; border-radius: 5px; }\n"
+                + "        .button { display: inline-block; padding: 10px 20px; background-color: #4a90e2; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }\n"
+                + "        .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #666; }\n"
+                + "    </style>\n"
+                + "</head>\n"
+                + "<body>\n"
+                + "    <div class=\"container\">\n"
+                + "        <div class=\"header\">\n"
+                + "            <h1>Booking Approved</h1>\n"
+                + "        </div>\n"
+                + "        <div class=\"content\">\n"
+                + "            <h2>Hello, " + fullName + "!</h2>\n"
+                + "            <p>We are pleased to inform you that your booking has been approved by our admin team.</p>\n"
+                + "            <p><strong>Booking Details:</strong></p>\n"
+                + "            <p>Booking ID: <strong>" + bookingId + "</strong></p>\n"
+                + "            <p>Room: <strong>" + roomDetails + "</strong></p>\n"
+                + "            <p>Check-in Date: <strong>" + checkInDate + "</strong></p>\n"
+                + "            <p>Check-out Date: <strong>" + checkOutDate + "</strong></p>\n"
+                + "            <p>We look forward to welcoming you! If you have any questions, feel free to contact our support team.</p>\n"
+                + "            <a href=\"" + BASE_URL + "/viewBookings\" class=\"button\">View Your Bookings</a>\n"
                 + "            <p>Best regards,<br>The Team</p>\n"
                 + "        </div>\n"
                 + "        <div class=\"footer\">\n"
