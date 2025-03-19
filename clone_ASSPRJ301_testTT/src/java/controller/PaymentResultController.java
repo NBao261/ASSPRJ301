@@ -2,28 +2,32 @@ package controller;
 
 import dao.BookingDAO;
 import dao.NotificationDAO;
+import dao.UserDAO; // Thêm import để lấy danh sách admin
 import dto.BookingDTO;
 import dto.NotificationDTO;
+import dto.UserDTO; // Thêm import để xử lý UserDTO
 import java.io.IOException;
+import java.util.List; // Thêm import để xử lý danh sách admin
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import utils.EmailUtils; // Thêm import để sử dụng EmailUtils
+import utils.EmailUtils;
 
 @WebServlet("/paymentResult")
 public class PaymentResultController extends HttpServlet {
 
     private BookingDAO bookingDAO = new BookingDAO();
     private NotificationDAO notificationDAO = new NotificationDAO();
+    private UserDAO userDAO = new UserDAO(); // Khởi tạo UserDAO để lấy danh sách admin
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         String resultCode = request.getParameter("resultCode");
         String orderId = request.getParameter("orderId");
-        String amount = request.getParameter("amount"); // Số tiền thanh toán
+        String amount = request.getParameter("amount");
 
         if ("0".equals(resultCode)) { // Thanh toán thành công
             String bookingId = orderId.split("_")[0]; // Tách bookingId từ orderId
@@ -39,10 +43,10 @@ public class PaymentResultController extends HttpServlet {
                     String roomName = booking.getRoom() != null ? booking.getRoom().getName() : "Không xác định";
                     String message = "Thanh toán thành công cho đặt phòng '" + roomName + "' với số tiền "
                             + String.format("%,.0f", Double.parseDouble(amount)) + " VND.";
-                    NotificationDTO notification = new NotificationDTO(0, userId, message, null, false);
-                    notificationDAO.addNotification(notification);
+                    NotificationDTO userNotification = new NotificationDTO(0, userId, message, null, false);
+                    notificationDAO.addNotification(userNotification);
 
-                    // Gửi email thông báo thanh toán thành công
+                    // Gửi email thông báo thanh toán thành công cho người dùng
                     boolean emailSent = EmailUtils.sendPaymentSuccessEmail(
                             booking.getUser().getGmail(),
                             booking.getUser().getFullName(),
@@ -52,6 +56,18 @@ public class PaymentResultController extends HttpServlet {
                     );
                     if (!emailSent) {
                         log("Failed to send payment success email to: " + booking.getUser().getGmail());
+                    }
+
+                    // Gửi thông báo cho tất cả admin
+                    try {
+                        List<UserDTO> admins = userDAO.getAllAdmins(); // Lấy danh sách admin
+                        for (UserDTO admin : admins) {
+                            String adminMessage = "Người dùng " + booking.getUser().getFullName() + " đã thanh toán thành công cho đặt phòng (ID: " + bookingIdInt + ") phòng '" + roomName + "' với số tiền " + String.format("%,.0f", Double.parseDouble(amount)) + " VND. Vui lòng xác nhận.";
+                            NotificationDTO adminNotification = new NotificationDTO(0, admin.getUserID(), adminMessage, null, false);
+                            notificationDAO.addNotification(adminNotification);
+                        }
+                    } catch (Exception e) {
+                        log("Failed to send notification to admins: " + e.getMessage());
                     }
 
                     // Gửi thông báo thành công tới giao diện
