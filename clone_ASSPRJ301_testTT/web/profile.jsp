@@ -4,8 +4,9 @@
 <html lang="vi">
     <head>
         <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Cập nhật thông tin cá nhân</title>
-        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
         <style>
             * {
@@ -149,6 +150,21 @@
                 display: block;
             }
 
+            .input-container {
+                position: relative;
+                display: flex;
+                align-items: center;
+            }
+
+            .input-container i {
+                position: absolute;
+                left: 12px;
+                color: #888;
+                font-size: 16px;
+                transition: color 0.3s ease;
+                z-index: 2;
+            }
+
             input[type="text"], input[type="email"], input[type="password"] {
                 width: 100%;
                 padding: 12px 15px 12px 38px;
@@ -176,17 +192,7 @@
                 outline: none;
             }
 
-            .form-group i {
-                position: absolute;
-                top: 70%;
-                left: 12px;
-                transform: translateY(-50%);
-                color: #888;
-                font-size: 16px;
-                transition: color 0.3s ease;
-            }
-
-            .form-group input:focus + i {
+            input:focus + i {
                 color: #5DC1B9;
             }
 
@@ -212,44 +218,92 @@
 
             .message {
                 padding: 10px 15px;
-                margin-bottom: 15px;
+                margin-top: 5px;
                 border-radius: 8px;
                 font-size: 14px;
-                text-align: center;
+                text-align: left;
             }
 
             .message.success {
                 background: #e8f5e9;
                 color: #27ae60;
-                border: 1px solid #27ae60;
+                border-left: 4px solid #27ae60;
             }
 
             .message.error {
                 background: #ffebee;
                 color: #e74c3c;
-                border: 1px solid #e74c3c;
+                border-left: 4px solid #e74c3c;
+            }
+
+            .form-message {
+                padding: 10px 15px;
+                margin-bottom: 20px;
+                border-radius: 8px;
+                font-size: 14px;
+                text-align: center;
+                font-weight: 500;
+            }
+
+            .form-message.success {
+                background: #e8f5e9;
+                color: #27ae60;
+                border: 1px solid #a5d6a7;
+            }
+
+            .form-message.error {
+                background: #ffebee;
+                color: #e74c3c;
+                border: 1px solid #ef9a9a;
             }
 
             .current-avatar {
                 margin-top: 15px;
                 text-align: center;
-                padding: 10px;
+                padding: 15px;
                 background: #f9f9f9;
                 border-radius: 8px;
                 border: 1px solid #e0e0e0;
             }
 
             .current-avatar img {
-                max-width: 80px;
-                border-radius: 8px;
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                max-width: 100px;
+                border-radius: 50%;
+                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+                transition: transform 0.3s ease;
+                border: 3px solid #5DC1B9;
+            }
+            
+            .current-avatar img:hover {
+                transform: scale(1.05);
             }
 
             .current-avatar span {
                 display: block;
+                margin-top: 10px;
+                font-size: 13px;
+                color: #666;
+            }
+
+            .verified-indicator {
+                display: inline-flex;
+                align-items: center;
                 margin-top: 5px;
                 font-size: 12px;
+                color: #27ae60;
+                font-weight: 500;
+            }
+            
+            .verified-indicator i {
+                margin-right: 5px;
+                position: static;
+            }
+
+            input[disabled], input[readonly] {
+                background: #f5f5f5;
                 color: #666;
+                cursor: not-allowed;
+                border: 1px solid #ddd;
             }
 
             @media (max-width: 768px) {
@@ -280,7 +334,7 @@
                     padding: 10px 15px 10px 35px;
                     font-size: 13px;
                 }
-                .form-group i {
+                .input-container i {
                     left: 10px;
                     font-size: 14px;
                 }
@@ -288,18 +342,6 @@
                     padding: 10px;
                     font-size: 14px;
                 }
-            }
-            .verified-indicator {
-                display: inline-block;
-                margin-left: 10px;
-                font-size: 12px;
-                color: #27ae60;
-                font-weight: 500;
-            }
-            input[disabled] {
-                background: #f0f0f0;
-                color: #888;
-                cursor: not-allowed;
             }
         </style>
     </head>
@@ -335,46 +377,52 @@
                         String errorMessage = (String) request.getAttribute("errorMessage");
                     %>
                     <% if (successMessage != null) {%>
-                    <div class="message success"><%= successMessage%></div>
+                    <div class="form-message success"><i class="fas fa-check-circle"></i> <%= successMessage%></div>
                     <% } %>
                     <% if (errorMessage != null) {%>
-                    <div class="message error"><%= errorMessage%></div>
+                    <div class="form-message error"><i class="fas fa-exclamation-circle"></i> <%= errorMessage%></div>
                     <% }%>
                     <form action="<%= request.getContextPath()%>/updateProfile" method="post" enctype="multipart/form-data">
                         <input type="hidden" name="userId" value="<%= user.getUserID()%>">
                         <div class="form-group">
                             <label for="fullName">Họ và tên:</label>
-                            <input type="text" id="fullName" name="fullName" value="<%= user.getFullName() != null ? user.getFullName() : ""%>">
-                            <i class="fas fa-id-card"></i>
+                            <div class="input-container">
+                                <input type="text" id="fullName" name="fullName" value="<%= user.getFullName() != null ? user.getFullName() : ""%>">
+                                <i class="fas fa-id-card"></i>
+                            </div>
                             <% if (request.getAttribute("errorFullName") != null) {%>
-                            <div class="message error"><%= request.getAttribute("errorFullName")%></div>
+                            <div class="message error"><i class="fas fa-exclamation-circle"></i> <%= request.getAttribute("errorFullName")%></div>
                             <% }%>
                         </div>
                         <div class="form-group">
                             <label for="gmail">Gmail:</label>
-                            <input type="email" id="gmail" name="gmail" value="<%= user.getGmail() != null ? user.getGmail() : ""%>"
-                                   <%= user.isIsVerified() ? "readonly" : ""%>> <!-- Vô hiệu hóa nếu đã xác thực -->
-                            <i class="fas fa-envelope"></i>
+                            <div class="input-container">
+                                <input type="email" id="gmail" name="gmail" value="<%= user.getGmail() != null ? user.getGmail() : ""%>"
+                                    <%= user.isIsVerified() ? "readonly" : ""%>>
+                                <i class="fas fa-envelope"></i>
+                            </div>
                             <% if (user.isIsVerified()) { %>
-                            <span class="verified-indicator">Email đã được xác nhận</span>
+                            <div class="verified-indicator"><i class="fas fa-check-circle"></i> Email đã được xác nhận</div>
                             <% } %>
                             <% if (request.getAttribute("errorGmail") != null) {%>
-                            <div class="message error"><%= request.getAttribute("errorGmail")%></div>
+                            <div class="message error"><i class="fas fa-exclamation-circle"></i> <%= request.getAttribute("errorGmail")%></div>
                             <% }%>
                         </div>
                         <div class="form-group">
                             <label for="sdt">Số điện thoại:</label>
-                            <input type="text" id="sdt" name="sdt" value="<%= user.getSdt() != null ? user.getSdt() : ""%>">
-                            <i class="fas fa-phone"></i>
+                            <div class="input-container">
+                                <input type="text" id="sdt" name="sdt" value="<%= user.getSdt() != null ? user.getSdt() : ""%>">
+                                <i class="fas fa-phone"></i>
+                            </div>
                             <% if (request.getAttribute("errorSdt") != null) {%>
-                            <div class="message error"><%= request.getAttribute("errorSdt")%></div>
+                            <div class="message error"><i class="fas fa-exclamation-circle"></i> <%= request.getAttribute("errorSdt")%></div>
                             <% } %>
                         </div>
                         <div class="form-group">
                             <label for="avatar">Avatar:</label>
                             <input type="file" id="avatar" name="avatar" accept="image/*">
                             <% if (request.getAttribute("errorAvatar") != null) {%>
-                            <div class="message error"><%= request.getAttribute("errorAvatar")%></div>
+                            <div class="message error"><i class="fas fa-exclamation-circle"></i> <%= request.getAttribute("errorAvatar")%></div>
                             <% } %>
                             <% if (user.getAvatarUrl() != null && !user.getAvatarUrl().isEmpty()) {%>
                             <div class="current-avatar">
@@ -383,11 +431,12 @@
                             </div>
                             <% } else { %>
                             <div class="current-avatar">
-                                <span>Không có avatar</span>
+                                <img src="<%= request.getContextPath()%>/images/default-avatar.png" alt="Avatar mặc định">
+                                <span>Chưa có avatar</span>
                             </div>
                             <% } %>
                         </div>
-                        <button type="submit">Cập nhật</button>
+                        <button type="submit"><i class="fas fa-save"></i> Cập nhật</button>
                     </form>
                 </div>
                 <% } else if (section.equals("security")) { %>
@@ -398,38 +447,44 @@
                         String changePassError = (String) request.getAttribute("changePassError");
                     %>
                     <% if (changePassSuccess != null) {%>
-                    <div class="message success"><%= changePassSuccess%></div>
+                    <div class="form-message success"><i class="fas fa-check-circle"></i> <%= changePassSuccess%></div>
                     <% } %>
                     <% if (changePassError != null) {%>
-                    <div class="message error"><%= changePassError%></div>
+                    <div class="form-message error"><i class="fas fa-exclamation-circle"></i> <%= changePassError%></div>
                     <% }%>
                     <form action="<%= request.getContextPath()%>/changePassword" method="post">
                         <input type="hidden" name="userId" value="<%= user.getUserID()%>">
                         <div class="form-group">
                             <label for="currentPassword">Mật khẩu hiện tại:</label>
-                            <input type="password" id="currentPassword" name="currentPassword" required>
-                            <i class="fas fa-lock"></i>
+                            <div class="input-container">
+                                <input type="password" id="currentPassword" name="currentPassword" required>
+                                <i class="fas fa-lock"></i>
+                            </div>
                             <% if (request.getAttribute("errorCurrentPassword") != null) {%>
-                            <div class="message error"><%= request.getAttribute("errorCurrentPassword")%></div>
+                            <div class="message error"><i class="fas fa-exclamation-circle"></i> <%= request.getAttribute("errorCurrentPassword")%></div>
                             <% } %>
                         </div>
                         <div class="form-group">
                             <label for="newPassword">Mật khẩu mới:</label>
-                            <input type="password" id="newPassword" name="newPassword" required>
-                            <i class="fas fa-lock"></i>
+                            <div class="input-container">
+                                <input type="password" id="newPassword" name="newPassword" required>
+                                <i class="fas fa-key"></i>
+                            </div>
                             <% if (request.getAttribute("errorNewPassword") != null) {%>
-                            <div class="message error"><%= request.getAttribute("errorNewPassword")%></div>
+                            <div class="message error"><i class="fas fa-exclamation-circle"></i> <%= request.getAttribute("errorNewPassword")%></div>
                             <% } %>
                         </div>
                         <div class="form-group">
                             <label for="confirmPassword">Xác nhận mật khẩu mới:</label>
-                            <input type="password" id="confirmPassword" name="confirmPassword" required>
-                            <i class="fas fa-lock"></i>
+                            <div class="input-container">
+                                <input type="password" id="confirmPassword" name="confirmPassword" required>
+                                <i class="fas fa-check-circle"></i>
+                            </div>
                             <% if (request.getAttribute("errorConfirmPassword") != null) {%>
-                            <div class="message error"><%= request.getAttribute("errorConfirmPassword")%></div>
+                            <div class="message error"><i class="fas fa-exclamation-circle"></i> <%= request.getAttribute("errorConfirmPassword")%></div>
                             <% } %>
                         </div>
-                        <button type="submit">Đổi mật khẩu</button>
+                        <button type="submit"><i class="fas fa-key"></i> Đổi mật khẩu</button>
                     </form>
                 </div>
                 <% }%>

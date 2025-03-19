@@ -65,7 +65,6 @@
         }
 
         .form-group {
-            position: relative;
             margin-bottom: 25px;
         }
 
@@ -75,6 +74,11 @@
             font-size: 16px;
             margin-bottom: 8px;
             display: block;
+        }
+
+        .input-container {
+            position: relative;
+            width: 100%;
         }
 
         .form-group input {
@@ -94,13 +98,14 @@
             outline: none;
         }
 
-        .form-group i {
+        .input-container i {
             position: absolute;
-            top: 62%;
+            top: 50%;
             left: 15px;
             transform: translateY(-50%);
             color: #888;
             font-size: 16px;
+            z-index: 1;
             transition: color 0.3s ease;
         }
 
@@ -140,7 +145,7 @@
             font-weight: 600;
             text-decoration: none;
             transition: color 0.3s ease;
-        }
+       }
 
         .switch-form a:hover {
             color: #4BAA9F;
@@ -194,16 +199,20 @@
                 <input type="hidden" name="action" value="login" />
                 <div class="form-group">
                     <label for="userId">Tên đăng nhập</label>
-                    <input type="text" id="userId" name="txtUsername" value="<%= request.getParameter("txtUsername") != null ? request.getParameter("txtUsername") : ""%>" required />
-                    <i class="fas fa-user"></i>
+                    <div class="input-container">
+                        <input type="text" id="userId" name="txtUsername" value="<%= request.getParameter("txtUsername") != null ? request.getParameter("txtUsername") : ""%>" required />
+                        <i class="fas fa-user"></i>
+                    </div>
                     <% if (request.getAttribute("errorUsername") != null) { %>
                         <p class="error"><%= request.getAttribute("errorUsername") %></p>
                     <% } %>
                 </div>
                 <div class="form-group">
                     <label for="password">Mật khẩu</label>
-                    <input type="password" id="password" name="txtPassword" required />
-                    <i class="fas fa-lock"></i>
+                    <div class="input-container">
+                        <input type="password" id="password" name="txtPassword" required />
+                        <i class="fas fa-lock"></i>
+                    </div>
                     <% if (request.getAttribute("errorPassword") != null) { %>
                         <p class="error"><%= request.getAttribute("errorPassword") %></p>
                     <% } %>
@@ -225,48 +234,60 @@
             <form action="register" method="post">
                 <div class="form-group">
                     <label for="newUsername">Tên đăng nhập</label>
-                    <input type="text" id="newUsername" name="txtNewUsername" value="<%= request.getParameter("txtNewUsername") != null ? request.getParameter("txtNewUsername") : ""%>" required />
-                    <i class="fas fa-user"></i>
+                    <div class="input-container">
+                        <input type="text" id="newUsername" name="txtNewUsername" value="<%= request.getParameter("txtNewUsername") != null ? request.getParameter("txtNewUsername") : ""%>" required />
+                        <i class="fas fa-user"></i>
+                    </div>
                     <% if (request.getAttribute("errorNewUsername") != null) { %>
                         <p class="error"><%= request.getAttribute("errorNewUsername") %></p>
                     <% } %>
                 </div>
                 <div class="form-group">
                     <label for="fullName">Họ và tên</label>
-                    <input type="text" id="fullName" name="txtFullName" value="<%= request.getParameter("txtFullName") != null ? request.getParameter("txtFullName") : ""%>" required />
-                    <i class="fas fa-id-card"></i>
+                    <div class="input-container">
+                        <input type="text" id="fullName" name="txtFullName" value="<%= request.getParameter("txtFullName") != null ? request.getParameter("txtFullName") : ""%>" required />
+                        <i class="fas fa-id-card"></i>
+                    </div>
                     <% if (request.getAttribute("errorFullName") != null) { %>
                         <p class="error"><%= request.getAttribute("errorFullName") %></p>
                     <% } %>
                 </div>
                 <div class="form-group">
                     <label for="gmail">Gmail</label>
-                    <input type="email" id="gmail" name="txtGmail" value="<%= request.getParameter("txtGmail") != null ? request.getParameter("txtGmail") : ""%>" required />
-                    <i class="fas fa-envelope"></i>
+                    <div class="input-container">
+                        <input type="email" id="gmail" name="txtGmail" value="<%= request.getParameter("txtGmail") != null ? request.getParameter("txtGmail") : ""%>" required />
+                        <i class="fas fa-envelope"></i>
+                    </div>
                     <% if (request.getAttribute("errorGmail") != null) { %>
                         <p class="error"><%= request.getAttribute("errorGmail") %></p>
                     <% } %>
                 </div>
                 <div class="form-group">
                     <label for="sdt">Số điện thoại</label>
-                    <input type="text" id="sdt" name="txtSdt" value="<%= request.getParameter("txtSdt") != null ? request.getParameter("txtSdt") : ""%>" />
-                    <i class="fas fa-phone"></i>
+                    <div class="input-container">
+                        <input type="text" id="sdt" name="txtSdt" value="<%= request.getParameter("txtSdt") != null ? request.getParameter("txtSdt") : ""%>" />
+                        <i class="fas fa-phone"></i>
+                    </div>
                     <% if (request.getAttribute("errorSdt") != null) { %>
                         <p class="error"><%= request.getAttribute("errorSdt") %></p>
                     <% } %>
                 </div>
                 <div class="form-group">
                     <label for="newPassword">Mật khẩu</label>
-                    <input type="password" id="newPassword" name="txtNewPassword" required />
-                    <i class="fas fa-lock"></i>
+                    <div class="input-container">
+                        <input type="password" id="newPassword" name="txtNewPassword" required />
+                        <i class="fas fa-lock"></i>
+                    </div>
                     <% if (request.getAttribute("errorNewPassword") != null) { %>
                         <p class="error"><%= request.getAttribute("errorNewPassword") %></p>
                     <% } %>
                 </div>
                 <div class="form-group">
                     <label for="confirmPassword">Nhập lại mật khẩu</label>
-                    <input type="password" id="confirmPassword" name="txtConfirmPassword" required />
-                    <i class="fas fa-lock"></i>
+                    <div class="input-container">
+                        <input type="password" id="confirmPassword" name="txtConfirmPassword" required />
+                        <i class="fas fa-lock"></i>
+                    </div>
                     <% if (request.getAttribute("errorConfirmPassword") != null) { %>
                         <p class="error"><%= request.getAttribute("errorConfirmPassword") %></p>
                     <% } %>
