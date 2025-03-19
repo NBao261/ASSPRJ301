@@ -106,20 +106,20 @@
                 border-radius: 15px;
                 overflow: hidden;
                 box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
-                table-layout: fixed; /* Cố định chiều rộng cột */
+                table-layout: fixed;
             }
             th, td {
                 padding: 18px;
-                text-align: center; /* Căn giữa nội dung */
+                text-align: center;
                 border-bottom: 1px solid #eee;
-                word-wrap: break-word; /* Ngắt chữ nếu quá dài */
+                word-wrap: break-word;
             }
             th {
                 background: linear-gradient(45deg, #1abc9c, #16a085);
                 color: white;
                 font-weight: 600;
                 text-transform: uppercase;
-                width: 16.67%; /* Phân bổ đều 6 cột */
+                width: 16.67%;
             }
             tr:hover {
                 background: #f5f7fa;
@@ -127,7 +127,7 @@
             }
             td.actions {
                 display: flex;
-                justify-content: center; /* Căn giữa nút */
+                justify-content: center;
                 gap: 8px;
                 align-items: center;
             }
@@ -188,6 +188,34 @@
                 margin-top: -10px;
                 margin-bottom: 15px;
             }
+            .pagination {
+                display: flex;
+                justify-content: center;
+                margin-top: 30px;
+                gap: 10px;
+            }
+            .pagination a {
+                padding: 10px 15px;
+                background: #1abc9c;
+                color: white;
+                text-decoration: none;
+                border-radius: 8px;
+                font-weight: 500;
+                transition: background 0.3s ease, transform 0.3s ease;
+            }
+            .pagination a:hover {
+                background: #16a085;
+                transform: scale(1.05);
+            }
+            .pagination a.disabled {
+                background: #bdc3c7;
+                cursor: not-allowed;
+                pointer-events: none;
+            }
+            .pagination a.active {
+                background: #16a085;
+                font-weight: 700;
+            }
             @media (max-width: 768px) {
                 .main-content {
                     padding: 60px 15px;
@@ -209,10 +237,14 @@
                     white-space: nowrap;
                 }
                 th {
-                    width: auto; /* Tự động điều chỉnh trên mobile */
+                    width: auto;
                 }
                 .form-container {
                     padding: 15px;
+                }
+                .pagination a {
+                    padding: 8px 12px;
+                    font-size: 14px;
                 }
             }
         </style>
@@ -225,7 +257,7 @@
         <div class="main-content">
             <div class="users-container">
                 <%
-                    Object userObj = session.getAttribute("user"); // Lấy user từ session
+                    Object userObj = session.getAttribute("user");
                     if (userObj == null || !"AD".equals(((dto.UserDTO) userObj).getRoleID())) {
                         response.sendRedirect(request.getContextPath() + "/login-regis.jsp");
                     } else {
@@ -313,6 +345,26 @@
                 <p class="no-data">Không có người dùng nào trong hệ thống.</p>
                 <%
                 } else {
+                    // Phân trang
+                    final int ITEMS_PER_PAGE = 5; // Số lượng người dùng trên mỗi trang
+                    int currentPage = 1;
+                    String pageParam = request.getParameter("page");
+                    if (pageParam != null) {
+                        try {
+                            currentPage = Integer.parseInt(pageParam);
+                        } catch (NumberFormatException e) {
+                            currentPage = 1;
+                        }
+                    }
+
+                    int totalUsers = userList.size();
+                    int totalPages = (int) Math.ceil((double) totalUsers / ITEMS_PER_PAGE);
+                    if (currentPage < 1) currentPage = 1;
+                    if (currentPage > totalPages) currentPage = totalPages;
+
+                    int start = (currentPage - 1) * ITEMS_PER_PAGE;
+                    int end = Math.min(start + ITEMS_PER_PAGE, totalUsers);
+                    List<UserDTO> usersToShow = totalUsers > 0 ? userList.subList(start, end) : userList;
                 %>
                 <table>
                     <thead>
@@ -326,7 +378,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <% for (UserDTO currentUser : userList) {%>
+                        <% for (UserDTO currentUser : usersToShow) {%>
                         <tr>
                             <td><%= currentUser.getUserID()%></td>
                             <td><%= currentUser.getFullName() != null ? currentUser.getFullName() : "Chưa cập nhật"%></td>
@@ -334,13 +386,32 @@
                             <td><%= currentUser.getGmail() != null ? currentUser.getGmail() : "Chưa cập nhật"%></td>
                             <td><%= currentUser.getSdt() != null ? currentUser.getSdt() : "Chưa cập nhật"%></td>
                             <td class="actions">
-                                <a href="<%= request.getContextPath()%>/admin/users?action=edit&userID=<%= currentUser.getUserID()%>" class="btn btn-edit"><i class="fas fa-edit"></i> Sửa</a>
-                                <button class="btn btn-delete" onclick="confirmDelete('<%= currentUser.getUserID()%>')"><i class="fas fa-trash"></i> Xóa</button>
+                                <a href="<%= request.getContextPath()%>/admin/users?action=edit&userID=<%= currentUser.getUserID()%>&page=<%= currentPage%>" class="btn btn-edit"><i class="fas fa-edit"></i> Sửa</a>
+                                <button class="btn btn-delete" onclick="confirmDelete('<%= currentUser.getUserID()%>', <%= currentPage%>)"><i class="fas fa-trash"></i> Xóa</button>
                             </td>
                         </tr>
                         <% } %>
                     </tbody>
                 </table>
+
+                <!-- Phân trang -->
+                <div class="pagination">
+                    <% if (currentPage > 1) { %>
+                    <a href="<%= request.getContextPath()%>/admin/users?page=<%= currentPage - 1%>">Trang trước</a>
+                    <% } else { %>
+                    <a href="#" class="disabled">Trang trước</a>
+                    <% } %>
+
+                    <% for (int i = 1; i <= totalPages; i++) { %>
+                    <a href="<%= request.getContextPath()%>/admin/users?page=<%= i%>" class="<%= (i == currentPage) ? "active" : ""%>"><%= i%></a>
+                    <% } %>
+
+                    <% if (currentPage < totalPages) { %>
+                    <a href="<%= request.getContextPath()%>/admin/users?page=<%= currentPage + 1%>">Trang sau</a>
+                    <% } else { %>
+                    <a href="#" class="disabled">Trang sau</a>
+                    <% } %>
+                </div>
                 <%
                     }
                 %>
@@ -358,9 +429,9 @@
                 form.classList.toggle('active');
             }
 
-            function confirmDelete(userID) {
+            function confirmDelete(userID, page) {
                 if (confirm("Bạn có chắc chắn muốn xóa người dùng này không?")) {
-                    window.location.href = '<%= request.getContextPath()%>/admin/users?action=delete&userID=' + userID;
+                    window.location.href = '<%= request.getContextPath()%>/admin/users?action=delete&userID=' + userID + '&page=' + page;
                 }
             }
         </script>

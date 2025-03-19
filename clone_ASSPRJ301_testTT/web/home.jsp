@@ -30,20 +30,21 @@
 
         .main-content {
             flex: 1;
-            padding: 80px 0 80px;
-            overflow: auto;
+            padding: 0 0 80px;
+            overflow: hidden;
         }
 
         /* Banner Section */
         .banner {
             background: url('https://acihome.vn/uploads/15/thiet-ke-khu-nghi-duong-homestay-la-gi.jpg') no-repeat center center/cover;
-            height: 600px;
+            height: 650px;
             display: flex;
             align-items: center;
             justify-content: center;
             text-align: center;
             position: relative;
-            margin-bottom: 50px;
+            margin-bottom: 80px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
         }
 
         .banner::after {
@@ -53,44 +54,47 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.4);
+            background: rgba(0, 0, 0, 0.5);
             z-index: 1;
         }
 
         .banner-content {
             position: relative;
             z-index: 2;
-            padding: 50px;
+            padding: 60px;
             max-width: 1000px;
             width: 90%;
             color: white;
+            animation: fadeIn 1.2s ease;
         }
 
         .banner h1 {
-            font-size: 50px;
+            font-size: 54px;
             font-weight: 700;
-            margin-bottom: 20px;
+            margin-bottom: 30px;
             text-shadow: 0 3px 6px rgba(0, 0, 0, 0.5);
             animation: fadeInDown 1s ease;
         }
 
         .banner p {
-            font-size: 22px;
+            font-size: 24px;
             font-weight: 300;
-            margin-bottom: 30px;
+            margin-bottom: 40px;
             text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+            line-height: 1.6;
         }
 
         .btn-view-details {
             background: linear-gradient(45deg, #5DC1B9, #4ECDC4);
             color: white;
-            padding: 12px 30px;
+            padding: 14px 34px;
             text-decoration: none;
             border-radius: 50px;
             font-size: 18px;
             font-weight: 600;
             transition: all 0.3s ease;
             box-shadow: 0 4px 15px rgba(93, 193, 185, 0.4);
+            display: inline-block;
         }
 
         .btn-view-details:hover {
@@ -104,13 +108,19 @@
             background: #fff;
             padding: 80px 40px;
             text-align: center;
-            margin: 0 auto 50px;
+            margin: 0 auto 80px;
             border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.12);
             max-width: 1200px;
             width: 90%;
             position: relative;
             overflow: hidden;
+            transform: translateY(0);
+            transition: transform 0.3s ease;
+        }
+
+        .intro:hover {
+            transform: translateY(-5px);
         }
 
         .intro::before {
@@ -118,27 +128,39 @@
             position: absolute;
             top: -50px;
             left: -50px;
-            width: 150px;
-            height: 150px;
-            background: rgba(93, 193, 185, 0.2);
+            width: 200px;
+            height: 200px;
+            background: rgba(93, 193, 185, 0.15);
+            border-radius: 50%;
+            z-index: 0;
+        }
+
+        .intro::after {
+            content: '';
+            position: absolute;
+            bottom: -80px;
+            right: -80px;
+            width: 250px;
+            height: 250px;
+            background: rgba(93, 193, 185, 0.1);
             border-radius: 50%;
             z-index: 0;
         }
 
         .intro h2 {
-            font-size: 40px;
+            font-size: 42px;
             font-weight: 600;
-            margin-bottom: 25px;
+            margin-bottom: 30px;
             color: #2c3e50;
             position: relative;
             z-index: 1;
         }
 
         .intro p {
-            font-size: 18px;
-            color: #666;
-            line-height: 1.8;
-            max-width: 800px;
+            font-size: 19px;
+            color: #555;
+            line-height: 1.9;
+            max-width: 850px;
             margin: 0 auto 30px;
             position: relative;
             z-index: 1;
@@ -148,48 +170,65 @@
         .highlighted-rooms {
             max-width: 1200px;
             width: 90%;
-            margin: 0 auto 50px;
+            margin: 0 auto 80px;
             padding: 0 20px;
         }
 
         .section-title {
             text-align: center;
-            font-size: 36px;
+            font-size: 38px;
             font-weight: 600;
             color: #2c3e50;
-            margin-bottom: 40px;
+            margin-bottom: 50px;
+            position: relative;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 3px;
+            background: linear-gradient(45deg, #5DC1B9, #4ECDC4);
         }
 
         .room-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 30px;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 40px;
         }
 
         .room {
             background: white;
             border-radius: 20px;
             overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            transition: all 0.3s ease;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            transition: all 0.4s ease;
             display: flex;
             flex-direction: column;
+            position: relative;
         }
 
         .room:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+            transform: translateY(-15px);
+            box-shadow: 0 20px 45px rgba(0, 0, 0, 0.15);
         }
 
         .room img {
             width: 100%;
-            height: 220px;
+            height: 240px;
             object-fit: cover;
-            border-radius: 20px 20px 0 0;
+            transition: transform 0.5s ease;
+        }
+
+        .room:hover img {
+            transform: scale(1.05);
         }
 
         .room-info {
-            padding: 25px;
+            padding: 30px;
             text-align: center;
             flex-grow: 1;
             display: flex;
@@ -198,34 +237,34 @@
         }
 
         .room h3 {
-            font-size: 24px;
+            font-size: 26px;
             font-weight: 600;
             color: #2c3e50;
             margin-bottom: 15px;
         }
 
         .room p {
-            font-size: 16px;
+            font-size: 17px;
             color: #666;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
             line-height: 1.6;
         }
 
         .room .price {
-            font-size: 22px;
+            font-size: 23px;
             font-weight: 600;
             color: #5DC1B9;
-            margin: 10px 0;
+            margin: 15px 0;
         }
 
         .room .btn-container {
-            margin-top: 20px;
+            margin-top: 25px;
         }
 
         /* More Rooms Link */
         .more-rooms {
             text-align: center;
-            margin-top: 30px;
+            margin-top: 50px;
         }
 
         .more-rooms a {
@@ -233,7 +272,7 @@
             font-size: 18px;
             font-weight: 600;
             text-decoration: none;
-            padding: 10px 20px;
+            padding: 12px 26px;
             border: 2px solid #5DC1B9;
             border-radius: 50px;
             transition: all 0.3s ease;
@@ -242,69 +281,122 @@
         .more-rooms a:hover {
             background: #5DC1B9;
             color: white;
-            box-shadow: 0 4px 15px rgba(93, 193, 185, 0.4);
+            box-shadow: 0 5px 15px rgba(93, 193, 185, 0.4);
         }
 
-        /* Animations */
+        /* Animation */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
         @keyframes fadeInDown {
-            from { opacity: 0; transform: translateY(-20px); }
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
         /* Responsive Design */
+        @media (max-width: 992px) {
+            .banner {
+                height: 550px;
+            }
+
+            .room-grid {
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                gap: 30px;
+            }
+        }
+
         @media (max-width: 768px) {
             .banner {
-                height: 400px;
+                height: 450px;
+                margin-bottom: 60px;
             }
 
             .banner-content {
-                padding: 30px;
+                padding: 40px 20px;
             }
 
             .banner h1 {
-                font-size: 32px;
+                font-size: 36px;
+                margin-bottom: 20px;
             }
 
             .banner p {
                 font-size: 18px;
+                margin-bottom: 30px;
             }
 
             .btn-view-details {
-                padding: 10px 25px;
+                padding: 12px 28px;
                 font-size: 16px;
+            }
+
+            .intro {
+                padding: 60px 30px;
+                margin-bottom: 60px;
+            }
+
+            .intro h2 {
+                font-size: 32px;
+            }
+
+            .intro p {
+                font-size: 17px;
+            }
+
+            .section-title {
+                font-size: 30px;
+                margin-bottom: 40px;
+            }
+
+            .room img {
+                height: 200px;
+            }
+
+            .room h3 {
+                font-size: 22px;
+            }
+
+            .room p {
+                font-size: 16px;
+            }
+
+            .room .price {
+                font-size: 20px;
+            }
+
+            .more-rooms a {
+                font-size: 16px;
+                padding: 10px 22px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .banner {
+                height: 400px;
+            }
+
+            .banner h1 {
+                font-size: 30px;
             }
 
             .intro {
                 padding: 50px 20px;
             }
 
-            .intro h2 {
-                font-size: 28px;
+            .room-grid {
+                grid-template-columns: 1fr;
+                gap: 30px;
             }
 
-            .intro p {
-                font-size: 16px;
-            }
-
-            .section-title {
-                font-size: 28px;
-            }
-
-            .room img {
-                height: 180px;
-            }
-
-            .room h3 {
-                font-size: 20px;
-            }
-
-            .room .price {
-                font-size: 18px;
-            }
-
-            .more-rooms a {
-                font-size: 16px;
-                padding: 8px 18px;
+            .room-info {
+                padding: 25px 20px;
             }
         }
     </style>

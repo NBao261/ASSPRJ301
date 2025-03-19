@@ -2,7 +2,7 @@
 <%@page import="java.util.List"%>
 <%@page import="dto.BookingDTO"%>
 <%@page import="java.text.SimpleDateFormat"%>
-<%@page import="dao.BookingDAO"%> <!-- Thêm để sử dụng hằng số trạng thái -->
+<%@page import="dao.BookingDAO"%>
 <% request.setCharacterEncoding("UTF-8");%>
 <!DOCTYPE html>
 <html lang="vi">
@@ -97,16 +97,16 @@
                 font-weight: 500;
             }
             .status.pending {
-                color: #f1c40f; /* Chờ thanh toán */
+                color: #f1c40f;
             }
             .status.paid {
-                color: #27ae60; /* Đã thanh toán */
+                color: #27ae60;
             }
             .status.confirmed {
-                color: #3498db; /* Đã xác nhận */
+                color: #3498db;
             }
             .status.cancelled {
-                color: #e74c3c; /* Đã hủy */
+                color: #e74c3c;
             }
             .btn {
                 padding: 10px 18px;
@@ -160,6 +160,34 @@
                 color: #7f8c8d;
                 font-size: 18px;
             }
+            .pagination {
+                display: flex;
+                justify-content: center;
+                margin-top: 30px;
+                gap: 10px;
+            }
+            .pagination a {
+                padding: 10px 15px;
+                background: #1abc9c;
+                color: white;
+                text-decoration: none;
+                border-radius: 8px;
+                font-weight: 500;
+                transition: background 0.3s ease, transform 0.3s ease;
+            }
+            .pagination a:hover {
+                background: #16a085;
+                transform: scale(1.05);
+            }
+            .pagination a.disabled {
+                background: #bdc3c7;
+                cursor: not-allowed;
+                pointer-events: none;
+            }
+            .pagination a.active {
+                background: #16a085;
+                font-weight: 700;
+            }
             @media (max-width: 768px) {
                 .main-content {
                     padding: 60px 15px;
@@ -179,6 +207,10 @@
                     display: block;
                     overflow-x: auto;
                     white-space: nowrap;
+                }
+                .pagination a {
+                    padding: 8px 12px;
+                    font-size: 14px;
                 }
             }
         </style>
@@ -211,6 +243,26 @@
                 <p class="no-data">Không có đặt phòng nào trong hệ thống.</p>
                 <%
                 } else {
+                    // Phân trang
+                    final int ITEMS_PER_PAGE = 5; // Số lượng đặt phòng trên mỗi trang
+                    int currentPage = 1;
+                    String pageParam = request.getParameter("page");
+                    if (pageParam != null) {
+                        try {
+                            currentPage = Integer.parseInt(pageParam);
+                        } catch (NumberFormatException e) {
+                            currentPage = 1;
+                        }
+                    }
+
+                    int totalBookings = bookingList.size();
+                    int totalPages = (int) Math.ceil((double) totalBookings / ITEMS_PER_PAGE);
+                    if (currentPage < 1) currentPage = 1;
+                    if (currentPage > totalPages) currentPage = totalPages;
+
+                    int start = (currentPage - 1) * ITEMS_PER_PAGE;
+                    int end = Math.min(start + ITEMS_PER_PAGE, totalBookings);
+                    List<BookingDTO> bookingsToShow = totalBookings > 0 ? bookingList.subList(start, end) : bookingList;
                 %>
                 <table>
                     <thead>
@@ -227,7 +279,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <% for (BookingDTO booking : bookingList) {
+                        <% for (BookingDTO booking : bookingsToShow) {
                                 String statusClass = "";
                                 String displayStatus = "";
                                 if (BookingDAO.STATUS_PENDING_PAYMENT.equals(booking.getStatus())) {
@@ -255,17 +307,36 @@
                             <td><%= dateFormat.format(booking.getCreatedAt())%></td>
                             <td>
                                 <% if (BookingDAO.STATUS_PAID.equals(booking.getStatus())) {%>
-                                <button class="btn btn-confirm" onclick="confirmBooking('<%= booking.getId()%>')"><i class="fas fa-check"></i> Xác nhận</button>
+                                <button class="btn btn-confirm" onclick="confirmBooking('<%= booking.getId()%>', <%= currentPage%>)"><i class="fas fa-check"></i> Xác nhận</button>
                                 <% } %>
                                 <% if (!BookingDAO.STATUS_CANCELLED.equals(booking.getStatus())) {%>
-                                <button class="btn btn-cancel" onclick="cancelBooking('<%= booking.getId()%>')"><i class="fas fa-times"></i> Hủy</button>
+                                <button class="btn btn-cancel" onclick="cancelBooking('<%= booking.getId()%>', <%= currentPage%>)"><i class="fas fa-times"></i> Hủy</button>
                                 <% }%>
-                                <button class="btn btn-delete" onclick="deleteBooking('<%= booking.getId()%>')"><i class="fas fa-trash"></i> Xóa</button>
+                                <button class="btn btn-delete" onclick="deleteBooking('<%= booking.getId()%>', <%= currentPage%>)"><i class="fas fa-trash"></i> Xóa</button>
                             </td>
                         </tr>
                         <% } %>
                     </tbody>
                 </table>
+
+                <!-- Phân trang -->
+                <div class="pagination">
+                    <% if (currentPage > 1) { %>
+                    <a href="<%= request.getContextPath()%>/admin/bookings?page=<%= currentPage - 1%>">Trang trước</a>
+                    <% } else { %>
+                    <a href="#" class="disabled">Trang trước</a>
+                    <% } %>
+
+                    <% for (int i = 1; i <= totalPages; i++) { %>
+                    <a href="<%= request.getContextPath()%>/admin/bookings?page=<%= i%>" class="<%= (i == currentPage) ? "active" : ""%>"><%= i%></a>
+                    <% } %>
+
+                    <% if (currentPage < totalPages) { %>
+                    <a href="<%= request.getContextPath()%>/admin/bookings?page=<%= currentPage + 1%>">Trang sau</a>
+                    <% } else { %>
+                    <a href="#" class="disabled">Trang sau</a>
+                    <% } %>
+                </div>
                 <%
                     }
                 %>
@@ -277,21 +348,21 @@
         </div>
 
         <script>
-            function confirmBooking(bookingId) {
+            function confirmBooking(bookingId, page) {
                 if (confirm("Bạn có chắc chắn muốn xác nhận đặt phòng này không?")) {
-                    window.location.href = '<%= request.getContextPath()%>/admin/bookings?action=confirm&bookingId=' + bookingId;
+                    window.location.href = '<%= request.getContextPath()%>/admin/bookings?action=confirm&bookingId=' + bookingId + '&page=' + page;
                 }
             }
 
-            function cancelBooking(bookingId) {
+            function cancelBooking(bookingId, page) {
                 if (confirm("Bạn có chắc chắn muốn hủy đặt phòng này không?")) {
-                    window.location.href = '<%= request.getContextPath()%>/admin/bookings?action=cancel&bookingId=' + bookingId;
+                    window.location.href = '<%= request.getContextPath()%>/admin/bookings?action=cancel&bookingId=' + bookingId + '&page=' + page;
                 }
             }
 
-            function deleteBooking(bookingId) {
+            function deleteBooking(bookingId, page) {
                 if (confirm("Bạn có chắc chắn muốn xóa đặt phòng này không?")) {
-                    window.location.href = '<%= request.getContextPath()%>/admin/bookings?action=delete&bookingId=' + bookingId;
+                    window.location.href = '<%= request.getContextPath()%>/admin/bookings?action=delete&bookingId=' + bookingId + '&page=' + page;
                 }
             }
         </script>

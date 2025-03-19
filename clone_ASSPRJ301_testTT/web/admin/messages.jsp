@@ -1,6 +1,7 @@
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%@page import="dto.ContactMessageDTO"%>
 <%@page import="java.util.List"%>
+<%@page import="java.text.SimpleDateFormat"%>
 <% request.setCharacterEncoding("UTF-8");%>
 <!DOCTYPE html>
 <html lang="vi">
@@ -95,10 +96,10 @@
             font-weight: 500;
         }
         .status.unread {
-            color: #f1c40f; /* Chưa đọc */
+            color: #f1c40f;
         }
         .status.read {
-            color: #27ae60; /* Đã đọc */
+            color: #27ae60;
         }
         .btn {
             padding: 10px 18px;
@@ -141,6 +142,34 @@
             color: #7f8c8d;
             font-size: 18px;
         }
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 30px;
+            gap: 10px;
+        }
+        .pagination a {
+            padding: 10px 15px;
+            background: #1abc9c;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: background 0.3s ease, transform 0.3s ease;
+        }
+        .pagination a:hover {
+            background: #16a085;
+            transform: scale(1.05);
+        }
+        .pagination a.disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+        .pagination a.active {
+            background: #16a085;
+            font-weight: 700;
+        }
         @media (max-width: 768px) {
             .main-content {
                 padding: 60px 15px;
@@ -160,6 +189,10 @@
                 display: block;
                 overflow-x: auto;
                 white-space: nowrap;
+            }
+            .pagination a {
+                padding: 8px 12px;
+                font-size: 14px;
             }
         }
     </style>
@@ -195,11 +228,32 @@
 
             <% 
                 List<ContactMessageDTO> messageList = (List<ContactMessageDTO>) request.getAttribute("messageList");
+                SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
                 if (messageList == null || messageList.isEmpty()) {
             %>
                 <p class="no-data">Không có tin nhắn nào từ người dùng.</p>
             <% 
                 } else {
+                    // Phân trang
+                    final int ITEMS_PER_PAGE = 5; // Số lượng tin nhắn trên mỗi trang
+                    int currentPage = 1;
+                    String pageParam = request.getParameter("page");
+                    if (pageParam != null) {
+                        try {
+                            currentPage = Integer.parseInt(pageParam);
+                        } catch (NumberFormatException e) {
+                            currentPage = 1;
+                        }
+                    }
+
+                    int totalMessages = messageList.size();
+                    int totalPages = (int) Math.ceil((double) totalMessages / ITEMS_PER_PAGE);
+                    if (currentPage < 1) currentPage = 1;
+                    if (currentPage > totalPages) currentPage = totalPages;
+
+                    int start = (currentPage - 1) * ITEMS_PER_PAGE;
+                    int end = Math.min(start + ITEMS_PER_PAGE, totalMessages);
+                    List<ContactMessageDTO> messagesToShow = totalMessages > 0 ? messageList.subList(start, end) : messageList;
             %>
                 <table>
                     <thead>
@@ -216,7 +270,7 @@
                     </thead>
                     <tbody>
                         <% 
-                            for (ContactMessageDTO message : messageList) {
+                            for (ContactMessageDTO message : messagesToShow) {
                                 String statusClass = message.isRead() ? "read" : "unread";
                                 String displayStatus = message.isRead() ? "Đã đọc" : "Chưa đọc";
                         %>
@@ -231,12 +285,13 @@
                                 <td><%= message.getEmail() %></td>
                                 <td><%= message.getPhone() != null ? message.getPhone() : "" %></td>
                                 <td><%= message.getMessage() %></td>
-                                <td><%= message.getCreatedAt() %></td>
+                                <td><%= dateFormat.format(message.getCreatedAt()) %></td>
                                 <td class="status <%= statusClass %>"><%= displayStatus %></td>
                                 <td>
                                     <% if (!message.isRead()) { %>
                                         <form action="<%= request.getContextPath() %>/admin/messages?action=markAsRead" method="post" style="display:inline;">
                                             <input type="hidden" name="messageId" value="<%= message.getId() %>">
+                                            <input type="hidden" name="page" value="<%= currentPage %>">
                                             <button type="submit" class="btn btn-mark-read"><i class="fas fa-check"></i> Đánh dấu đã đọc</button>
                                         </form>
                                     <% } %>
@@ -247,6 +302,25 @@
                         %>
                     </tbody>
                 </table>
+
+                <!-- Phân trang -->
+                <div class="pagination">
+                    <% if (currentPage > 1) { %>
+                    <a href="<%= request.getContextPath()%>/admin/messages?page=<%= currentPage - 1%>">Trang trước</a>
+                    <% } else { %>
+                    <a href="#" class="disabled">Trang trước</a>
+                    <% } %>
+
+                    <% for (int i = 1; i <= totalPages; i++) { %>
+                    <a href="<%= request.getContextPath()%>/admin/messages?page=<%= i%>" class="<%= (i == currentPage) ? "active" : ""%>"><%= i%></a>
+                    <% } %>
+
+                    <% if (currentPage < totalPages) { %>
+                    <a href="<%= request.getContextPath()%>/admin/messages?page=<%= currentPage + 1%>">Trang sau</a>
+                    <% } else { %>
+                    <a href="#" class="disabled">Trang sau</a>
+                    <% } %>
+                </div>
             <% 
                 }
             %>

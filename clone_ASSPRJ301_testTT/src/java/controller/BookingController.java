@@ -7,9 +7,11 @@ import dto.RoomDTO;
 import dto.UserDTO;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.sql.Date;
-import java.time.temporal.ChronoUnit;
+import java.text.SimpleDateFormat;
+import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -23,10 +25,10 @@ import utils.EmailUtils;
 @WebServlet(name = "BookingController", urlPatterns = {"/bookRoom", "/viewBookings", "/cancelBooking", "/checkAvailability"})
 public class BookingController extends HttpServlet {
 
-    // Các hằng số đường dẫn trang JSP
     private static final String LOGIN_PAGE = "login-regis.jsp";
     private static final String BOOKING_PAGE = "booking.jsp";
     private static final String BOOKING_LIST_PAGE = "viewBookings.jsp";
+    private static final int ITEMS_PER_PAGE = 5;
 
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -35,7 +37,6 @@ public class BookingController extends HttpServlet {
         HttpSession session = request.getSession();
         UserDTO user = (UserDTO) session.getAttribute("user");
 
-        // Kiểm tra đăng nhập, ngoại trừ action checkAvailability
         if (user == null && !action.equals("/checkAvailability")) {
             response.sendRedirect(request.getContextPath() + "/" + LOGIN_PAGE);
             return;
@@ -66,7 +67,6 @@ public class BookingController extends HttpServlet {
         }
     }
 
-    // Hàm xử lý đặt phòng mới
     private void handleBooking(HttpServletRequest request, HttpServletResponse response, UserDTO user)
             throws IOException, ServletException, ClassNotFoundException, Exception {
         String roomIdParam = request.getParameter("roomId");
@@ -90,9 +90,14 @@ public class BookingController extends HttpServlet {
         }
 
         BookingDAO bookingDAO = new BookingDAO();
-        Date checkInDate = Date.valueOf(checkInStr);
-        Date checkOutDate = Date.valueOf(checkOutStr);
-        long days = ChronoUnit.DAYS.between(checkInDate.toLocalDate(), checkOutDate.toLocalDate());
+        // Chuyển chuỗi ngày thành java.util.Date
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        Date checkInDate = sdf.parse(checkInStr);
+        Date checkOutDate = sdf.parse(checkOutStr);
+
+        // Tính số ngày giữa check-in và check-out
+        long diffInMillies = checkOutDate.getTime() - checkInDate.getTime();
+        long days = diffInMillies / (1000 * 60 * 60 * 24);
 
         if (days <= 0) {
             request.setAttribute("errorMessage", "Ngày trả phòng phải sau ngày nhận phòng!");
@@ -107,10 +112,9 @@ public class BookingController extends HttpServlet {
         }
 
         double totalPrice = days * room.getPrice();
-        BookingDTO booking = new BookingDTO(0, user, room, checkInDate, checkOutDate, totalPrice, BookingDAO.STATUS_PENDING_PAYMENT, new java.util.Date());
+        BookingDTO booking = new BookingDTO(0, user, room, checkInDate, checkOutDate, totalPrice, BookingDAO.STATUS_PENDING_PAYMENT, new Date());
 
         if (bookingDAO.addBooking(booking)) {
-            // Lấy bookingId sau khi thêm vào DB
             int bookingId = bookingDAO.getLastInsertedBookingId();
             if (bookingId == -1) {
                 request.setAttribute("errorMessage", "Đặt phòng thành công nhưng không thể lấy ID đặt phòng để gửi thông báo!");
@@ -118,50 +122,201 @@ public class BookingController extends HttpServlet {
                 return;
             }
 
-            // Gửi thông báo qua hệ thống
             NotificationDAO notificationDAO = new NotificationDAO();
             NotificationDTO notification = new NotificationDTO(0, user.getUserID(),
                     "Bạn đã đặt phòng '" + room.getName() + "' thành công! Vui lòng thanh toán để hoàn tất.", null, false);
             notificationDAO.addNotification(notification);
 
-            // Gửi email thông báo đặt phòng thành công
             boolean emailSent = EmailUtils.sendBookingSuccessEmail(
                     user.getGmail(),
                     user.getFullName(),
                     String.valueOf(bookingId),
                     room.getName(),
-                    checkInDate.toString(),
-                    checkOutDate.toString()
+                    sdf.format(checkInDate),
+                    sdf.format(checkOutDate)
             );
             if (!emailSent) {
                 log("Failed to send booking success email to: " + user.getGmail());
             }
 
             request.setAttribute("successMessage", "Đặt phòng thành công! Vui lòng thanh toán để hoàn tất.");
-            viewBookings(request, response, user); // Chuyển đến danh sách đặt phòng
+            viewBookings(request, response, user);
         } else {
             request.setAttribute("errorMessage", "Đặt phòng thất bại, vui lòng thử lại.");
             request.getRequestDispatcher(BOOKING_PAGE).forward(request, response);
         }
     }
 
-    // Hàm hiển thị danh sách đặt phòng của người dùng
     private void viewBookings(HttpServletRequest request, HttpServletResponse response, UserDTO user)
             throws ServletException, IOException, ClassNotFoundException, Exception {
         BookingDAO bookingDAO = new BookingDAO();
-        List<BookingDTO> bookingList = bookingDAO.getBookingsByUserId(user.getUserID());
+        List<BookingDTO> allBookings = bookingDAO.getBookingsByUserId(user.getUserID());
+        Date currentDate = new Date();
+
+        // --- Lọc danh sách đặt phòng ---
+        String bookingStatusFilter = request.getParameter("bookingStatusFilter");
+        if (bookingStatusFilter != null && !bookingStatusFilter.equals("all")) {
+            allBookings = allBookings.stream().filter(booking -> {
+                if ("pending".equals(bookingStatusFilter)) {
+                    return BookingDAO.STATUS_PENDING_PAYMENT.equals(booking.getStatus());
+                } else if ("paid".equals(bookingStatusFilter)) {
+                    return BookingDAO.STATUS_PAID.equals(booking.getStatus()) || BookingDAO.STATUS_CONFIRMED.equals(booking.getStatus());
+                } else if ("cancelled".equals(bookingStatusFilter)) {
+                    return BookingDAO.STATUS_CANCELLED.equals(booking.getStatus());
+                } else if ("completed".equals(bookingStatusFilter)) {
+                    return currentDate.after(booking.getCheckOutDate());
+                }
+                return true;
+            }).collect(Collectors.toList());
+        }
+
+        // Lọc theo khoảng thời gian
+        String bookingStartDateStr = request.getParameter("bookingStartDate");
+        String bookingEndDateStr = request.getParameter("bookingEndDate");
+        if (bookingStartDateStr != null && bookingEndDateStr != null && !bookingStartDateStr.isEmpty() && !bookingEndDateStr.isEmpty()) {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+            Date startDate = sdf.parse(bookingStartDateStr);
+            Date endDate = sdf.parse(bookingEndDateStr);
+            allBookings = allBookings.stream()
+                    .filter(booking -> !booking.getCreatedAt().before(startDate) && !booking.getCreatedAt().after(endDate))
+                    .collect(Collectors.toList());
+        }
+
+        // --- Sắp xếp danh sách đặt phòng ---
+        String bookingSortBy = request.getParameter("bookingSortBy");
+        if (bookingSortBy != null) {
+            switch (bookingSortBy) {
+                case "dateAsc":
+                    allBookings.sort(Comparator.comparing(BookingDTO::getCreatedAt));
+                    break;
+                case "dateDesc":
+                    allBookings.sort(Comparator.comparing(BookingDTO::getCreatedAt).reversed());
+                    break;
+                case "statusAsc":
+                    allBookings.sort(Comparator.comparing(BookingDTO::getStatus));
+                    break;
+                case "statusDesc":
+                    allBookings.sort(Comparator.comparing(BookingDTO::getStatus).reversed());
+                    break;
+            }
+        }
+
+        // --- Phân trang cho danh sách đặt phòng ---
+        int bookingPage = 1;
+        String bookingPageParam = request.getParameter("bookingPage");
+        if (bookingPageParam != null) {
+            try {
+                bookingPage = Integer.parseInt(bookingPageParam);
+            } catch (NumberFormatException e) {
+                bookingPage = 1;
+            }
+        }
+
+        int totalBookings = allBookings.size();
+        int totalBookingPages = (int) Math.ceil((double) totalBookings / ITEMS_PER_PAGE);
+        if (bookingPage < 1) bookingPage = 1;
+        if (bookingPage > totalBookingPages) bookingPage = totalBookingPages;
+
+        int start = (bookingPage - 1) * ITEMS_PER_PAGE;
+        int end = Math.min(start + ITEMS_PER_PAGE, totalBookings);
+        List<BookingDTO> bookingList = totalBookings > 0 ? allBookings.subList(start, end) : allBookings;
+
+        // --- Lấy lịch sử giao dịch ---
+        List<BookingDTO> allTransactions = bookingDAO.getBookingsByUserId(user.getUserID()).stream()
+                .filter(booking -> BookingDAO.STATUS_PAID.equals(booking.getStatus()) ||
+                        BookingDAO.STATUS_CONFIRMED.equals(booking.getStatus()) ||
+                        BookingDAO.STATUS_CANCELLED.equals(booking.getStatus()))
+                .collect(Collectors.toList());
+
+        // --- Lọc lịch sử giao dịch ---
+        String transactionStatusFilter = request.getParameter("transactionStatusFilter");
+        if (transactionStatusFilter != null && !transactionStatusFilter.equals("all")) {
+            allTransactions = allTransactions.stream().filter(transaction -> {
+                if ("paid".equals(transactionStatusFilter)) {
+                    return BookingDAO.STATUS_PAID.equals(transaction.getStatus()) || BookingDAO.STATUS_CONFIRMED.equals(transaction.getStatus());
+                } else if ("cancelled".equals(transactionStatusFilter)) {
+                    return BookingDAO.STATUS_CANCELLED.equals(transaction.getStatus());
+                }
+                return true;
+            }).collect(Collectors.toList());
+        }
+
+        String transactionStartDateStr = request.getParameter("transactionStartDate");
+        String transactionEndDateStr = request.getParameter("transactionEndDate");
+        if (transactionStartDateStr != null && transactionEndDateStr != null && !transactionStartDateStr.isEmpty() && !transactionEndDateStr.isEmpty()) {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+            Date startDate = sdf.parse(transactionStartDateStr);
+            Date endDate = sdf.parse(transactionEndDateStr);
+            allTransactions = allTransactions.stream()
+                    .filter(transaction -> !transaction.getCreatedAt().before(startDate) && !transaction.getCreatedAt().after(endDate))
+                    .collect(Collectors.toList());
+        }
+
+        // --- Sắp xếp lịch sử giao dịch ---
+        String transactionSortBy = request.getParameter("transactionSortBy");
+        if (transactionSortBy != null) {
+            switch (transactionSortBy) {
+                case "dateAsc":
+                    allTransactions.sort(Comparator.comparing(BookingDTO::getCreatedAt));
+                    break;
+                case "dateDesc":
+                    allTransactions.sort(Comparator.comparing(BookingDTO::getCreatedAt).reversed());
+                    break;
+                case "statusAsc":
+                    allTransactions.sort(Comparator.comparing(BookingDTO::getStatus));
+                    break;
+                case "statusDesc":
+                    allTransactions.sort(Comparator.comparing(BookingDTO::getStatus).reversed());
+                    break;
+            }
+        }
+
+        // --- Phân trang cho lịch sử giao dịch ---
+        int transactionPage = 1;
+        String transactionPageParam = request.getParameter("transactionPage");
+        if (transactionPageParam != null) {
+            try {
+                transactionPage = Integer.parseInt(transactionPageParam);
+            } catch (NumberFormatException e) {
+                transactionPage = 1;
+            }
+        }
+
+        int totalTransactions = allTransactions.size();
+        int totalTransactionPages = (int) Math.ceil((double) totalTransactions / ITEMS_PER_PAGE);
+        if (transactionPage < 1) transactionPage = 1;
+        if (transactionPage > totalTransactionPages) transactionPage = totalTransactionPages;
+
+        start = (transactionPage - 1) * ITEMS_PER_PAGE;
+        end = Math.min(start + ITEMS_PER_PAGE, totalTransactions);
+        List<BookingDTO> transactionList = totalTransactions > 0 ? allTransactions.subList(start, end) : allTransactions;
+
+        // Truyền dữ liệu cho JSP
         request.setAttribute("bookingList", bookingList);
+        request.setAttribute("bookingPage", bookingPage);
+        request.setAttribute("totalBookingPages", totalBookingPages);
+        request.setAttribute("bookingStatusFilter", bookingStatusFilter);
+        request.setAttribute("bookingStartDate", bookingStartDateStr);
+        request.setAttribute("bookingEndDate", bookingEndDateStr);
+        request.setAttribute("bookingSortBy", bookingSortBy);
+
+        request.setAttribute("transactionList", transactionList);
+        request.setAttribute("transactionPage", transactionPage);
+        request.setAttribute("totalTransactionPages", totalTransactionPages);
+        request.setAttribute("transactionStatusFilter", transactionStatusFilter);
+        request.setAttribute("transactionStartDate", transactionStartDateStr);
+        request.setAttribute("transactionEndDate", transactionEndDateStr);
+        request.setAttribute("transactionSortBy", transactionSortBy);
+
         request.getRequestDispatcher(BOOKING_LIST_PAGE).forward(request, response);
     }
 
-    // Hàm xử lý hủy đặt phòng
     private void cancelBooking(HttpServletRequest request, HttpServletResponse response, UserDTO user)
             throws IOException, ServletException, ClassNotFoundException, Exception {
         int bookingId = Integer.parseInt(request.getParameter("bookingId"));
         BookingDAO bookingDAO = new BookingDAO();
         BookingDTO booking = bookingDAO.getBookingById(bookingId);
 
-        // Chỉ cho phép hủy khi trạng thái là "PendingPayment"
         if (booking != null && BookingDAO.STATUS_PENDING_PAYMENT.equals(booking.getStatus()) && bookingDAO.cancelBooking(bookingId)) {
             NotificationDAO notificationDAO = new NotificationDAO();
             String roomName = booking.getRoom() != null ? booking.getRoom().getName() : "Không xác định";
@@ -172,11 +327,10 @@ public class BookingController extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/viewBookings");
         } else {
             request.setAttribute("errorMessage", "Hủy đặt phòng thất bại. Đơn đặt phòng không tồn tại hoặc đã được thanh toán/xác nhận.");
-            viewBookings(request, response, user); // Quay lại danh sách với thông báo lỗi
+            viewBookings(request, response, user);
         }
     }
 
-    // Hàm kiểm tra phòng trống (AJAX endpoint)
     private void checkAvailability(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
         response.setContentType("application/json");
@@ -187,8 +341,9 @@ public class BookingController extends HttpServlet {
             String checkInDateStr = request.getParameter("checkInDate");
             String checkOutDateStr = request.getParameter("checkOutDate");
 
-            Date checkInDate = Date.valueOf(checkInDateStr);
-            Date checkOutDate = Date.valueOf(checkOutDateStr);
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+            Date checkInDate = sdf.parse(checkInDateStr);
+            Date checkOutDate = sdf.parse(checkOutDateStr);
 
             BookingDAO bookingDAO = new BookingDAO();
             boolean isAvailable = bookingDAO.isRoomAvailable(roomId, checkInDate, checkOutDate);

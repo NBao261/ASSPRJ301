@@ -3,6 +3,7 @@
 <%@page import="dao.NotificationDAO"%>
 <%@page import="java.util.List"%>
 <%@page import="java.text.SimpleDateFormat"%>
+<%@page import="dto.UserDTO"%>
 <!DOCTYPE html>
 <html lang="vi">
     <head>
@@ -82,7 +83,7 @@
                 display: flex;
                 flex-direction: column;
                 gap: 8px;
-                position: relative; /* Để thêm hiệu ứng động */
+                position: relative;
             }
             .notification-item:hover {
                 transform: translateY(-5px);
@@ -90,7 +91,7 @@
             }
             .notification-item.unread {
                 background: #e8f5e9;
-                border-left: 5px solid #27ae60; /* Đánh dấu thông báo chưa đọc */
+                border-left: 5px solid #27ae60;
             }
             .notification-item p {
                 margin: 0;
@@ -131,7 +132,6 @@
                 border-radius: 15px;
                 box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
             }
-            /* Thông báo tạm thời */
             .temp-message {
                 position: fixed;
                 top: 20px;
@@ -157,6 +157,34 @@
                 from { opacity: 1; }
                 to { opacity: 0; }
             }
+            .pagination {
+                display: flex;
+                justify-content: center;
+                margin-top: 30px;
+                gap: 10px;
+            }
+            .pagination a {
+                padding: 10px 15px;
+                background: #1abc9c;
+                color: white;
+                text-decoration: none;
+                border-radius: 8px;
+                font-weight: 500;
+                transition: background 0.3s ease, transform 0.3s ease;
+            }
+            .pagination a:hover {
+                background: #16a085;
+                transform: scale(1.05);
+            }
+            .pagination a.disabled {
+                background: #bdc3c7;
+                cursor: not-allowed;
+                pointer-events: none;
+            }
+            .pagination a.active {
+                background: #16a085;
+                font-weight: 700;
+            }
             @media (max-width: 768px) {
                 .main-content {
                     padding: 60px 15px;
@@ -169,6 +197,10 @@
                 }
                 .btn-mark-read {
                     padding: 8px 15px;
+                }
+                .pagination a {
+                    padding: 8px 12px;
+                    font-size: 14px;
                 }
             }
         </style>
@@ -191,6 +223,28 @@
                 } else {
                     List<NotificationDTO> notifications = notificationDAO.getNotificationsByUserId(user.getUserID());
                     SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+
+                    // Phân trang
+                    final int ITEMS_PER_PAGE = 5; // Số lượng thông báo trên mỗi trang
+                    int currentPage = 1;
+                    String pageParam = request.getParameter("page");
+                    if (pageParam != null) {
+                        try {
+                            currentPage = Integer.parseInt(pageParam);
+                        } catch (NumberFormatException e) {
+                            currentPage = 1;
+                        }
+                    }
+
+                    int totalNotifications = notifications.size();
+                    int totalPages = (int) Math.ceil((double) totalNotifications / ITEMS_PER_PAGE);
+                    if (currentPage < 1) currentPage = 1;
+                    if (currentPage > totalPages) currentPage = totalPages;
+
+                    int start = (currentPage - 1) * ITEMS_PER_PAGE;
+                    int end = Math.min(start + ITEMS_PER_PAGE, totalNotifications);
+                    List<NotificationDTO> notificationsToShow = totalNotifications > 0 ? notifications.subList(start, end) : notifications;
+
                     if (notifications.isEmpty()) {
                 %>
                 <p class="no-notifications">Bạn chưa có thông báo nào.</p>
@@ -198,7 +252,7 @@
                 } else {
                 %>
                 <div class="notification-list">
-                    <% for (NotificationDTO notification : notifications) {%>
+                    <% for (NotificationDTO notification : notificationsToShow) {%>
                     <div class="notification-item <%= notification.isIsRead() ? "" : "unread"%>" id="notification-<%= notification.getNotificationId()%>">
                         <p class="message"><%= notification.getMessage()%></p>
                         <p class="timestamp"><small><%= dateFormat.format(notification.getCreatedAt())%></small></p>
@@ -206,6 +260,25 @@
                         <button class="btn-mark-read" onclick="markAsRead(<%= notification.getNotificationId()%>)">Đánh dấu đã đọc</button>
                         <% } %>
                     </div>
+                    <% } %>
+                </div>
+
+                <!-- Phân trang -->
+                <div class="pagination">
+                    <% if (currentPage > 1) { %>
+                    <a href="<%= request.getContextPath()%>/notifications.jsp?page=<%= currentPage - 1%>">Trang trước</a>
+                    <% } else { %>
+                    <a href="#" class="disabled">Trang trước</a>
+                    <% } %>
+
+                    <% for (int i = 1; i <= totalPages; i++) { %>
+                    <a href="<%= request.getContextPath()%>/notifications.jsp?page=<%= i%>" class="<%= (i == currentPage) ? "active" : ""%>"><%= i%></a>
+                    <% } %>
+
+                    <% if (currentPage < totalPages) { %>
+                    <a href="<%= request.getContextPath()%>/notifications.jsp?page=<%= currentPage + 1%>">Trang sau</a>
+                    <% } else { %>
+                    <a href="#" class="disabled">Trang sau</a>
                     <% } %>
                 </div>
                 <%
@@ -226,13 +299,11 @@
                     type: 'POST',
                     data: {notificationId: notificationId},
                     success: function (response) {
-                        // Cập nhật giao diện mà không cần reload
                         const notificationItem = $('#notification-' + notificationId);
                         notificationItem.removeClass('unread');
                         notificationItem.find('.btn-mark-read').fadeOut(300, function() {
                             $(this).remove();
                         });
-                        // Hiển thị thông báo tạm thời
                         showTempMessage('Thông báo đã được đánh dấu là đã đọc!', 'success');
                     },
                     error: function () {
@@ -247,7 +318,7 @@
                     text: message
                 });
                 $('body').append(tempMessage);
-                setTimeout(() => tempMessage.remove(), 3000); // Xóa sau 3 giây
+                setTimeout(() => tempMessage.remove(), 1000);
             }
         </script>
     </body>
