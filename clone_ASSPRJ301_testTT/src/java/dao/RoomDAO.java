@@ -6,6 +6,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import utils.DBUtils;
 
@@ -312,6 +313,29 @@ public class RoomDAO {
         }
         return rooms;
     }
+    
+    // Thêm phương thức kiểm tra phòng có sẵn
+    public boolean isRoomAvailable(int roomId, Date checkIn, Date checkOut) throws Exception {
+        if (roomId <= 0 || checkIn == null || checkOut == null || checkOut.before(checkIn)) {
+            return false;
+        }
 
-    // Các phương thức khác như getAllRooms nếu có
+        String sql = "SELECT COUNT(*) FROM bookings WHERE room_id = ? AND (check_in_date < ? AND check_out_date > ?) AND status != ?";
+        try (Connection conn = DBUtils.getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, roomId);
+            ps.setDate(2, new java.sql.Date(checkOut.getTime()));
+            ps.setDate(3, new java.sql.Date(checkIn.getTime()));
+            ps.setString(4, BookingDAO.STATUS_CANCELLED);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) == 0;
+                }
+            }
+        } catch (SQLException e) {
+            throw new Exception("Error checking room availability: " + e.getMessage(), e);
+        }
+        return false;
+    }
+
 }

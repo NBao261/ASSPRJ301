@@ -9,10 +9,9 @@ public class UserDTO {
     private String gmail;
     private String sdt;
     private String avatarUrl;
-    private String token;       // Thêm token
-    private boolean isVerified; // Thêm isVerified
+    private String token;       
+    private boolean isVerified; 
 
-    // Constructor đầy đủ
     public UserDTO(String userID, String fullName, String roleID, String password, String gmail, String sdt, String avatarUrl, String token, boolean isVerified) {
         this.userID = userID;
         this.fullName = fullName;
@@ -25,7 +24,6 @@ public class UserDTO {
         this.isVerified = isVerified;
     }
 
-    // Constructor không có token và isVerified (cho tương thích với code cũ)
     public UserDTO(String userID, String fullName, String roleID, String password, String gmail, String sdt, String avatarUrl) {
         this(userID, fullName, roleID, password, gmail, sdt, avatarUrl, null, false);
     }
