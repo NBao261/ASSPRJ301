@@ -13,10 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import sample.utils.DBUtils;
 
-/**
- *
- * @author cbao
- */
+
 public class RoomDAO {
 
     public List<RoomDTO> searchRoomByName(String searchName) {
