@@ -56,26 +56,38 @@ public class MainController extends HttpServlet {
                     return;
                 }
             } else if ("create".equals(action)) {
-                int idApp = Integer.parseInt(request.getParameter("idApp"));
                 String account = request.getParameter("account");
                 String partnerPhone = request.getParameter("partnerPhone");
                 String partnerName = request.getParameter("partnerName");
-                Date timeToMeet = java.sql.Date.valueOf(request.getParameter("timeToMeet"));
+                String timeToMeetStr = request.getParameter("timeToMeet");
                 String place = request.getParameter("place");
                 float expense = Float.parseFloat(request.getParameter("expense"));
                 String note = request.getParameter("note");
 
-                AppointmentDTO appointment = new AppointmentDTO(idApp, account, partnerPhone, partnerName, timeToMeet, place, expense, note);
+                java.sql.Timestamp timeToMeet;
+                try {
+                    // input type="datetime-local" trả về định dạng "yyyy-MM-dd'T'HH:mm"
+                    // Chuyển đổi thành Timestamp
+                    timeToMeet = java.sql.Timestamp.valueOf(timeToMeetStr.replace("T", " ") + ":00");
+                } catch (IllegalArgumentException e) {
+                    request.setAttribute("error", "Invalid date and time format for Time to Meet");
+                    request.getRequestDispatcher("create.jsp").forward(request, response);
+                    return;
+                }
+
+                AppointmentDTO appointment = new AppointmentDTO(account, partnerPhone, partnerName, timeToMeet, place, expense, note);
                 if (appointmentDAO.create(appointment)) {
+                    List<AppointmentDTO> appointmentList = appointmentDAO.getAll();
                     url = "appointments.jsp";
-                    request.setAttribute("appointment", appointment);
+                    request.setAttribute("appointment", appointmentList);
                     request.getRequestDispatcher(url).forward(request, response);
+                    return;
                 } else {
                     url = "create.jsp";
                     request.setAttribute("error", "Fail");
                     request.getRequestDispatcher(url).forward(request, response);
+                    return;
                 }
-                return;
             }
 
         } catch (Exception e) {

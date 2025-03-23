@@ -11,11 +11,10 @@
         <!--your code here-->
         <form action="MainController" method="POST">
             <input type="hidden" name="action" value="create"/>
-            idApp <input type="text" name="idApp"/> <br>
             account <input type="text" name="account"/> <br>
             partnerPhone<input type="text" name="partnerPhone"/> <br>
             partnerName	 <input type="text" name="partnerName"/> <br>
-            timeToMeet <input type="date" name="timeToMeet"/> <br>
+            timeToMeet <input type="datetime-local" name="timeToMeet"/> <br>
             place <input type="text" name="place"/> <br>
             expense <input type="text" name="expense"/> <br>
             note <input type="text" name="note"/> <br>

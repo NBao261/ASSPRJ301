@@ -1,6 +1,7 @@
 <%@page import="java.util.List"%>
 <%@page import="pe.appointment.AppointmentDTO"%>
 <%@page import="pe.account.AccountDTO"%>
+<%@page import="java.text.SimpleDateFormat"%>
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <!DOCTYPE html>
 <html>
@@ -46,6 +47,7 @@
                 List<AppointmentDTO> appointment = (List<AppointmentDTO>) request.getAttribute("appointment");
                 if (appointment != null) {
                     for (AppointmentDTO appointments : appointment) {
+                        SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
             %>
 
             <tr>
@@ -53,7 +55,7 @@
                 <td> <%= appointments.getAccount()%></td>
                 <td><%= appointments.getPartnerPhone()%></td>
                 <td><%= appointments.getPartnerName()%></td>
-                <td><%= appointments.getTimeToMeet()%></td>
+                <td><%= sdf.format(appointments.getTimeToMeet())%></td>
                 <td><%= appointments.getPlace()%></td>
                 <td><%= appointments.getExpense()%></td>
                 <td><%= appointments.getNote()%></td>

@@ -1,5 +1,6 @@
 package pe.appointment;
 
+import java.sql.Timestamp;
 import java.util.Date;
 
 public class AppointmentDTO {
@@ -9,7 +10,7 @@ public class AppointmentDTO {
     private String account;
     private String partnerPhone;
     private String partnerName;
-    private Date timeToMeet;
+    private Timestamp timeToMeet;
     private String place;
     private float expense;
     private String note;
@@ -17,8 +18,18 @@ public class AppointmentDTO {
     public AppointmentDTO() {
     }
 
-    public AppointmentDTO(int idApp, String account, String partnerPhone, String partnerName, Date timeToMeet, String place, float expense, String note) {
+    public AppointmentDTO(int idApp, String account, String partnerPhone, String partnerName, Timestamp timeToMeet, String place, float expense, String note) {
         this.idApp = idApp;
+        this.account = account;
+        this.partnerPhone = partnerPhone;
+        this.partnerName = partnerName;
+        this.timeToMeet = timeToMeet;
+        this.place = place;
+        this.expense = expense;
+        this.note = note;
+    }
+
+    public AppointmentDTO(String account, String partnerPhone, String partnerName, Timestamp timeToMeet, String place, float expense, String note) {
         this.account = account;
         this.partnerPhone = partnerPhone;
         this.partnerName = partnerName;
@@ -60,11 +71,11 @@ public class AppointmentDTO {
         this.partnerName = partnerName;
     }
 
-    public Date getTimeToMeet() {
+    public Timestamp getTimeToMeet() {
         return timeToMeet;
     }
 
-    public void setTimeToMeet(Date timeToMeet) {
+    public void setTimeToMeet(Timestamp timeToMeet) {
         this.timeToMeet = timeToMeet;
     }
 
@@ -91,5 +102,7 @@ public class AppointmentDTO {
     public void setNote(String note) {
         this.note = note;
     }
+
+    
 
 }

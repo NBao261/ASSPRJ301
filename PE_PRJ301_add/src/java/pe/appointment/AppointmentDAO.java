@@ -3,6 +3,7 @@ package pe.appointment;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import pe.utils.DBUtils;
@@ -22,7 +23,7 @@ public class AppointmentDAO {
                         rs.getString("account"),
                         rs.getString("partnerPhone"),
                         rs.getString("partnerName"),
-                        rs.getDate("timeToMeet"),
+                        rs.getTimestamp("timeToMeet"),
                         rs.getString("place"),
                         rs.getFloat("expense"),
                         rs.getString("note")));
@@ -33,24 +34,19 @@ public class AppointmentDAO {
         return appointment;
     }
 
-    public boolean create(AppointmentDTO appointment) {
-        String sql = "INSERT INTO Appointments (idApp, account, partnerPhone, partnerName, timeToMeet, place, expense, note)" + ""
-                + " VALUES (?,?,?,?,?,?,?,?)";
-        try {
-            Connection conn = DBUtils.getConnection();
-            PreparedStatement ps = conn.prepareStatement(sql);
-            ps.setInt(1, appointment.getIdApp());
-            ps.setString(2, appointment.getAccount());
-            ps.setString(3, appointment.getPartnerPhone());
-            ps.setString(4, appointment.getPartnerName());
-            ps.setDate(5, new java.sql.Date(appointment.getTimeToMeet().getTime()));
-            ps.setString(6, appointment.getPlace());
-            ps.setFloat(7, appointment.getExpense());
-            ps.setString(8, appointment.getNote());
+    public boolean create(AppointmentDTO appointment) throws SQLException, ClassNotFoundException {
+        String sql = "INSERT INTO Appointments (account, partnerPhone, partnerName, timeToMeet, place, expense, note) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        try (Connection conn = DBUtils.getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, appointment.getAccount());
+            ps.setString(2, appointment.getPartnerPhone());
+            ps.setString(3, appointment.getPartnerName());
+            ps.setTimestamp(4, appointment.getTimeToMeet());
+            ps.setString(5, appointment.getPlace());
+            ps.setFloat(6, appointment.getExpense());
+            ps.setString(7, appointment.getNote());
+
             return ps.executeUpdate() > 0;
-        } catch (Exception e) {
-            e.printStackTrace();
         }
-        return false;
     }
 }
