@@ -1,33 +1,20 @@
-<%@page contentType="text/html" pageEncoding="UTF-8"%>
+<%@page pageEncoding="UTF-8"%>
 <footer>
     <div class="footer-content">
         <p>© 2025 Homestay Booking. Tất cả quyền lợi được bảo vệ.</p>
 
-        <!-- Social media icons (FontAwesome) -->
-<!--        <div class="social-links">
-            <a href="https://www.facebook.com" class="social-icon" title="Facebook" target="_blank" rel="noopener noreferrer">
-                <i class="fab fa-facebook-f"></i>
+        <!-- Social media logos (images) -->
+        <div class="social-logos">
+            <a href="https://www.facebook.com" class="logo-link" target="_blank" rel="noopener noreferrer">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/2021_Facebook_icon.svg/512px-2021_Facebook_icon.svg.png" alt="Facebook" loading="lazy">
             </a>
-            <a href="https://www.instagram.com" class="social-icon" title="Instagram" target="_blank" rel="noopener noreferrer">
-                <i class="fab fa-instagram"></i>
+            <a href="https://www.instagram.com" class="logo-link" target="_blank" rel="noopener noreferrer">
+                <img src="https://cdn-icons-png.flaticon.com/512/1409/1409946.png" alt="Instagram" loading="lazy">
             </a>
-            <a href="https://zalo.me" class="social-icon" title="Zalo" target="_blank" rel="noopener noreferrer">
-                <i class="fab fa-zalo"></i> 
+            <a href="https://zalo.me" class="logo-link" target="_blank" rel="noopener noreferrer">
+                <img src="https://haiauint.vn/wp-content/uploads/2024/02/zalo-icon.png" alt="Zalo" loading="lazy">
             </a>
         </div>
-    </div>-->
-    
-    <!-- Social media logos (images) -->
-    <div class="social-logos">
-        <a href="https://www.facebook.com" class="logo-link" target="_blank" rel="noopener noreferrer">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/2021_Facebook_icon.svg/512px-2021_Facebook_icon.svg.png" alt="Facebook" loading="lazy">
-        </a>
-        <a href="https://www.instagram.com" class="logo-link" target="_blank" rel="noopener noreferrer">
-            <img src="https://cdn-icons-png.flaticon.com/512/1409/1409946.png" alt="Instagram" loading="lazy">
-        </a>
-        <a href="https://zalo.me" class="logo-link" target="_blank" rel="noopener noreferrer">
-            <img src="https://haiauint.vn/wp-content/uploads/2024/02/zalo-icon.png" alt="Zalo" loading="lazy">
-        </a>
     </div>
 </footer>
 
@@ -41,7 +28,7 @@
 
     /* Footer styling */
     footer {
-        background: linear-gradient(45deg, #5DC1B9, #4ECDC4); /* Gradient for modern look */
+        background: linear-gradient(45deg, #5DC1B9, #F7DC6F); /* Đồng bộ gradient với header */
         color: white;
         text-align: center;
         padding: 10px 0; 
@@ -70,25 +57,7 @@
         font-size: 14px;
         font-weight: 500;
         margin: 0;
-    }
-
-    /* Social media icons (FontAwesome) */
-    .social-links {
-        display: flex;
-        justify-content: center;
-        gap: 15px;
-        margin-top: 0; 
-    }
-
-    .social-icon {
-        font-size: 18px;
-        color: white;
-        transition: transform 0.3s ease, color 0.3s ease;
-    }
-
-    .social-icon:hover {
-        color: #f8f9fa;
-        transform: scale(1.2);
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2); /* Thêm text-shadow để chữ nổi bật trên nền gradient */
     }
 
     /* Social media logos (images) */
@@ -124,12 +93,8 @@
             margin: 0;
         }
 
-        .social-links, .social-logos {
+        .social-logos {
             gap: 8px; 
-        }
-
-        .social-icon {
-            font-size: 16px;
         }
 
         .logo-link img {
@@ -144,6 +109,3 @@
         console.log("Footer script loaded!");
     });
 </script>
-
-<!-- Import FontAwesome (moved to including page if needed) -->
-<!-- <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script> -->
