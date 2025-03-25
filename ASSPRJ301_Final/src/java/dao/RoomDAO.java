@@ -266,7 +266,7 @@ public class RoomDAO {
         }
     }
 
-    public List<RoomDTO> getFilteredRooms(String homestayName, double minPrice, double maxPrice, String amenities) {
+     public List<RoomDTO> getFilteredRooms(String homestayName, double minPrice, double maxPrice, String amenities) {
         List<RoomDTO> rooms = new ArrayList<>();
         String sql = "SELECT * FROM Rooms WHERE 1=1";
 
@@ -313,5 +313,4 @@ public class RoomDAO {
         return rooms;
     }
 
-    // Các phương thức khác như getAllRooms nếu có
 }

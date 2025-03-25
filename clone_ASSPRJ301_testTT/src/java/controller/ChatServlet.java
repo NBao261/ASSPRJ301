@@ -32,14 +32,49 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import java.util.logging.Logger;
+import java.util.logging.Level;
+import java.util.Properties;
+import java.io.FileInputStream;
+import java.io.File;
 
 @WebServlet(name = "ChatServlet", urlPatterns = {"/ChatServlet"})
 public class ChatServlet extends HttpServlet {
-    private static final Log log = LogFactory.getLog(ChatServlet.class);
-    private static final String GROK_API_KEY = "xai-9R3arNcqSL0lwl3PQt6Uaxhtxwxfq3htCq7KTjDiswacLM9OyZa37LIdczc8kUcT4iNBAZXlyr5QfD6k"; // Thay bằng API Key của bạn
-    private static final String GROK_API_URL = "https://api.x.ai/v1/chat/completions"; // URL API của Grok
+    private static final Logger LOGGER = Logger.getLogger(ChatServlet.class.getName());
+    private static String GROK_API_KEY;
+    private static final String GROK_API_URL = "https://api.x.ai/v1/chat/completions";
+    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+    private static final SimpleDateFormat TIME_FORMATTER = new SimpleDateFormat("HH:mm:ss");
+
+    @Override
+    public void init() throws ServletException {
+        try {
+            // Load configuration from WEB-INF/config.properties
+            String configPath = getServletContext().getRealPath("/WEB-INF/config.properties");
+            File configFile = new File(configPath);
+            
+            if (!configFile.exists()) {
+                LOGGER.log(Level.SEVERE, "Configuration file not found at: {0}", configPath);
+                throw new ServletException("Configuration file not found");
+            }
+
+            Properties props = new Properties();
+            try (FileInputStream fis = new FileInputStream(configFile)) {
+                props.load(fis);
+            }
+
+            GROK_API_KEY = props.getProperty("grok.api.key");
+            if (GROK_API_KEY == null || GROK_API_KEY.trim().isEmpty()) {
+                LOGGER.log(Level.SEVERE, "Grok API key not found in configuration");
+                throw new ServletException("Grok API key not found in configuration");
+            }
+            
+            LOGGER.log(Level.INFO, "ChatServlet initialized successfully");
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Failed to initialize ChatServlet", e);
+            throw new ServletException("Failed to initialize ChatServlet", e);
+        }
+    }
 
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -50,39 +85,41 @@ public class ChatServlet extends HttpServlet {
         String grokResponse = "";
 
         try {
-            // Kiểm tra yêu cầu xóa lịch sử chat
+            // Validate session
+            if (session == null) {
+                response.getWriter().write("Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.");
+                return;
+            }
+
+            // Handle clear history request
             if ("true".equals(request.getParameter("clearHistory"))) {
                 session.removeAttribute("chatHistory");
                 session.removeAttribute("chatState");
-                grokResponse = "Lịch sử đã được xóa";
+                grokResponse = "Lịch sử chat đã được xóa thành công.";
                 response.getWriter().write(grokResponse);
                 return;
             }
 
-            // Kiểm tra yêu cầu xác nhận đặt phòng
+            // Handle booking confirmation
             String confirmBooking = request.getParameter("confirmBooking");
             if (confirmBooking != null && confirmBooking.equals("true")) {
                 grokResponse = confirmAndSaveBooking(session);
                 session.removeAttribute("chatState");
                 response.getWriter().write(grokResponse);
-
-                // Lưu lịch sử chat
-                List<String[]> chatHistory = (List<String[]>) session.getAttribute("chatHistory");
-                if (chatHistory == null) {
-                    chatHistory = new ArrayList<>();
-                }
-                String timestamp = new SimpleDateFormat("HH:mm:ss").format(new Date());
-                chatHistory.add(new String[]{"You", "Xác nhận đặt phòng", timestamp});
-                chatHistory.add(new String[]{"Grok", grokResponse, timestamp});
-                session.setAttribute("chatHistory", chatHistory);
-
+                updateChatHistory(session, "You", "Xác nhận đặt phòng", grokResponse);
                 return;
             }
 
-            String userMessage = request.getParameter("message").toLowerCase();
+            // Process user message
+            String userMessage = request.getParameter("message");
+            if (userMessage == null || userMessage.trim().isEmpty()) {
+                response.getWriter().write("Vui lòng nhập tin nhắn.");
+                return;
+            }
 
-            // Kiểm tra trạng thái hội thoại (chat state)
+            userMessage = userMessage.toLowerCase().trim();
             String chatState = (String) session.getAttribute("chatState");
+
             if (chatState != null) {
                 switch (chatState) {
                     case "awaiting_booking_details":
@@ -92,137 +129,90 @@ public class ChatServlet extends HttpServlet {
                         grokResponse = processSuggestionAmenities(userMessage, session);
                         break;
                     default:
-                        grokResponse = "Lỗi trạng thái hội thoại, vui lòng thử lại.";
+                        grokResponse = "Lỗi trạng thái hội thoại. Vui lòng thử lại.";
                         session.removeAttribute("chatState");
                 }
             } else {
-                // Gửi tin nhắn đến API của Grok để phân tích ý định
                 String apiResponse = callGrokAPI(userMessage);
                 grokResponse = processApiResponse(apiResponse, userMessage, session);
             }
 
-            // Lưu lịch sử chat
-            List<String[]> chatHistory = (List<String[]>) session.getAttribute("chatHistory");
-            if (chatHistory == null) {
-                chatHistory = new ArrayList<>();
-            }
-            String timestamp = new SimpleDateFormat("HH:mm:ss").format(new Date());
-            chatHistory.add(new String[]{"You", userMessage, timestamp});
-            chatHistory.add(new String[]{"Grok", grokResponse, timestamp});
-            session.setAttribute("chatHistory", chatHistory);
-
-            // Gửi phản hồi về client
+            // Update chat history and send response
+            updateChatHistory(session, "You", userMessage, grokResponse);
             response.getWriter().write(grokResponse);
 
         } catch (Exception e) {
-            String errorMessage = e.getMessage() != null ? e.getMessage() : "Không xác định";
-            grokResponse = "Lỗi hệ thống: " + errorMessage;
-            response.getWriter().write(grokResponse);
+            LOGGER.log(Level.SEVERE, "Error processing chat request", e);
+            String errorMessage = "Lỗi hệ thống: " + (e.getMessage() != null ? e.getMessage() : "Không xác định");
+            response.getWriter().write(errorMessage);
         }
     }
 
+    private void updateChatHistory(HttpSession session, String sender, String message, String response) {
+        List<String[]> chatHistory = (List<String[]>) session.getAttribute("chatHistory");
+        if (chatHistory == null) {
+            chatHistory = new ArrayList<>();
+        }
+        String timestamp = TIME_FORMATTER.format(new Date());
+        chatHistory.add(new String[]{sender, message, timestamp});
+        if (response != null) {
+            chatHistory.add(new String[]{"Grok", response, timestamp});
+        }
+        session.setAttribute("chatHistory", chatHistory);
+    }
+
     private String callGrokAPI(String userMessage) throws IOException {
-        log.info("Gửi yêu cầu đến API Grok với tin nhắn: " + userMessage);
+        LOGGER.log(Level.INFO, "Sending request to Grok API with message: " + userMessage);
         CloseableHttpClient client = HttpClients.createDefault();
         HttpPost httpPost = new HttpPost(GROK_API_URL);
 
-        // Thiết lập header
         httpPost.setHeader("Content-Type", "application/json");
         httpPost.setHeader("Accept", "application/json");
         httpPost.setHeader("Authorization", "Bearer " + GROK_API_KEY);
 
-        // Tạo JSON request
+        String systemPrompt = "Bạn là một trợ lý đặt phòng homestay, trả lời bằng tiếng Việt. " +
+                "Bạn có thể giúp người dùng đặt phòng, gợi ý phòng dựa trên tiện ích, và trả lời các câu hỏi về homestay. " +
+                "Khi người dùng muốn đặt phòng, hãy hướng dẫn họ cung cấp thông tin theo định dạng: tên phòng, ngày và giờ check-in. " +
+                "Khi người dùng muốn gợi ý phòng, hãy yêu cầu họ liệt kê các tiện ích cần thiết.";
+
         String jsonInputString = String.format(
-                "{\"model\": \"grok-2-latest\", \"messages\": [{\"role\": \"system\", \"content\": \"Bạn là một trợ lý đặt phòng homestay, trả lời bằng tiếng Việt.\"}, {\"role\": \"user\", \"content\": \"%s\"}], \"temperature\": 0.7, \"max_tokens\": 1024}",
+                "{\"model\": \"grok-2-latest\", \"messages\": [{\"role\": \"system\", \"content\": \"%s\"}, {\"role\": \"user\", \"content\": \"%s\"}], \"temperature\": 0.7, \"max_tokens\": 1024}",
+                systemPrompt.replace("\"", "\\\""),
                 userMessage.replace("\"", "\\\"")
         );
         httpPost.setEntity(new StringEntity(jsonInputString, "UTF-8"));
 
-        // Gửi yêu cầu và nhận phản hồi
-        CloseableHttpResponse response = client.execute(httpPost);
-        try {
-            // Kiểm tra mã trạng thái HTTP
+        try (CloseableHttpResponse response = client.execute(httpPost)) {
             int statusCode = response.getStatusLine().getStatusCode();
             if (statusCode != 200) {
-                BufferedReader reader = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), "UTF-8"));
-                StringBuilder errorResult = new StringBuilder();
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    errorResult.append(line);
-                }
-                throw new IOException("Lỗi từ API Grok (HTTP " + statusCode + "): " + errorResult.toString());
+                String errorMessage = readResponse(response);
+                LOGGER.log(Level.SEVERE, "Grok API error: " + errorMessage);
+                throw new IOException("Lỗi từ API Grok (HTTP " + statusCode + "): " + errorMessage);
             }
 
-            BufferedReader reader = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), "UTF-8"));
+            String result = readResponse(response);
+            LOGGER.log(Level.INFO, "Received response from Grok API: " + result);
+            return result;
+        } finally {
+            client.close();
+        }
+    }
+
+    private String readResponse(CloseableHttpResponse response) throws IOException {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), "UTF-8"))) {
             StringBuilder result = new StringBuilder();
             String line;
             while ((line = reader.readLine()) != null) {
                 result.append(line);
             }
-            log.info("Nhận phản hồi từ API Grok: " + result.toString());
             return result.toString();
-        } finally {
-            response.close();
-            client.close();
-        }
-    }
-
-    private String processApiResponse(String apiResponse, String userMessage, HttpSession session) {
-        String intent = extractIntent(apiResponse);
-        String response = extractResponse(apiResponse);
-
-        switch (intent.toLowerCase()) {
-            case "view_rooms":
-                return "Bạn có thể xem danh sách phòng tại đây: \n" +
-                       "- Xem tất cả phòng: http://localhost:8080/clone_ASSPRJ301_testTT/search.jsp\n" +
-                       "- Xem phòng theo loại: http://localhost:8080/clone_ASSPRJ301_testTT/room-details?roomId=2";
-            case "book_room":
-                session.setAttribute("chatState", "awaiting_booking_details");
-                return "Vui lòng cung cấp thông tin đặt phòng: tên phòng, ngày và giờ check-in (ví dụ: Deluxe, 2025-04-01 14:00).";
-            case "suggest_room":
-                session.setAttribute("chatState", "awaiting_suggestion_amenities");
-                return "Bạn muốn phòng có các tiện ích nào? (Ví dụ: wifi, điều hòa, tivi)";
-            default:
-                return response != null ? response : "Tôi không hiểu, bạn có thể hỏi về phòng hoặc đặt phòng không?";
-        }
-    }
-
-    private String extractIntent(String apiResponse) {
-        try {
-            JSONObject jsonResponse = new JSONObject(apiResponse);
-            JSONObject choice = jsonResponse.getJSONArray("choices").getJSONObject(0);
-            String content = choice.getJSONObject("message").getString("content").toLowerCase();
-
-            // Phân tích nội dung để xác định intent
-            if (content.contains("xem")) {
-                return "view_rooms";
-            } else if (content.contains("đặt")) {
-                return "book_room";
-            } else if (content.contains("gợi ý")) {
-                return "suggest_room";
-            } else {
-                return "unknown";
-            }
-        } catch (Exception e) {
-            return "unknown";
-        }
-    }
-
-    private String extractResponse(String apiResponse) {
-        try {
-            JSONObject jsonResponse = new JSONObject(apiResponse);
-            JSONObject choice = jsonResponse.getJSONArray("choices").getJSONObject(0);
-            return choice.getJSONObject("message").getString("content");
-        } catch (Exception e) {
-            return null;
         }
     }
 
     private String processBookingDetails(String userMessage, HttpSession session) {
-        // Giả sử người dùng nhập: "Deluxe, 2025-04-01 14:00"
         String[] parts = userMessage.split(",");
         if (parts.length < 2) {
-            return "Vui lòng cung cấp đầy đủ: tên phòng, ngày và giờ check-in (ví dụ: Deluxe, 2025-04-01 14:00).";
+            return "Vui lòng cung cấp đầy đủ thông tin theo định dạng: tên phòng, ngày và giờ check-in (ví dụ: Deluxe, 2025-04-01 14:00).";
         }
 
         String roomName = parts[0].trim();
@@ -231,7 +221,7 @@ public class ChatServlet extends HttpServlet {
         UserDTO user = (UserDTO) session.getAttribute("user");
         if (user == null) {
             session.removeAttribute("chatState");
-            return "Vui lòng đăng nhập để đặt phòng";
+            return "Vui lòng đăng nhập để đặt phòng.";
         }
 
         try {
@@ -239,28 +229,34 @@ public class ChatServlet extends HttpServlet {
             RoomDTO room = roomDAO.getRoomByName(roomName);
             if (room == null) {
                 session.removeAttribute("chatState");
-                return "Phòng " + roomName + " không tồn tại";
+                return "Phòng " + roomName + " không tồn tại trong hệ thống.";
             }
 
-            // Phân tích ngày và giờ check-in
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
-            LocalDateTime checkInDateTime = LocalDateTime.parse(checkInDateTimeStr, formatter);
-            LocalDateTime checkOutDateTime = checkInDateTime.plusDays(1); // Giả sử mặc định 1 đêm
+            LocalDateTime checkInDateTime;
+            try {
+                checkInDateTime = LocalDateTime.parse(checkInDateTimeStr, DATE_TIME_FORMATTER);
+            } catch (Exception e) {
+                return "Định dạng ngày giờ không hợp lệ. Vui lòng nhập theo định dạng: yyyy-MM-dd HH:mm";
+            }
 
-            // Kiểm tra phòng có trống không
+            if (checkInDateTime.isBefore(LocalDateTime.now())) {
+                return "Thời gian check-in không thể trong quá khứ.";
+            }
+
+            LocalDateTime checkOutDateTime = checkInDateTime.plusDays(1);
+
             if (!roomDAO.isRoomAvailable(room.getId(), 
-                    java.sql.Timestamp.valueOf(checkInDateTime), 
-                    java.sql.Timestamp.valueOf(checkOutDateTime))) {
+                    Timestamp.valueOf(checkInDateTime), 
+                    Timestamp.valueOf(checkOutDateTime))) {
                 session.removeAttribute("chatState");
-                return "Phòng " + roomName + " không còn trống trong khoảng thời gian này";
+                return "Phòng " + roomName + " không còn trống trong khoảng thời gian này. Vui lòng chọn thời gian khác.";
             }
 
-            // Tạo booking tạm thời và lưu vào session để xác nhận
             BookingDTO booking = new BookingDTO();
             booking.setUser(user);
             booking.setRoom(room);
-            booking.setCheckInDate(java.sql.Timestamp.valueOf(checkInDateTime));
-            booking.setCheckOutDate(java.sql.Timestamp.valueOf(checkOutDateTime));
+            booking.setCheckInDate(Timestamp.valueOf(checkInDateTime));
+            booking.setCheckOutDate(Timestamp.valueOf(checkOutDateTime));
             booking.setTotalPrice(room.getPrice() * ChronoUnit.DAYS.between(checkInDateTime, checkOutDateTime));
             booking.setStatus(BookingDAO.STATUS_PENDING_PAYMENT);
             booking.setCreatedAt(new Timestamp(System.currentTimeMillis()));
@@ -268,12 +264,12 @@ public class ChatServlet extends HttpServlet {
             session.setAttribute("pendingBooking", booking);
             session.setAttribute("pendingUserName", user.getFullName());
 
-            return "Bạn đang đặt phòng " + roomName + " từ " + checkInDateTimeStr + " với tổng giá: " + 
-                   String.format("%,.0f", booking.getTotalPrice()) + " VND.\n" +
-                   "Vui lòng xác nhận đặt phòng bằng cách nhập: Xác nhận đặt phòng";
+            return String.format("Bạn đang đặt phòng %s từ %s với tổng giá: %,.0f VND.\nVui lòng xác nhận đặt phòng bằng cách nhập: Xác nhận đặt phòng",
+                    roomName, checkInDateTimeStr, booking.getTotalPrice());
         } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error processing booking details", e);
             session.removeAttribute("chatState");
-            return "Lỗi khi đặt phòng: " + e.getMessage();
+            return "Lỗi khi xử lý thông tin đặt phòng: " + e.getMessage();
         }
     }
 
@@ -281,9 +277,8 @@ public class ChatServlet extends HttpServlet {
         try {
             RoomDAO roomDAO = new RoomDAO();
             List<RoomDTO> rooms = roomDAO.getAllRooms();
-            StringBuilder response = new StringBuilder("Gợi ý phòng:\n");
+            StringBuilder response = new StringBuilder("Dựa trên yêu cầu của bạn, tôi gợi ý các phòng sau:\n\n");
 
-            // Tách các tiện ích người dùng nhập (ví dụ: "wifi, điều hòa")
             String[] requestedAmenities = userMessage.toLowerCase().split(",");
             boolean found = false;
 
@@ -291,7 +286,6 @@ public class ChatServlet extends HttpServlet {
                 String amenities = room.getAmenities() != null ? room.getAmenities().toLowerCase() : "";
                 boolean matchesAllAmenities = true;
 
-                // Kiểm tra xem phòng có chứa tất cả tiện ích người dùng yêu cầu không
                 for (String amenity : requestedAmenities) {
                     amenity = amenity.trim();
                     if (!amenities.contains(amenity)) {
@@ -301,42 +295,23 @@ public class ChatServlet extends HttpServlet {
                 }
 
                 if (matchesAllAmenities) {
-                    response.append(String.format("%s: %s - Giá: %,.0f VND - Đánh giá: %.1f - Ảnh: %s\n",
+                    response.append(String.format("- %s\n  Mô tả: %s\n  Giá: %,.0f VND/đêm\n  Đánh giá: %.1f/5\n  Ảnh: %s\n\n",
                             room.getName(), room.getDescription(), room.getPrice(), room.getRatings(), room.getImageUrl()));
                     found = true;
                 }
             }
 
             if (!found) {
-                response.append("Không tìm thấy phòng phù hợp với các tiện ích bạn yêu cầu.");
+                response.append("Không tìm thấy phòng phù hợp với các tiện ích bạn yêu cầu. Vui lòng thử với các tiện ích khác.");
             }
 
             session.removeAttribute("chatState");
             return response.toString();
         } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error processing room suggestions", e);
             session.removeAttribute("chatState");
             return "Lỗi khi gợi ý phòng: " + e.getMessage();
         }
-    }
-
-    private String listRooms() {
-        try {
-            RoomDAO roomDAO = new RoomDAO();
-            List<RoomDTO> rooms = roomDAO.getAllRooms();
-            StringBuilder response = new StringBuilder("Danh sách phòng:\n");
-            for (RoomDTO room : rooms) {
-                response.append(String.format("%s: %s - Giá: %,.0f VND - Đánh giá: %.1f - Ảnh: %s\n",
-                        room.getName(), room.getDescription(), room.getPrice(), room.getRatings(), room.getImageUrl()));
-            }
-            return response.toString();
-        } catch (Exception e) {
-            return "Lỗi khi lấy danh sách phòng: " + e.getMessage();
-        }
-    }
-
-    private String bookRoom(String message, HttpSession session) {
-        // Không cần phương thức này nữa vì đã xử lý trong processBookingDetails
-        return "Vui lòng cung cấp thông tin đặt phòng: tên phòng, ngày và giờ check-in (ví dụ: Deluxe, 2025-04-01 14:00).";
     }
 
     private String confirmAndSaveBooking(HttpSession session) {
@@ -352,33 +327,74 @@ public class ChatServlet extends HttpServlet {
             if (bookingDAO.addBooking(booking)) {
                 NotificationDAO notificationDAO = new NotificationDAO();
 
-                String userNotificationMessage = "Bạn vừa đặt phòng " + booking.getRoom().getName() + " thành công.";
-                NotificationDTO userNotification = new NotificationDTO(0, booking.getUser().getUserID(), userNotificationMessage, new Timestamp(System.currentTimeMillis()), false);
+                // Create user notification
+                String userNotificationMessage = String.format("Bạn đã đặt phòng %s thành công từ %s đến %s.",
+                        booking.getRoom().getName(),
+                        booking.getCheckInDate().toLocalDateTime().format(DATE_TIME_FORMATTER),
+                        booking.getCheckOutDate().toLocalDateTime().format(DATE_TIME_FORMATTER));
+                
+                NotificationDTO userNotification = new NotificationDTO(0, booking.getUser().getUserID(), 
+                        userNotificationMessage, new Timestamp(System.currentTimeMillis()), false);
                 notificationDAO.addNotification(userNotification);
 
+                // Create admin notifications
                 UserDAO userDAO = new UserDAO();
                 List<UserDTO> admins = userDAO.getAllAdmins();
-                String adminNotificationMessage = "Người dùng " + booking.getUser().getFullName() + " vừa đặt phòng " + booking.getRoom().getName() + ".";
+                String adminNotificationMessage = String.format("Người dùng %s vừa đặt phòng %s từ %s đến %s.",
+                        booking.getUser().getFullName(),
+                        booking.getRoom().getName(),
+                        booking.getCheckInDate().toLocalDateTime().format(DATE_TIME_FORMATTER),
+                        booking.getCheckOutDate().toLocalDateTime().format(DATE_TIME_FORMATTER));
+
                 for (UserDTO admin : admins) {
-                    NotificationDTO adminNotification = new NotificationDTO(0, admin.getUserID(), adminNotificationMessage, new Timestamp(System.currentTimeMillis()), false);
+                    NotificationDTO adminNotification = new NotificationDTO(0, admin.getUserID(), 
+                            adminNotificationMessage, new Timestamp(System.currentTimeMillis()), false);
                     notificationDAO.addNotification(adminNotification);
                 }
 
                 session.removeAttribute("pendingBooking");
                 session.removeAttribute("pendingUserName");
 
-                return "Đặt phòng " + booking.getRoom().getName() + " thành công cho " + userName;
+                return String.format("Đặt phòng %s thành công cho %s từ %s đến %s. Tổng giá: %,.0f VND",
+                        booking.getRoom().getName(),
+                        userName,
+                        booking.getCheckInDate().toLocalDateTime().format(DATE_TIME_FORMATTER),
+                        booking.getCheckOutDate().toLocalDateTime().format(DATE_TIME_FORMATTER),
+                        booking.getTotalPrice());
             } else {
-                return "Lỗi khi lưu đặt phòng";
+                return "Lỗi khi lưu đặt phòng. Vui lòng thử lại.";
             }
         } catch (Exception e) {
-            return "Lỗi khi lưu đặt phòng: " + e.getMessage();
+            LOGGER.log(Level.SEVERE, "Error confirming booking", e);
+            return "Lỗi khi xác nhận đặt phòng: " + e.getMessage();
         }
     }
 
-    private String suggestRoom(String message, HttpSession session) {
-        // Không cần phương thức này nữa vì đã xử lý trong processSuggestionAmenities
-        return "Bạn muốn phòng có các tiện ích nào? (Ví dụ: wifi, điều hòa, tivi)";
+    private String processApiResponse(String apiResponse, String userMessage, HttpSession session) {
+        try {
+            JSONObject jsonResponse = new JSONObject(apiResponse);
+            String content = jsonResponse.getJSONArray("choices")
+                    .getJSONObject(0)
+                    .getJSONObject("message")
+                    .getString("content");
+
+            // Check for booking-related keywords
+            if (userMessage.contains("đặt phòng") || userMessage.contains("book room")) {
+                session.setAttribute("chatState", "awaiting_booking_details");
+                return "Vui lòng cung cấp thông tin đặt phòng theo định dạng: tên phòng, ngày và giờ check-in (ví dụ: Deluxe, 2025-04-01 14:00)";
+            }
+
+            // Check for room suggestion keywords
+            if (userMessage.contains("gợi ý") || userMessage.contains("suggest")) {
+                session.setAttribute("chatState", "awaiting_suggestion_amenities");
+                return "Vui lòng cho biết các tiện ích bạn cần (ví dụ: WiFi, Bể bơi, Gym)";
+            }
+
+            return content;
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error processing API response", e);
+            return "Xin lỗi, tôi không thể xử lý yêu cầu của bạn lúc này. Vui lòng thử lại sau.";
+        }
     }
 
     @Override

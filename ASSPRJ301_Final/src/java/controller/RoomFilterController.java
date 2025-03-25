@@ -1,6 +1,5 @@
 package controller;
 
-
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.List;
@@ -37,13 +36,16 @@ public class RoomFilterController extends HttpServlet {
 
         for (RoomDTO room : rooms) {
             out.println("<div class='room-item'>");
+            out.println("<div class='room-content'>");
+            out.println("<div class='room-image'>");
             out.println("<img src='" + room.getImageUrl() + "' alt='Hình ảnh phòng'>");
+            out.println("</div>");
             out.println("<h3>" + room.getName() + "</h3>");
-            out.println("<p>" + (room.getDescription() != null ? room.getDescription() : "Chưa có mô tả") + "</p>");
-            out.println("<p>Giá: " + String.format("%,.0f", room.getPrice()) + " VND</p>");
-            out.println("<p>Tiện ích: " + (room.getAmenities() != null ? room.getAmenities() : "Chưa có tiện ích") + "</p>");
-            out.println("<p>Đánh giá: " + room.getRatings() + "/5</p>");
+            out.println("<p><i class='fas fa-tag'></i> Khởi giá từ " + String.format("%,.0f", room.getPrice()) + " VND</p>");
+            out.println("<p><i class='fas fa-wifi'></i> Tiện ích: " + (room.getAmenities() != null ? room.getAmenities() : "Chưa có tiện ích") + "</p>");
+            out.println("<p><i class='fas fa-star'></i> Đánh giá: " + room.getRatings() + "/5</p>");
             out.println("<button onclick='roomDetails(" + room.getId() + ")'>Xem chi tiết</button>");
+            out.println("</div>");
             out.println("</div>");
         }
     }
