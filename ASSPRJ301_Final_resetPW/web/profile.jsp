@@ -8,7 +8,9 @@
         <title>Cập nhật thông tin cá nhân</title>
         <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
         <style>
+            /* Giữ nguyên toàn bộ CSS của bạn, chỉ điều chỉnh phần avatar */
             * {
                 margin: 0;
                 padding: 0;
@@ -257,28 +259,24 @@
                 border: 1px solid #ef9a9a;
             }
 
-            .current-avatar {
-                margin-top: 15px;
+            .avatar-preview-container {
+                margin-top: 10px;
                 text-align: center;
-                padding: 15px;
-                background: #f9f9f9;
-                border-radius: 8px;
-                border: 1px solid #e0e0e0;
             }
 
-            .current-avatar img {
+            .avatar-preview {
                 max-width: 100px;
                 border-radius: 50%;
                 box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-                transition: transform 0.3s ease;
                 border: 3px solid #5DC1B9;
+                transition: transform 0.3s ease;
             }
-            
-            .current-avatar img:hover {
+
+            .avatar-preview:hover {
                 transform: scale(1.05);
             }
 
-            .current-avatar span {
+            .avatar-preview-caption {
                 display: block;
                 margin-top: 10px;
                 font-size: 13px;
@@ -293,7 +291,7 @@
                 color: #27ae60;
                 font-weight: 500;
             }
-            
+
             .verified-indicator i {
                 margin-right: 5px;
                 position: static;
@@ -356,10 +354,12 @@
                     response.sendRedirect("login-regis.jsp");
                     return;
                 }
-                String section = request.getParameter("section") != null ? request.getParameter("section") : "profile";
             %>
             <div class="sidebar">
                 <h3>Tài khoản: <%= user.getUserID()%></h3>
+                <%
+                    String section = request.getParameter("section") != null ? request.getParameter("section") : "profile";
+                %>
                 <a href="<%= request.getContextPath()%>/profile?section=profile" class="<%= section.equals("profile") ? "active" : ""%>">
                     <i class="fas fa-user"></i> Thông tin cá nhân
                 </a>
@@ -382,7 +382,7 @@
                     <% if (errorMessage != null) {%>
                     <div class="form-message error"><i class="fas fa-exclamation-circle"></i> <%= errorMessage%></div>
                     <% }%>
-                    <form action="<%= request.getContextPath()%>/updateProfile" method="post" enctype="multipart/form-data">
+                    <form action="<%= request.getContextPath()%>/updateProfile" method="post">
                         <input type="hidden" name="userId" value="<%= user.getUserID()%>">
                         <div class="form-group">
                             <label for="fullName">Họ và tên:</label>
@@ -421,19 +421,18 @@
                         <div class="form-group">
                             <label for="avatar">Avatar:</label>
                             <input type="file" id="avatar" name="avatar" accept="image/*">
+                            <input type="hidden" id="avatarUrl" name="avatarUrl" value="<%= user.getAvatarUrl() != null ? user.getAvatarUrl() : ""%>">
+                            <div id="avatarPreview" class="avatar-preview-container">
+                                <% if (user.getAvatarUrl() != null && !user.getAvatarUrl().isEmpty()) { %>
+                                <img src="<%= user.getAvatarUrl()%>" alt="Avatar hiện tại" class="avatar-preview">
+                                <span class="avatar-preview-caption">Avatar hiện tại</span>
+                                <% } else { %>
+                                <img src="<%= request.getContextPath()%>/images/default-avatar.png" alt="Avatar mặc định" class="avatar-preview">
+                                <span class="avatar-preview-caption">Chưa có avatar</span>
+                                <% } %>
+                            </div>
                             <% if (request.getAttribute("errorAvatar") != null) {%>
                             <div class="message error"><i class="fas fa-exclamation-circle"></i> <%= request.getAttribute("errorAvatar")%></div>
-                            <% } %>
-                            <% if (user.getAvatarUrl() != null && !user.getAvatarUrl().isEmpty()) {%>
-                            <div class="current-avatar">
-                                <img src="<%= user.getAvatarUrl()%>" alt="Avatar hiện tại">
-                                <span>Avatar hiện tại</span>
-                            </div>
-                            <% } else { %>
-                            <div class="current-avatar">
-                                <img src="<%= request.getContextPath()%>/images/default-avatar.png" alt="Avatar mặc định">
-                                <span>Chưa có avatar</span>
-                            </div>
                             <% } %>
                         </div>
                         <button type="submit"><i class="fas fa-save"></i> Cập nhật</button>
@@ -494,5 +493,36 @@
         <div class="footer-container">
             <%@include file="footer.jsp" %>
         </div>
+
+        <script>
+            $(document).ready(function() {
+                // Xử lý upload ảnh avatar và hiển thị preview
+                $('#avatar').on('change', function() {
+                    const file = this.files[0];
+                    const $avatarPreview = $('#avatarPreview');
+                    $avatarPreview.empty(); // Xóa preview cũ trước khi thêm mới
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            $avatarPreview.append('<img src="' + e.target.result + '" alt="Avatar Preview" class="avatar-preview">');
+                            $avatarPreview.append('<span class="avatar-preview-caption">Ảnh mới được chọn</span>');
+                            $('#avatarUrl').val(e.target.result); // Lưu base64 vào input hidden
+                        };
+                        reader.readAsDataURL(file);
+                    } else {
+                        // Giữ giá trị cũ nếu không chọn file mới
+                        const currentAvatarUrl = '<%= user.getAvatarUrl() != null ? user.getAvatarUrl() : "" %>';
+                        if (currentAvatarUrl) {
+                            $avatarPreview.append('<img src="' + currentAvatarUrl + '" alt="Avatar hiện tại" class="avatar-preview">');
+                            $avatarPreview.append('<span class="avatar-preview-caption">Avatar hiện tại</span>');
+                        } else {
+                            $avatarPreview.append('<img src="<%= request.getContextPath()%>/images/default-avatar.png" alt="Avatar mặc định" class="avatar-preview">');
+                            $avatarPreview.append('<span class="avatar-preview-caption">Chưa có avatar</span>');
+                        }
+                        $('#avatarUrl').val(currentAvatarUrl);
+                    }
+                });
+            });
+        </script>
     </body>
 </html>

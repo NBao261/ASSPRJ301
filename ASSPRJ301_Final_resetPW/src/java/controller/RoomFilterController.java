@@ -13,28 +13,65 @@ import javax.servlet.annotation.WebServlet;
 
 @WebServlet("/RoomFilterServlet")
 public class RoomFilterController extends HttpServlet {
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) 
+
+    private static final int ITEMS_PER_PAGE = 6; // Đặt 6 homestay mỗi trang
+
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        // Thiết lập encoding
+        response.setContentType("text/html;charset=UTF-8");
+        request.setCharacterEncoding("UTF-8");
+        PrintWriter out = response.getWriter();
 
         // Nhận tham số từ request
         String searchName = request.getParameter("searchName");
         String minPriceStr = request.getParameter("minPrice");
         String maxPriceStr = request.getParameter("maxPrice");
         String amenities = request.getParameter("amenities");
+        String pageStr = request.getParameter("page");
+        String getTotal = request.getParameter("getTotal");
 
         // Xử lý giá (nếu không nhập thì đặt giá trị mặc định)
         double minPrice = (minPriceStr != null && !minPriceStr.isEmpty()) ? Double.parseDouble(minPriceStr) : 0;
         double maxPrice = (maxPriceStr != null && !maxPriceStr.isEmpty()) ? Double.parseDouble(maxPriceStr) : Double.MAX_VALUE;
 
+        // Xử lý trang hiện tại
+        int page = 1;
+        if (pageStr != null && !pageStr.isEmpty()) {
+            try {
+                page = Integer.parseInt(pageStr);
+            } catch (NumberFormatException e) {
+                page = 1; // Mặc định về trang 1 nếu tham số không hợp lệ
+            }
+        }
+
         // Lấy danh sách phòng từ DAO
         RoomDAO roomDAO = new RoomDAO();
         List<RoomDTO> rooms = roomDAO.getFilteredRooms(searchName, minPrice, maxPrice, amenities);
 
-        // Trả về HTML cập nhật danh sách phòng
-        response.setContentType("text/html;charset=UTF-8");
-        PrintWriter out = response.getWriter();
+        // Nếu chỉ cần lấy tổng số phòng (cho phân trang Ajax)
+        if ("true".equals(getTotal)) {
+            out.write(String.valueOf(rooms.size()));
+            out.close();
+            return;
+        }
 
-        for (RoomDTO room : rooms) {
+        // Tính toán phân trang
+        int totalRooms = rooms.size();
+        int totalPages = (int) Math.ceil((double) totalRooms / ITEMS_PER_PAGE);
+        if (page < 1) {
+            page = 1;
+        }
+        if (page > totalPages) {
+            page = totalPages;
+        }
+
+        int start = (page - 1) * ITEMS_PER_PAGE;
+        int end = Math.min(start + ITEMS_PER_PAGE, totalRooms);
+        List<RoomDTO> roomsToShow = totalRooms > 0 ? rooms.subList(start, end) : rooms;
+
+        // Trả về HTML cập nhật danh sách phòng
+        for (RoomDTO room : roomsToShow) {
             out.println("<div class='room-item'>");
             out.println("<div class='room-content'>");
             out.println("<div class='room-image'>");
@@ -48,5 +85,7 @@ public class RoomFilterController extends HttpServlet {
             out.println("</div>");
             out.println("</div>");
         }
+
+        out.close();
     }
 }

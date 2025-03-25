@@ -9,7 +9,9 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Quản lý phòng - Admin</title>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
         <style>
+            /* Giữ nguyên CSS của bạn */
             * {
                 margin: 0;
                 padding: 0;
@@ -263,6 +265,18 @@
                     padding: 8px 12px;
                     font-size: 14px;
                 }
+                .image-preview-container {
+                    margin-top: 10px;
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 10px;
+                }
+                .image-preview {
+                    max-width: 120px;
+                    height: auto;
+                    border-radius: 8px;
+                    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+                }
             }
         </style>
     </head>
@@ -311,13 +325,16 @@
                         <label for="addRatings">Đánh giá (0-5):</label>
                         <input type="number" id="addRatings" name="ratings" step="0.1" min="0" max="5" required>
 
-                        <label for="addImageUrl">URL hình ảnh chính:</label>
-                        <input type="text" id="addImageUrl" name="imageUrl" placeholder="Nhập link ảnh">
-                        <div class="note">Nhập link ảnh bất kỳ</div>
+                        <label for="addImageUpload">Hình ảnh chính:</label>
+                        <input type="file" id="addImageUpload" accept="image/*">
+                        <input type="hidden" id="addImageUrl" name="imageUrl"> <!-- Lưu base64 -->
+                        <div id="addImagePreview" class="image-preview-container"></div>
 
-                        <label for="addDetailImages">URL ảnh chi tiết (mỗi dòng một URL):</label>
-                        <textarea id="addDetailImages" name="detailImages" placeholder="Nhập các link ảnh, mỗi dòng một link"></textarea>
-                        <div class="note">Nhập từng link ảnh chi tiết trên một dòng</div>
+                        <label for="addDetailImagesUpload">Ảnh chi tiết:</label>
+                        <input type="file" id="addDetailImagesUpload" accept="image/*" multiple>
+                        <input type="hidden" id="addDetailImages" name="detailImages"> <!-- Lưu base64 -->
+                        <div id="addDetailImagesPreview" class="image-preview-container"></div>
+                        <div class="note">Chọn nhiều ảnh để hiển thị chi tiết phòng</div>
 
                         <button type="submit" class="btn btn-add">Lưu</button>
                         <button type="button" class="btn btn-delete" onclick="toggleForm('addForm')">Hủy</button>
@@ -349,13 +366,26 @@
                         <label for="editRatings">Đánh giá (0-5):</label>
                         <input type="number" id="editRatings" name="ratings" step="0.1" min="0" max="5" value="<%= showEditForm ? editRoom.getRatings() : ""%>" required>
 
-                        <label for="editImageUrl">URL hình ảnh chính:</label>
-                        <input type="text" id="editImageUrl" name="imageUrl" value="<%= showEditForm && editRoom.getImageUrl() != null ? editRoom.getImageUrl() : ""%>" placeholder="Nhập link ảnh">
-                        <div class="note">Nhập link ảnh bất kỳ</div>
+                        <label for="editImageUpload">Hình ảnh chính:</label>
+                        <input type="file" id="editImageUpload" accept="image/*">
+                        <input type="hidden" id="editImageUrl" name="imageUrl" value="<%= showEditForm && editRoom.getImageUrl() != null ? editRoom.getImageUrl() : ""%>"> <!-- Lưu base64 -->
+                        <div id="editImagePreview" class="image-preview-container">
+                            <% if (showEditForm && editRoom.getImageUrl() != null && !editRoom.getImageUrl().isEmpty()) {%>
+                            <img src="<%= editRoom.getImageUrl()%>" alt="Preview" class="image-preview">
+                            <% }%>
+                        </div>
 
-                        <label for="editDetailImages">URL ảnh chi tiết (mỗi dòng một URL):</label>
-                        <textarea id="editDetailImages" name="detailImages" placeholder="Nhập các link ảnh, mỗi dòng một link"><%= detailImagesText%></textarea>
-                        <div class="note">Nhập từng link ảnh chi tiết trên một dòng</div>
+                        <label for="editDetailImagesUpload">Ảnh chi tiết:</label>
+                        <input type="file" id="editDetailImagesUpload" accept="image/*" multiple>
+                        <input type="hidden" id="editDetailImages" name="detailImages" value="<%= detailImagesText%>"> <!-- Lưu base64 -->
+                        <div id="editDetailImagesPreview" class="image-preview-container">
+                            <% if (showEditForm && editRoom.getDetailImages() != null) {
+                                    for (String img : editRoom.getDetailImages()) {%>
+                            <img src="<%= img%>" alt="Detail Preview" class="image-preview">
+                            <%  }
+                                } %>
+                        </div>
+                        <div class="note">Chọn nhiều ảnh để hiển thị chi tiết phòng</div>
 
                         <button type="submit" class="btn btn-add">Lưu</button>
                         <button type="button" class="btn btn-delete" onclick="toggleForm('editForm')">Hủy</button>
@@ -383,8 +413,12 @@
 
                     int totalRooms = roomList.size();
                     int totalPages = (int) Math.ceil((double) totalRooms / ITEMS_PER_PAGE);
-                    if (currentPage < 1) currentPage = 1;
-                    if (currentPage > totalPages) currentPage = totalPages;
+                    if (currentPage < 1) {
+                        currentPage = 1;
+                    }
+                    if (currentPage > totalPages) {
+                        currentPage = totalPages;
+                    }
 
                     int start = (currentPage - 1) * ITEMS_PER_PAGE;
                     int end = Math.min(start + ITEMS_PER_PAGE, totalRooms);
@@ -430,17 +464,17 @@
 
                 <!-- Phân trang -->
                 <div class="pagination">
-                    <% if (currentPage > 1) { %>
+                    <% if (currentPage > 1) {%>
                     <a href="<%= request.getContextPath()%>/admin/rooms?page=<%= currentPage - 1%>">Trang trước</a>
                     <% } else { %>
                     <a href="#" class="disabled">Trang trước</a>
                     <% } %>
 
-                    <% for (int i = 1; i <= totalPages; i++) { %>
+                    <% for (int i = 1; i <= totalPages; i++) {%>
                     <a href="<%= request.getContextPath()%>/admin/rooms?page=<%= i%>" class="<%= (i == currentPage) ? "active" : ""%>"><%= i%></a>
                     <% } %>
 
-                    <% if (currentPage < totalPages) { %>
+                    <% if (currentPage < totalPages) {%>
                     <a href="<%= request.getContextPath()%>/admin/rooms?page=<%= currentPage + 1%>">Trang sau</a>
                     <% } else { %>
                     <a href="#" class="disabled">Trang sau</a>
@@ -458,16 +492,91 @@
         </div>
 
         <script>
-            function toggleForm(formId) {
-                const form = document.getElementById(formId);
-                form.classList.toggle('active');
-            }
+            $(document).ready(function () {
+                // Xử lý upload ảnh chính cho form thêm phòng
+                $('#addImageUpload').on('change', function () {
+                    const file = this.files[0];
+                    const $imagePreview = $('#addImagePreview');
+                    $imagePreview.empty(); // Xóa preview cũ trước khi thêm mới
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = function (e) {
+                            $imagePreview.append('<img src="' + e.target.result + '" alt="Preview" class="image-preview">');
+                            $('#addImageUrl').val(e.target.result); // Lưu base64 vào input ẩn
+                        };
+                        reader.readAsDataURL(file);
+                    } else {
+                        $('#addImageUrl').val('');
+                    }
+                });
 
-            function confirmDelete(roomId, page) {
-                if (confirm("Bạn có chắc chắn muốn xóa phòng này không?")) {
-                    window.location.href = '<%= request.getContextPath()%>/admin/rooms?action=delete&roomId=' + roomId + '&page=' + page;
-                }
-            }
+                // Xử lý upload ảnh chi tiết cho form thêm phòng
+                $('#addDetailImagesUpload').on('change', function () {
+                    const files = this.files;
+                    const $detailImagesPreview = $('#addDetailImagesPreview');
+                    const $detailImagesTextarea = $('#addDetailImages');
+                    $detailImagesPreview.empty(); // Xóa preview cũ trước khi thêm mới
+                    $detailImagesTextarea.val('');
+                    if (files && files.length > 0) {
+                        for (let i = 0; i < files.length; i++) {
+                            const reader = new FileReader();
+                            reader.onload = function (e) {
+                                $detailImagesPreview.append('<img src="' + e.target.result + '" alt="Detail Preview" class="image-preview">');
+                                $detailImagesTextarea.val($detailImagesTextarea.val() + e.target.result + '\n');
+                            };
+                            reader.readAsDataURL(files[i]);
+                        }
+                    }
+                });
+
+                // Xử lý upload ảnh chính cho form sửa phòng
+                $('#editImageUpload').on('change', function () {
+                    const file = this.files[0];
+                    const $imagePreview = $('#editImagePreview');
+                    $imagePreview.empty(); // Xóa preview cũ trước khi thêm mới
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = function (e) {
+                            $imagePreview.append('<img src="' + e.target.result + '" alt="Preview" class="image-preview">');
+                            $('#editImageUrl').val(e.target.result); // Lưu base64 vào input ẩn
+                        };
+                        reader.readAsDataURL(file);
+                    } else {
+                        $('#editImageUrl').val('');
+                    }
+                });
+
+                // Xử lý upload ảnh chi tiết cho form sửa phòng
+                $('#editDetailImagesUpload').on('change', function () {
+                    const files = this.files;
+                    const $detailImagesPreview = $('#editDetailImagesPreview');
+                    const $detailImagesTextarea = $('#editDetailImages');
+                    $detailImagesPreview.empty(); // Xóa preview cũ trước khi thêm mới
+                    $detailImagesTextarea.val('');
+                    if (files && files.length > 0) {
+                        for (let i = 0; i < files.length; i++) {
+                            const reader = new FileReader();
+                            reader.onload = function (e) {
+                                $detailImagesPreview.append('<img src="' + e.target.result + '" alt="Detail Preview" class="image-preview">');
+                                $detailImagesTextarea.val($detailImagesTextarea.val() + e.target.result + '\n');
+                            };
+                            reader.readAsDataURL(files[i]);
+                        }
+                    }
+                });
+
+                // Giữ nguyên các hàm toggleForm và confirmDelete
+                window.toggleForm = function(formId) {
+                    const form = document.getElementById(formId);
+                    form.classList.toggle('active');
+                };
+
+                window.confirmDelete = function(roomId, page) {
+                    if (confirm("Bạn có chắc chắn muốn xóa phòng này không?")) {
+                        window.location.href = '<%= request.getContextPath()%>/admin/rooms?action=delete&roomId=' + roomId + '&page=' + page;
+                    }
+                };
+            });
         </script>
     </body>
 </html>

@@ -3,6 +3,10 @@
 <%@page import="dto.RoomDTO"%>
 <%@page import="dao.RoomDAO"%>
 <%@include file="header.jsp" %>
+<%
+    RoomDAO roomDAO = new RoomDAO();
+    List<RoomDTO> rooms = roomDAO.getAllRooms();
+%>
 
 <!DOCTYPE html>
 <html lang="vi">
@@ -410,6 +414,64 @@
                 box-shadow: 0 6px 20px rgba(244, 162, 97, 0.5);
             }
 
+            /* Kết quả tìm kiếm */
+            .search-result {
+                text-align: center;
+                padding: 15px;
+                background: rgba(255, 255, 255, 0.9);
+                border-radius: 10px;
+                margin-bottom: 20px;
+                color: #4a704a;
+                font-weight: 600;
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            }
+
+            /* Phân trang */
+            .pagination {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                margin-top: 30px;
+                gap: 12px;
+            }
+
+            .pagination a {
+                padding: 10px 18px;
+                background: linear-gradient(45deg, #f4a261, #e9c46a);
+                color: white;
+                text-decoration: none;
+                border-radius: 8px;
+                font-weight: 600;
+                transition: all 0.3s ease;
+                box-shadow: 0 4px 12px rgba(244, 162, 97, 0.3);
+                display: flex;
+                align-items: center;
+                gap: 6px;
+            }
+
+            .pagination a:hover {
+                background: linear-gradient(45deg, #e76f51, #e9c46a);
+                transform: translateY(-3px);
+                box-shadow: 0 6px 15px rgba(244, 162, 97, 0.5);
+            }
+
+            .pagination a.disabled {
+                background: #bdc3c7;
+                cursor: not-allowed;
+                pointer-events: none;
+                box-shadow: none;
+            }
+
+            .pagination a.active {
+                background: linear-gradient(45deg, #e76f51, #e9c46a);
+                font-weight: 700;
+                transform: scale(1.1);
+            }
+
+            .pagination a i {
+                font-size: 14px;
+            }
+
             @media (max-width: 768px) {
                 .main-content {
                     flex-direction: column;
@@ -445,11 +507,14 @@
                     height: 180px;
                 }
 
+                .pagination a {
+                    padding: 8px 14px;
+                    font-size: 14px;
+                }
             }
         </style>
     </head>
     <body>
-
         <div class="main-content">
             <!-- Phần lọc bên trái -->
             <div class="search-container">
@@ -491,11 +556,36 @@
 
             <!-- Phần danh sách phòng bên phải -->
             <div class="room-list-container">
+                <div class="search-result" id="searchResult">
+                    Tìm thấy <%= rooms.size()%> homestay phù hợp
+                </div>
                 <div id="roomList" class="room-list">
                     <%
-                        RoomDAO roomDAO = new RoomDAO();
-                        List<RoomDTO> rooms = roomDAO.getAllRooms();
-                        for (RoomDTO room : rooms) {
+                        final int ITEMS_PER_PAGE = 6; // Đặt 6 homestay mỗi trang
+                        int currentPage = 1;
+                        String pageParam = request.getParameter("page");
+                        if (pageParam != null) {
+                            try {
+                                currentPage = Integer.parseInt(pageParam);
+                            } catch (NumberFormatException e) {
+                                currentPage = 1;
+                            }
+                        }
+
+                        int totalRooms = rooms.size();
+                        int totalPages = (int) Math.ceil((double) totalRooms / ITEMS_PER_PAGE);
+                        if (currentPage < 1) {
+                            currentPage = 1;
+                        }
+                        if (currentPage > totalPages) {
+                            currentPage = totalPages;
+                        }
+
+                        int start = (currentPage - 1) * ITEMS_PER_PAGE;
+                        int end = Math.min(start + ITEMS_PER_PAGE, totalRooms);
+                        List<RoomDTO> roomsToShow = totalRooms > 0 ? rooms.subList(start, end) : rooms;
+
+                        for (RoomDTO room : roomsToShow) {
                     %>
                     <div class="room-item">
                         <div class="room-content">
@@ -509,7 +599,26 @@
                             <button onclick="roomDetails(<%= room.getId()%>)">Xem chi tiết</button>
                         </div>
                     </div>
-                    <% }%>
+                    <% } %>
+                </div>
+
+                <!-- Phân trang -->
+                <div class="pagination">
+                    <% if (currentPage > 1) {%>
+                    <a href="<%= request.getContextPath()%>/search.jsp?page=<%= currentPage - 1%>"><i class="fas fa-chevron-left"></i> Trang trước</a>
+                    <% } else { %>
+                    <a href="#" class="disabled"><i class="fas fa-chevron-left"></i> Trang trước</a>
+                    <% } %>
+
+                    <% for (int i = 1; i <= totalPages; i++) {%>
+                    <a href="<%= request.getContextPath()%>/search.jsp?page=<%= i%>" class="<%= (i == currentPage) ? "active" : ""%>"><%= i%></a>
+                    <% } %>
+
+                    <% if (currentPage < totalPages) {%>
+                    <a href="<%= request.getContextPath()%>/search.jsp?page=<%= currentPage + 1%>">Trang sau <i class="fas fa-chevron-right"></i></a>
+                        <% } else { %>
+                    <a href="#" class="disabled">Trang sau <i class="fas fa-chevron-right"></i></a>
+                        <% }%>
                 </div>
             </div>
         </div>
@@ -561,6 +670,7 @@
                     var minPrice = $("#minPrice").val();
                     var maxPrice = $("#maxPrice").val();
                     var amenities = $("#amenities").val();
+                    var page = <%= currentPage%>; // Lấy trang hiện tại từ server
 
                     $.ajax({
                         url: "RoomFilterServlet",
@@ -569,7 +679,8 @@
                             searchName: searchName,
                             minPrice: minPrice,
                             maxPrice: maxPrice,
-                            amenities: amenities
+                            amenities: amenities,
+                            page: page // Gửi thêm tham số page
                         },
                         success: function (response) {
                             $("#roomList").html(response);
@@ -579,17 +690,98 @@
                                 'gap': '30px',
                                 'padding': '20px 0'
                             });
+
+                            // Cập nhật phân trang và kết quả tìm kiếm sau khi lọc
+                            updatePaginationAndResult(searchName, minPrice, maxPrice, amenities);
                         },
                         error: function (xhr, status, error) {
                             console.error("Lỗi khi lọc phòng: ", error);
                         }
                     });
                 });
+
+                // Hàm cập nhật phân trang và kết quả tìm kiếm
+                function updatePaginationAndResult(searchName, minPrice, maxPrice, amenities) {
+                    $.ajax({
+                        url: "RoomFilterServlet",
+                        type: "GET",
+                        data: {
+                            searchName: searchName,
+                            minPrice: minPrice,
+                            maxPrice: maxPrice,
+                            amenities: amenities,
+                            getTotal: true // Tham số để lấy tổng số phòng
+                        },
+                        success: function (totalRooms) {
+                            const totalPages = Math.ceil(totalRooms / <%= ITEMS_PER_PAGE%>);
+                            let paginationHtml = '';
+
+                            // Cập nhật kết quả tìm kiếm
+                            $("#searchResult").text("Tìm thấy " + totalRooms + " homestay phù hợp");
+
+                            // Cập nhật phân trang
+                            if (<%= currentPage%> > 1) {
+                                paginationHtml += '<a href="javascript:loadPage(' + (<%= currentPage%> - 1) + ')"><i class="fas fa-chevron-left"></i> Trang trước</a>';
+                            } else {
+                                paginationHtml += '<a href="#" class="disabled"><i class="fas fa-chevron-left"></i> Trang trước</a>';
+                            }
+
+                            for (let i = 1; i <= totalPages; i++) {
+                                paginationHtml += '<a href="javascript:loadPage(' + i + ')" class="' + (i == <%= currentPage%> ? "active" : "") + '">' + i + '</a>';
+                            }
+
+                            if (<%= currentPage%> < totalPages) {
+                                paginationHtml += '<a href="javascript:loadPage(' + (<%= currentPage%> + 1) + ')">Trang sau <i class="fas fa-chevron-right"></i></a>';
+                            } else {
+                                paginationHtml += '<a href="#" class="disabled">Trang sau <i class="fas fa-chevron-right"></i></a>';
+                            }
+
+                            $(".pagination").html(paginationHtml);
+                        },
+                        error: function (xhr, status, error) {
+                            console.error("Lỗi khi lấy tổng số phòng: ", error);
+                        }
+                    });
+                }
+
+                // Hàm tải trang khi nhấp vào phân trang
+                window.loadPage = function (page) {
+                    var searchName = $("#searchName").val();
+                    var minPrice = $("#minPrice").val();
+                    var maxPrice = $("#maxPrice").val();
+                    var amenities = $("#amenities").val();
+
+                    $.ajax({
+                        url: "RoomFilterServlet",
+                        type: "GET",
+                        data: {
+                            searchName: searchName,
+                            minPrice: minPrice,
+                            maxPrice: maxPrice,
+                            amenities: amenities,
+                            page: page
+                        },
+                        success: function (response) {
+                            $("#roomList").html(response);
+                            $("#roomList").css({
+                                'display': 'grid',
+                                'grid-template-columns': 'repeat(auto-fill, minmax(320px, 1fr))',
+                                'gap': '30px',
+                                'padding': '20px 0'
+                            });
+                            updatePaginationAndResult(searchName, minPrice, maxPrice, amenities); // Cập nhật lại phân trang và kết quả
+                        },
+                        error: function (xhr, status, error) {
+                            console.error("Lỗi khi tải trang: ", error);
+                        }
+                    });
+                };
             });
 
             function roomDetails(roomId) {
                 window.location.href = "room-details?roomId=" + roomId;
             }
         </script>
+         <%@include file="footer.jsp" %> 
     </body>
 </html>

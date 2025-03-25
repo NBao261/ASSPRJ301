@@ -118,7 +118,7 @@
             width: 40px;
             height: 40px;
             border-radius: 50%;
-            background: #A2D9CE; /* Màu nền pastel nhẹ từ code đầu tiên */
+            background: #A2D9CE; 
             display: flex;
             align-items: center;
             justify-content: center;
@@ -126,7 +126,7 @@
             transition: transform 0.3s ease, box-shadow 0.3s ease;
             overflow: hidden;
             border: 2px solid transparent;
-            background-image: linear-gradient(45deg, #5DC1B9, #F7DC6F); /* Viền gradient */
+            background-image: linear-gradient(45deg, #5DC1B9, #F7DC6F); 
             background-clip: padding-box;
         }
 
