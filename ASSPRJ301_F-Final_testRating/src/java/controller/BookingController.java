@@ -2,9 +2,21 @@ package controller;
 
 import dao.BookingDAO;
 import dao.RoomDAO;
+import dao.PromotionDAO;
+import dao.NotificationDAO;
 import dto.BookingDTO;
 import dto.RoomDTO;
 import dto.UserDTO;
+import dto.PromotionDTO;
+import dto.NotificationDTO;
+import utils.EmailUtils;
+
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
@@ -12,15 +24,6 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
-import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-import dao.NotificationDAO;
-import dto.NotificationDTO;
-import utils.EmailUtils;
 
 @WebServlet(name = "BookingController", urlPatterns = {"/bookRoom", "/viewBookings", "/cancelBooking", "/checkAvailability"})
 public class BookingController extends HttpServlet {
@@ -72,6 +75,7 @@ public class BookingController extends HttpServlet {
         String roomIdParam = request.getParameter("roomId");
         String checkInStr = request.getParameter("checkInDate");
         String checkOutStr = request.getParameter("checkOutDate");
+        String promoCode = request.getParameter("promoCode");
 
         if (roomIdParam == null || roomIdParam.trim().isEmpty()) {
             request.setAttribute("errorMessage", "Không tìm thấy thông tin phòng!");
@@ -111,8 +115,52 @@ public class BookingController extends HttpServlet {
             return;
         }
 
-        double totalPrice = days * room.getPrice();
-        BookingDTO booking = new BookingDTO(0, user, room, checkInDate, checkOutDate, totalPrice, BookingDAO.STATUS_PENDING_PAYMENT, new Date());
+        // Tính tổng tiền ban đầu (trước khi giảm)
+        double originalPrice = days * room.getPrice();
+        double discountAmount = 0;
+
+        // Kiểm tra và áp dụng mã giảm giá
+        PromotionDAO promotionDAO = new PromotionDAO();
+        if (promoCode != null && !promoCode.trim().isEmpty()) {
+            PromotionDTO promotion = promotionDAO.getPromotionByCode(promoCode);
+            if (promotion == null) {
+                request.setAttribute("errorMessage", "Mã giảm giá không tồn tại.");
+                request.getRequestDispatcher(BOOKING_PAGE).forward(request, response);
+                return;
+            }
+
+            // Kiểm tra ngày hiệu lực của mã giảm giá
+            Date currentDate = new Date();
+            if (promotion.getStartDate().after(currentDate) || promotion.getEndDate().before(currentDate)) {
+                request.setAttribute("errorMessage", "Mã giảm giá không còn hiệu lực.");
+                request.getRequestDispatcher(BOOKING_PAGE).forward(request, response);
+                return;
+            }
+
+            // Kiểm tra số lần sử dụng (nếu có giới hạn)
+            if (promotion.getUsageLimit() != null && promotion.getUsageCount() >= promotion.getUsageLimit()) {
+                request.setAttribute("errorMessage", "Mã giảm giá đã được sử dụng hết.");
+                request.getRequestDispatcher(BOOKING_PAGE).forward(request, response);
+                return;
+            }
+
+            // Tính số tiền giảm
+            discountAmount = promotion.getDiscountAmount();
+            if (promotion.getDiscountType().equals("PERCENTAGE")) {
+                discountAmount = originalPrice * (discountAmount / 100); // Tính số tiền giảm theo phần trăm
+            }
+
+            // Cập nhật usage_count của mã giảm giá
+            promotionDAO.incrementUsageCount(promoCode);
+        }
+
+        // Tính giá cuối cùng (sau khi giảm)
+        double finalPrice = originalPrice - discountAmount;
+
+        // Tạo BookingDTO
+        BookingDTO booking = new BookingDTO(0, user, room, checkInDate, checkOutDate, finalPrice, BookingDAO.STATUS_PENDING_PAYMENT, new Date());
+        booking.setPromoCode(promoCode);
+        booking.setDiscountAmount(discountAmount);
 
         if (bookingDAO.addBooking(booking)) {
             int bookingId = bookingDAO.getLastInsertedBookingId();
@@ -124,7 +172,7 @@ public class BookingController extends HttpServlet {
 
             NotificationDAO notificationDAO = new NotificationDAO();
             NotificationDTO notification = new NotificationDTO(0, user.getUserID(),
-                    "Bạn đã đặt phòng '" + room.getName() + "' thành công! Vui lòng thanh toán để hoàn tất.", null, false);
+                    "Bạn đã đặt phòng '" + room.getName() + "' thành công! Tổng tiền: " + finalPrice + " đ. Vui lòng thanh toán để hoàn tất.", null, false);
             notificationDAO.addNotification(notification);
 
             boolean emailSent = EmailUtils.sendBookingSuccessEmail(
@@ -139,7 +187,7 @@ public class BookingController extends HttpServlet {
                 log("Failed to send booking success email to: " + user.getGmail());
             }
 
-            request.setAttribute("successMessage", "Đặt phòng thành công! Vui lòng thanh toán để hoàn tất.");
+            request.setAttribute("successMessage", "Đặt phòng thành công! Tổng tiền ban đầu: " + originalPrice + " đ, đã giảm: " + discountAmount + " đ, tổng tiền cuối: " + finalPrice + " đ. Vui lòng thanh toán để hoàn tất.");
             viewBookings(request, response, user);
         } else {
             request.setAttribute("errorMessage", "Đặt phòng thất bại, vui lòng thử lại.");

@@ -15,6 +15,7 @@ import utils.DBUtils;
 
 public class BookingDAO {
 
+    // Hằng số cho các trạng thái đặt phòng
     public static final String STATUS_PENDING_PAYMENT = "PendingPayment"; 
     public static final String STATUS_PAID = "Paid";                     
     public static final String STATUS_CONFIRMED = "Confirmed";          
@@ -26,16 +27,19 @@ public class BookingDAO {
             return false;
         }
 
-        String sql = "INSERT INTO bookings (userID, room_id, check_in_date, check_out_date, total_price, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO bookings (userID, room_id, check_in_date, check_out_date, total_price, status, created_at, promo_code, discount_amount) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = DBUtils.getConnection();
                 PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, booking.getUser().getUserID());
             ps.setInt(2, booking.getRoom().getId());
             ps.setDate(3, new java.sql.Date(booking.getCheckInDate().getTime()));
             ps.setDate(4, new java.sql.Date(booking.getCheckOutDate().getTime()));
-            ps.setDouble(5, booking.getTotalPrice());
+            ps.setDouble(5, booking.getTotalPrice()); // Lưu giá gốc
             ps.setString(6, STATUS_PENDING_PAYMENT); 
             ps.setTimestamp(7, new Timestamp(booking.getCreatedAt().getTime()));
+            // Gán promo_code và discount_amount, nếu null thì gán giá trị mặc định
+            ps.setString(8, booking.getPromoCode() != null ? booking.getPromoCode() : "");
+            ps.setDouble(9, booking.getDiscountAmount() != 0 ? booking.getDiscountAmount() : 0.0);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
             System.err.println("Error adding booking: " + e.getMessage());
@@ -156,7 +160,7 @@ public class BookingDAO {
         RoomDAO roomDAO = new RoomDAO();
         RoomDTO room = roomDAO.getRoomById(rs.getInt("room_id"));
 
-        return new BookingDTO(
+        BookingDTO booking = new BookingDTO(
                 rs.getInt("id"),
                 user,
                 room,
@@ -166,6 +170,17 @@ public class BookingDAO {
                 rs.getString("status"),
                 rs.getTimestamp("created_at")
         );
+        // Xử lý promo_code và discount_amount
+        String promoCode = rs.getString("promo_code");
+        booking.setPromoCode(promoCode != null ? promoCode : "");
+        
+        double discountAmount = rs.getDouble("discount_amount");
+        if (rs.wasNull()) {
+            discountAmount = 0.0;
+        }
+        booking.setDiscountAmount(discountAmount);
+        
+        return booking;
     }
 
     // Lấy thông tin đặt phòng theo ID
@@ -267,5 +282,73 @@ public class BookingDAO {
             System.err.println("Error fetching last inserted booking ID: " + e.getMessage());
         }
         return -1; // Trả về -1 nếu có lỗi hoặc không tìm thấy
+    }
+
+    // Hàm mới: Kiểm tra xem một đặt phòng có tồn tại hay không
+    public boolean existsBooking(int bookingId) throws ClassNotFoundException {
+        if (bookingId <= 0) {
+            return false;
+        }
+
+        String sql = "SELECT COUNT(*) FROM bookings WHERE id = ?";
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, bookingId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error checking if booking exists: " + e.getMessage());
+        }
+        return false;
+    }
+
+    // Hàm mới: Lấy danh sách đặt phòng theo trạng thái
+    public List<BookingDTO> getBookingsByStatus(String status) throws ClassNotFoundException, Exception {
+        List<BookingDTO> bookings = new ArrayList<>();
+        if (status == null || status.trim().isEmpty()) {
+            return bookings;
+        }
+
+        String sql = "SELECT * FROM bookings WHERE status = ? ORDER BY created_at DESC";
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, status);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    bookings.add(mapResultSetToBooking(rs));
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error fetching bookings by status: " + e.getMessage());
+        }
+        return bookings;
+    }
+
+    // Hàm mới: Cập nhật thông tin đặt phòng
+    public boolean updateBooking(BookingDTO booking) throws ClassNotFoundException {
+        if (booking == null || booking.getId() <= 0) {
+            return false;
+        }
+
+        String sql = "UPDATE bookings SET userID = ?, room_id = ?, check_in_date = ?, check_out_date = ?, total_price = ?, status = ?, promo_code = ?, discount_amount = ? WHERE id = ?";
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, booking.getUser().getUserID());
+            ps.setInt(2, booking.getRoom().getId());
+            ps.setDate(3, new java.sql.Date(booking.getCheckInDate().getTime()));
+            ps.setDate(4, new java.sql.Date(booking.getCheckOutDate().getTime()));
+            ps.setDouble(5, booking.getTotalPrice());
+            ps.setString(6, booking.getStatus());
+            ps.setString(7, booking.getPromoCode());
+            ps.setDouble(8, booking.getDiscountAmount());
+            ps.setInt(9, booking.getId());
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("Error updating booking: " + e.getMessage());
+            return false;
+        }
     }
 }

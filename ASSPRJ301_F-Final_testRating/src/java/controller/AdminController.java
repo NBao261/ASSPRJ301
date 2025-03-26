@@ -4,12 +4,14 @@ import dao.BookingDAO;
 import dao.ContactDAO;
 import dao.RoomDAO;
 import dao.UserDAO;
-import dao.NotificationDAO; // Thêm import cho NotificationDAO
+import dao.NotificationDAO;
+import dao.PromotionDAO;
 import dto.BookingDTO;
 import dto.ContactMessageDTO;
 import dto.RoomDTO;
 import dto.UserDTO;
-import dto.NotificationDTO; // Thêm import cho NotificationDTO
+import dto.NotificationDTO;
+import dto.PromotionDTO;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -33,7 +35,7 @@ import java.util.stream.Collectors;
 import utils.EmailUtils;
 
 @WebServlet(name = "AdminController", urlPatterns = {
-    "/admin/users", "/admin/rooms", "/admin/bookings", "/admin/statistics", "/admin/messages"
+    "/admin/users", "/admin/rooms", "/admin/bookings", "/admin/statistics", "/admin/messages", "/admin/promotions"
 })
 public class AdminController extends HttpServlet {
 
@@ -43,6 +45,7 @@ public class AdminController extends HttpServlet {
     private static final String ADMIN_BOOKINGS_PAGE = "/admin/bookings.jsp";
     private static final String ADMIN_STATISTICS_PAGE = "/admin/statistics.jsp";
     private static final String ADMIN_MESSAGES_PAGE = "/admin/messages.jsp";
+    private static final String ADMIN_PROMOTIONS_PAGE = "/admin/promotions.jsp";
     private static final String EMAIL_PATTERN = "^[A-Za-z0-9+_.-]+@(.+)$";
     private static final String PHONE_PATTERN = "^\\+?[0-9]{9,12}$";
     private static final Logger LOGGER = Logger.getLogger(AdminController.class.getName());
@@ -212,186 +215,186 @@ public class AdminController extends HttpServlet {
                 }
             }
         } else if ("/admin/rooms".equals(path)) {
-    RoomDAO roomDAO = new RoomDAO();
-    if (action == null || action.isEmpty()) {
-        try {
-            List<RoomDTO> roomList = roomDAO.getAllRooms();
-            LOGGER.log(Level.INFO, "Retrieved {0} rooms from database", roomList.size());
-            request.setAttribute("roomList", roomList);
-            if (roomList.isEmpty()) {
-                request.setAttribute("errorMessage", "Không có phòng nào được tìm thấy trong cơ sở dữ liệu!");
-            }
-        } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Error retrieving rooms: " + e.getMessage(), e);
-            request.setAttribute("errorMessage", "Lỗi khi lấy danh sách phòng: " + e.getMessage());
-        }
-        request.getRequestDispatcher(ADMIN_ROOMS_PAGE).forward(request, response);
-    } else {
-        switch (action) {
-            case "add":
-                if ("GET".equals(request.getMethod())) {
-                    List<RoomDTO> roomList = roomDAO.getAllRooms();
-                    request.setAttribute("roomList", roomList);
-                    request.getRequestDispatcher(ADMIN_ROOMS_PAGE).forward(request, response);
-                } else if ("POST".equals(request.getMethod())) {
-                    String name = request.getParameter("name");
-                    String description = request.getParameter("description");
-                    String priceStr = request.getParameter("price");
-                    String amenities = request.getParameter("amenities");
-                    String imageUrl = request.getParameter("imageUrl");
-                    String detailImagesStr = request.getParameter("detailImages");
-
-                    try {
-                        double price = priceStr != null && !priceStr.trim().isEmpty() ? Double.parseDouble(priceStr) : 0;
-                        List<String> detailImages = detailImagesStr != null && !detailImagesStr.trim().isEmpty()
-                                ? Arrays.asList(detailImagesStr.split("\\r?\\n")) : new ArrayList<>();
-
-                        if (name == null || name.trim().isEmpty()) {
-                            request.setAttribute("errorMessage", "Tên phòng không được để trống!");
-                        } else if (price <= 0) {
-                            request.setAttribute("errorMessage", "Giá phòng phải lớn hơn 0!");
-                        } else {
-                            RoomDTO newRoom = new RoomDTO(0, name, description, price, amenities, imageUrl, detailImages, 0.0, 0);
-                            if (roomDAO.create(newRoom)) {
-                                request.setAttribute("successMessage", "Thêm phòng thành công!");
-                            } else {
-                                request.setAttribute("errorMessage", "Thêm phòng thất bại!");
-                            }
-                        }
-                    } catch (NumberFormatException e) {
-                        request.setAttribute("errorMessage", "Giá phải là số hợp lệ!");
-                    } catch (Exception e) {
-                        request.setAttribute("errorMessage", "Lỗi hệ thống khi thêm phòng: " + e.getMessage());
-                    }
-
-                    List<RoomDTO> roomList = roomDAO.getAllRooms();
-                    request.setAttribute("roomList", roomList);
-                    request.getRequestDispatcher(ADMIN_ROOMS_PAGE).forward(request, response);
-                }
-                break;
-
-            case "edit":
-                if ("GET".equals(request.getMethod())) {
-                    String roomIdStr = request.getParameter("roomId");
-                    try {
-                        int roomId = Integer.parseInt(roomIdStr);
-                        RoomDTO editRoom = roomDAO.getRoomById(roomId);
-                        if (editRoom != null) {
-                            request.setAttribute("editRoom", editRoom);
-                        } else {
-                            request.setAttribute("errorMessage", "Không tìm thấy phòng để sửa!");
-                        }
-                    } catch (NumberFormatException e) {
-                        request.setAttribute("errorMessage", "ID phòng không hợp lệ!");
-                    } catch (Exception e) {
-                        request.setAttribute("errorMessage", "Lỗi hệ thống khi lấy thông tin phòng: " + e.getMessage());
-                    }
-                    List<RoomDTO> roomList = roomDAO.getAllRooms();
-                    request.setAttribute("roomList", roomList);
-                    request.getRequestDispatcher(ADMIN_ROOMS_PAGE).forward(request, response);
-                } else if ("POST".equals(request.getMethod())) {
-                    String roomIdStr = request.getParameter("roomId");
-                    String name = request.getParameter("name");
-                    String description = request.getParameter("description");
-                    String priceStr = request.getParameter("price");
-                    String amenities = request.getParameter("amenities");
-                    String imageUrl = request.getParameter("imageUrl");
-                    String detailImagesStr = request.getParameter("detailImages");
-
-                    try {
-                        int roomId = Integer.parseInt(roomIdStr);
-                        double price = priceStr != null && !priceStr.trim().isEmpty() ? Double.parseDouble(priceStr) : 0;
-                        List<String> detailImages = detailImagesStr != null && !detailImagesStr.trim().isEmpty()
-                                ? Arrays.asList(detailImagesStr.split("\\r?\\n")) : new ArrayList<>();
-
-                        RoomDTO updatedRoom = roomDAO.getRoomById(roomId);
-                        if (updatedRoom != null) {
-                            if (name == null || name.trim().isEmpty()) {
-                                request.setAttribute("errorMessage", "Tên phòng không được để trống!");
-                            } else if (price <= 0) {
-                                request.setAttribute("errorMessage", "Giá phòng phải lớn hơn 0!");
-                            } else {
-                                updatedRoom.setName(name);
-                                updatedRoom.setDescription(description);
-                                updatedRoom.setPrice(price);
-                                updatedRoom.setAmenities(amenities);
-                                updatedRoom.setImageUrl(imageUrl);
-                                updatedRoom.setDetailImages(detailImages);
-
-                                if (roomDAO.update(updatedRoom)) {
-                                    request.setAttribute("successMessage", "Cập nhật phòng thành công!");
-                                } else {
-                                    request.setAttribute("errorMessage", "Cập nhật phòng thất bại!");
-                                }
-                            }
-                        } else {
-                            request.setAttribute("errorMessage", "Không tìm thấy phòng để cập nhật!");
-                        }
-                    } catch (NumberFormatException e) {
-                        request.setAttribute("errorMessage", "Giá phải là số hợp lệ!");
-                    } catch (Exception e) {
-                        request.setAttribute("errorMessage", "Lỗi hệ thống khi cập nhật phòng: " + e.getMessage());
-                    }
-
-                    List<RoomDTO> roomList = roomDAO.getAllRooms();
-                    request.setAttribute("roomList", roomList);
-                    request.getRequestDispatcher(ADMIN_ROOMS_PAGE).forward(request, response);
-                }
-                break;
-
-            case "delete":
-                String deleteRoomIdStr = request.getParameter("roomId");
-                BookingDAO bookingDAO = new BookingDAO();
+            RoomDAO roomDAO = new RoomDAO();
+            if (action == null || action.isEmpty()) {
                 try {
-                    int deleteRoomId = Integer.parseInt(deleteRoomIdStr);
-                    RoomDTO roomToDelete = roomDAO.getRoomById(deleteRoomId);
-                    if (roomToDelete != null) {
-                        boolean canDelete = true;
-                        StringBuilder errorMsg = new StringBuilder();
-                        Date currentDate = new Date();
-
-                        List<BookingDTO> roomBookings = bookingDAO.getBookingsByRoomId(deleteRoomId);
-                        if (roomBookings != null && !roomBookings.isEmpty()) {
-                            for (BookingDTO booking : roomBookings) {
-                                if (!"Cancelled".equals(booking.getStatus()) && currentDate.before(booking.getCheckOutDate())) {
-                                    canDelete = false;
-                                    errorMsg.append("Có đặt phòng chưa hoàn tất (ID: ")
-                                            .append(booking.getId()).append(") từ ")
-                                            .append(sdf.format(booking.getCheckInDate())).append(" đến ")
-                                            .append(sdf.format(booking.getCheckOutDate())).append(". ");
-                                }
-                            }
-                        }
-
-                        if (canDelete) {
-                            if (roomDAO.delete(deleteRoomId)) {
-                                request.setAttribute("successMessage", "Xóa phòng thành công! Các đặt phòng liên quan (nếu có) cũng đã được xóa.");
-                            } else {
-                                request.setAttribute("errorMessage", "Xóa phòng thất bại!");
-                            }
-                        } else {
-                            request.setAttribute("errorMessage", "Không thể xóa phòng vì: " + errorMsg.toString());
-                        }
-                    } else {
-                        request.setAttribute("errorMessage", "Không tìm thấy phòng để xóa!");
+                    List<RoomDTO> roomList = roomDAO.getAllRooms();
+                    LOGGER.log(Level.INFO, "Retrieved {0} rooms from database", roomList.size());
+                    request.setAttribute("roomList", roomList);
+                    if (roomList.isEmpty()) {
+                        request.setAttribute("errorMessage", "Không có phòng nào được tìm thấy trong cơ sở dữ liệu!");
                     }
-                } catch (NumberFormatException e) {
-                    request.setAttribute("errorMessage", "ID phòng không hợp lệ!");
                 } catch (Exception e) {
-                    request.setAttribute("errorMessage", "Lỗi khi xóa phòng: " + e.getMessage());
+                    LOGGER.log(Level.SEVERE, "Error retrieving rooms: " + e.getMessage(), e);
+                    request.setAttribute("errorMessage", "Lỗi khi lấy danh sách phòng: " + e.getMessage());
                 }
-
-                List<RoomDTO> roomList = roomDAO.getAllRooms();
-                request.setAttribute("roomList", roomList);
                 request.getRequestDispatcher(ADMIN_ROOMS_PAGE).forward(request, response);
-                break;
+            } else {
+                switch (action) {
+                    case "add":
+                        if ("GET".equals(request.getMethod())) {
+                            List<RoomDTO> roomList = roomDAO.getAllRooms();
+                            request.setAttribute("roomList", roomList);
+                            request.getRequestDispatcher(ADMIN_ROOMS_PAGE).forward(request, response);
+                        } else if ("POST".equals(request.getMethod())) {
+                            String name = request.getParameter("name");
+                            String description = request.getParameter("description");
+                            String priceStr = request.getParameter("price");
+                            String amenities = request.getParameter("amenities");
+                            String imageUrl = request.getParameter("imageUrl");
+                            String detailImagesStr = request.getParameter("detailImages");
 
-            default:
-                response.sendError(HttpServletResponse.SC_NOT_FOUND, "Action not supported");
-                break;
-        }
-    }
-       } else if ("/admin/bookings".equals(path)) {
+                            try {
+                                double price = priceStr != null && !priceStr.trim().isEmpty() ? Double.parseDouble(priceStr) : 0;
+                                List<String> detailImages = detailImagesStr != null && !detailImagesStr.trim().isEmpty()
+                                        ? Arrays.asList(detailImagesStr.split("\\r?\\n")) : new ArrayList<>();
+
+                                if (name == null || name.trim().isEmpty()) {
+                                    request.setAttribute("errorMessage", "Tên phòng không được để trống!");
+                                } else if (price <= 0) {
+                                    request.setAttribute("errorMessage", "Giá phòng phải lớn hơn 0!");
+                                } else {
+                                    RoomDTO newRoom = new RoomDTO(0, name, description, price, amenities, imageUrl, detailImages, 0.0, 0);
+                                    if (roomDAO.create(newRoom)) {
+                                        request.setAttribute("successMessage", "Thêm phòng thành công!");
+                                    } else {
+                                        request.setAttribute("errorMessage", "Thêm phòng thất bại!");
+                                    }
+                                }
+                            } catch (NumberFormatException e) {
+                                request.setAttribute("errorMessage", "Giá phải là số hợp lệ!");
+                            } catch (Exception e) {
+                                request.setAttribute("errorMessage", "Lỗi hệ thống khi thêm phòng: " + e.getMessage());
+                            }
+
+                            List<RoomDTO> roomList = roomDAO.getAllRooms();
+                            request.setAttribute("roomList", roomList);
+                            request.getRequestDispatcher(ADMIN_ROOMS_PAGE).forward(request, response);
+                        }
+                        break;
+
+                    case "edit":
+                        if ("GET".equals(request.getMethod())) {
+                            String roomIdStr = request.getParameter("roomId");
+                            try {
+                                int roomId = Integer.parseInt(roomIdStr);
+                                RoomDTO editRoom = roomDAO.getRoomById(roomId);
+                                if (editRoom != null) {
+                                    request.setAttribute("editRoom", editRoom);
+                                } else {
+                                    request.setAttribute("errorMessage", "Không tìm thấy phòng để sửa!");
+                                }
+                            } catch (NumberFormatException e) {
+                                request.setAttribute("errorMessage", "ID phòng không hợp lệ!");
+                            } catch (Exception e) {
+                                request.setAttribute("errorMessage", "Lỗi hệ thống khi lấy thông tin phòng: " + e.getMessage());
+                            }
+                            List<RoomDTO> roomList = roomDAO.getAllRooms();
+                            request.setAttribute("roomList", roomList);
+                            request.getRequestDispatcher(ADMIN_ROOMS_PAGE).forward(request, response);
+                        } else if ("POST".equals(request.getMethod())) {
+                            String roomIdStr = request.getParameter("roomId");
+                            String name = request.getParameter("name");
+                            String description = request.getParameter("description");
+                            String priceStr = request.getParameter("price");
+                            String amenities = request.getParameter("amenities");
+                            String imageUrl = request.getParameter("imageUrl");
+                            String detailImagesStr = request.getParameter("detailImages");
+
+                            try {
+                                int roomId = Integer.parseInt(roomIdStr);
+                                double price = priceStr != null && !priceStr.trim().isEmpty() ? Double.parseDouble(priceStr) : 0;
+                                List<String> detailImages = detailImagesStr != null && !detailImagesStr.trim().isEmpty()
+                                        ? Arrays.asList(detailImagesStr.split("\\r?\\n")) : new ArrayList<>();
+
+                                RoomDTO updatedRoom = roomDAO.getRoomById(roomId);
+                                if (updatedRoom != null) {
+                                    if (name == null || name.trim().isEmpty()) {
+                                        request.setAttribute("errorMessage", "Tên phòng không được để trống!");
+                                    } else if (price <= 0) {
+                                        request.setAttribute("errorMessage", "Giá phòng phải lớn hơn 0!");
+                                    } else {
+                                        updatedRoom.setName(name);
+                                        updatedRoom.setDescription(description);
+                                        updatedRoom.setPrice(price);
+                                        updatedRoom.setAmenities(amenities);
+                                        updatedRoom.setImageUrl(imageUrl);
+                                        updatedRoom.setDetailImages(detailImages);
+
+                                        if (roomDAO.update(updatedRoom)) {
+                                            request.setAttribute("successMessage", "Cập nhật phòng thành công!");
+                                        } else {
+                                            request.setAttribute("errorMessage", "Cập nhật phòng thất bại!");
+                                        }
+                                    }
+                                } else {
+                                    request.setAttribute("errorMessage", "Không tìm thấy phòng để cập nhật!");
+                                }
+                            } catch (NumberFormatException e) {
+                                request.setAttribute("errorMessage", "Giá phải là số hợp lệ!");
+                            } catch (Exception e) {
+                                request.setAttribute("errorMessage", "Lỗi hệ thống khi cập nhật phòng: " + e.getMessage());
+                            }
+
+                            List<RoomDTO> roomList = roomDAO.getAllRooms();
+                            request.setAttribute("roomList", roomList);
+                            request.getRequestDispatcher(ADMIN_ROOMS_PAGE).forward(request, response);
+                        }
+                        break;
+
+                    case "delete":
+                        String deleteRoomIdStr = request.getParameter("roomId");
+                        BookingDAO bookingDAO = new BookingDAO();
+                        try {
+                            int deleteRoomId = Integer.parseInt(deleteRoomIdStr);
+                            RoomDTO roomToDelete = roomDAO.getRoomById(deleteRoomId);
+                            if (roomToDelete != null) {
+                                boolean canDelete = true;
+                                StringBuilder errorMsg = new StringBuilder();
+                                Date currentDate = new Date();
+
+                                List<BookingDTO> roomBookings = bookingDAO.getBookingsByRoomId(deleteRoomId);
+                                if (roomBookings != null && !roomBookings.isEmpty()) {
+                                    for (BookingDTO booking : roomBookings) {
+                                        if (!"Cancelled".equals(booking.getStatus()) && currentDate.before(booking.getCheckOutDate())) {
+                                            canDelete = false;
+                                            errorMsg.append("Có đặt phòng chưa hoàn tất (ID: ")
+                                                    .append(booking.getId()).append(") từ ")
+                                                    .append(sdf.format(booking.getCheckInDate())).append(" đến ")
+                                                    .append(sdf.format(booking.getCheckOutDate())).append(". ");
+                                        }
+                                    }
+                                }
+
+                                if (canDelete) {
+                                    if (roomDAO.delete(deleteRoomId)) {
+                                        request.setAttribute("successMessage", "Xóa phòng thành công! Các đặt phòng liên quan (nếu có) cũng đã được xóa.");
+                                    } else {
+                                        request.setAttribute("errorMessage", "Xóa phòng thất bại!");
+                                    }
+                                } else {
+                                    request.setAttribute("errorMessage", "Không thể xóa phòng vì: " + errorMsg.toString());
+                                }
+                            } else {
+                                request.setAttribute("errorMessage", "Không tìm thấy phòng để xóa!");
+                            }
+                        } catch (NumberFormatException e) {
+                            request.setAttribute("errorMessage", "ID phòng không hợp lệ!");
+                        } catch (Exception e) {
+                            request.setAttribute("errorMessage", "Lỗi khi xóa phòng: " + e.getMessage());
+                        }
+
+                        List<RoomDTO> roomList = roomDAO.getAllRooms();
+                        request.setAttribute("roomList", roomList);
+                        request.getRequestDispatcher(ADMIN_ROOMS_PAGE).forward(request, response);
+                        break;
+
+                    default:
+                        response.sendError(HttpServletResponse.SC_NOT_FOUND, "Action not supported");
+                        break;
+                }
+            }
+        } else if ("/admin/bookings".equals(path)) {
             BookingDAO bookingDAO = new BookingDAO();
             NotificationDAO notificationDAO = new NotificationDAO(); // Khởi tạo NotificationDAO
             if (action == null || action.isEmpty()) {
@@ -431,8 +434,8 @@ public class AdminController extends HttpServlet {
                                         }
 
                                         // Gửi thông báo qua hệ thống cho người dùng
-                                        String userMessage = "Đặt phòng '" + booking.getRoom().getName() + "' (ID: " + bookingId + ") của bạn đã được xác nhận từ " +
-                                                sdf.format(booking.getCheckInDate()) + " đến " + sdf.format(booking.getCheckOutDate()) + ".";
+                                        String userMessage = "Đặt phòng '" + booking.getRoom().getName() + "' (ID: " + bookingId + ") của bạn đã được xác nhận từ "
+                                                + sdf.format(booking.getCheckInDate()) + " đến " + sdf.format(booking.getCheckOutDate()) + ".";
                                         NotificationDTO userNotification = new NotificationDTO(0, booking.getUser().getUserID(), userMessage, null, false);
                                         notificationDAO.addNotification(userNotification);
 
@@ -665,6 +668,61 @@ public class AdminController extends HttpServlet {
                 List<ContactMessageDTO> updatedMessageList = contactDAO.getAllMessages();
                 request.setAttribute("messageList", updatedMessageList);
                 request.getRequestDispatcher(ADMIN_MESSAGES_PAGE).forward(request, response);
+            } else {
+                response.sendError(HttpServletResponse.SC_NOT_FOUND, "Action not supported");
+            }
+        } else if ("/admin/promotions".equals(path)) {
+            PromotionDAO promotionDAO = new PromotionDAO();
+            if (action == null || action.isEmpty()) {
+                // Hiển thị form thêm mã khuyến mãi
+                request.getRequestDispatcher(ADMIN_PROMOTIONS_PAGE).forward(request, response);
+            } else if ("add".equals(action)) {
+                if ("POST".equals(request.getMethod())) {
+                    String code = request.getParameter("code");
+                    String discountType = request.getParameter("discountType");
+                    String discountAmountStr = request.getParameter("discountAmount");
+                    String startDateStr = request.getParameter("startDate");
+                    String endDateStr = request.getParameter("endDate");
+                    String usageLimitStr = request.getParameter("usageLimit");
+
+                    try {
+                        double discountAmount = Double.parseDouble(discountAmountStr);
+                        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+                        Date startDate = sdf.parse(startDateStr);
+                        Date endDate = sdf.parse(endDateStr);
+                        Integer usageLimit = usageLimitStr.isEmpty() ? null : Integer.parseInt(usageLimitStr);
+
+                        if (code == null || code.trim().isEmpty()) {
+                            request.setAttribute("errorMessage", "Mã khuyến mãi không được để trống!");
+                        } else if (discountAmount <= 0) {
+                            request.setAttribute("errorMessage", "Số tiền giảm giá phải lớn hơn 0!");
+                        } else if (startDate.after(endDate)) {
+                            request.setAttribute("errorMessage", "Ngày bắt đầu phải trước ngày kết thúc!");
+                        } else if (promotionDAO.getPromotionByCode(code) != null) {
+                            request.setAttribute("errorMessage", "Mã khuyến mãi đã tồn tại!");
+                        } else {
+                            PromotionDTO newPromotion = new PromotionDTO();
+                            newPromotion.setCode(code);
+                            newPromotion.setDiscountType(discountType);
+                            newPromotion.setDiscountAmount(discountAmount);
+                            newPromotion.setStartDate(startDate);
+                            newPromotion.setEndDate(endDate);
+                            newPromotion.setUsageLimit(usageLimit);
+                            newPromotion.setUsageCount(0);
+
+                            if (promotionDAO.createPromotion(newPromotion)) {
+                                request.setAttribute("successMessage", "Thêm mã khuyến mãi thành công!");
+                            } else {
+                                request.setAttribute("errorMessage", "Thêm mã khuyến mãi thất bại!");
+                            }
+                        }
+                    } catch (NumberFormatException e) {
+                        request.setAttribute("errorMessage", "Số tiền giảm giá hoặc giới hạn sử dụng không hợp lệ!");
+                    } catch (Exception e) {
+                        request.setAttribute("errorMessage", "Lỗi hệ thống khi thêm mã khuyến mãi: " + e.getMessage());
+                    }
+                    request.getRequestDispatcher(ADMIN_PROMOTIONS_PAGE).forward(request, response);
+                }
             } else {
                 response.sendError(HttpServletResponse.SC_NOT_FOUND, "Action not supported");
             }

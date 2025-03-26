@@ -18,7 +18,7 @@
 
     <div class="main-content">
         <%
-            Object userObj = session.getAttribute("user"); // Lấy user từ session
+            Object userObj = session.getAttribute("user");
             if (userObj == null || !"AD".equals(((dto.UserDTO) userObj).getRoleID())) {
                 response.sendRedirect(request.getContextPath() + "/login-regis.jsp");
             } else {
@@ -38,6 +38,7 @@
                     <span class="message-count"><%= unreadMessageCount %></span>
                     <% } %>
                 </a>
+                <a href="<%= request.getContextPath() %>/admin/promotions" class="menu-item"><i class="fas fa-tag"></i> Quản lý mã khuyến mãi</a>
             </div>
             <a href="<%= request.getContextPath() %>/login?action=logout" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a>
         </div>
