@@ -101,9 +101,7 @@
             </div>
         </div>
 
-        <div class="footer-container">
-            <%@include file="footer.jsp" %>
-        </div>
+   
 
         <script>
             function markAsRead(notificationId) {

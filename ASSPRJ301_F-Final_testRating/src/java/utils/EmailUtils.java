@@ -18,7 +18,7 @@ public class EmailUtils {
     private static final String SMTP_PORT = "587";
     
     // URL cơ sở dựa trên context path thực tế
-    private static final String BASE_URL = "http://localhost:8080/ASSPRJ301_Final_resetPW";
+    private static final String BASE_URL = "http://localhost:8080/ASSPRJ301_F-Final_testRating";
     
     // Email gửi khi đăng ký thành công
     public static boolean sendRegistrationEmail(String toEmail, String fullName, String userID) {

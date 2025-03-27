@@ -21,8 +21,8 @@ public class ProcessPaymentController extends HttpServlet {
     private static final String ACCESS_KEY = "klm05TvNBzhg7h7j";
     private static final String SECRET_KEY = "at67qH6mk8w5Y1nAyMoYKMWACiEi2bsa";
     private static final String ENDPOINT = "https://test-payment.momo.vn/v2/gateway/api/create";
-    private static final String REDIRECT_URL = "http://localhost:8080/clone_ASSPRJ301_testTT/paymentResult";
-    private static final String IPN_URL = "http://localhost:8080/clone_ASSPRJ301_testTT/ipn";
+    private static final String REDIRECT_URL = "http://localhost:8080/ASSPRJ301_F-Final_testRating/paymentResult";
+    private static final String IPN_URL = "http://localhost:8080/ASSPRJ301_F-Final_testRating/ipn";
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)

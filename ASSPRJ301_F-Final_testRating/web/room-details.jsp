@@ -65,7 +65,7 @@
                         <p><%= room.getDescription() != null ? room.getDescription() : "Chưa có mô tả"%></p>
                         <p><strong>Giá:</strong> <%= String.format("%,.0f", room.getPrice())%>đ / đêm</p>
                         <p><strong>Tiện nghi:</strong> <%= room.getAmenities() != null ? room.getAmenities() : "Không có thông tin"%></p>
-                        <p><strong>Đánh giá:</strong> <%= String.format("%.1f", room.getAverageRating())%> ⭐ (<%= room.getReviewCount() %> đánh giá)</p>
+                        <p><strong>Đánh giá:</strong> <%= String.format("%.1f", room.getAverageRating())%> ⭐ (<%= room.getReviewCount()%> đánh giá)</p>
 
                         <!-- Amenities -->
                         <div class="room-amenities">
@@ -138,21 +138,26 @@
                 </div>
 
                 <!-- Phần 3: Hành động (Bên phải) -->
+                <!-- Phần 3: Hành động (Bên phải) -->
                 <div class="action-info-section">
                     <div class="price"><%= String.format("%,.0f", room.getPrice())%>đ</div>
                     <div class="rating">
-                        Đánh giá: <%= String.format("%.1f", room.getAverageRating())%> <span class="stars">⭐</span> (<%= room.getReviewCount() %> đánh giá)
+                        Đánh giá: <%= String.format("%.1f", room.getAverageRating())%> <span class="stars">⭐</span> (<%= room.getReviewCount()%> đánh giá)
                     </div>
+                    <% if (user != null) {%>
                     <a href="booking.jsp?roomId=<%= room.getId()%>" class="btn-book">Đặt ngay</a>
+                    <% } else { %>
+                    <a href="login-regis.jsp" class="btn-book">Đăng nhập để đặt</a>
+                    <% } %>
                     <!-- Tích hợp phần thông tin liên hệ -->
                     <div class="contact-info">
                         <h4>Liên hệ nhanh</h4>
-                        <p><i class="fas fa-phone-alt"></i> 0909 123 456</p>
-                        <p><i class="fas fa-envelope"></i> homestay@example.com</p>
-                        <a href="https://facebook.com/yourpage" target="_blank" class="btn-contact" style="background: linear-gradient(45deg, #1877F2, #3B5998);">
+                        <p><i class="fas fa-phone-alt"></i> 0123 654 789</p>
+                        <p><i class="fas fa-envelope"></i> mamproject2024@gmail.com</p>
+                        <a href="https://www.facebook.com/mamchildrendreamfoundation/" target="_blank" class="btn-contact" style="background: linear-gradient(45deg, #1877F2, #3B5998);">
                             <i class="fab fa-facebook-f"></i> Liên hệ qua Facebook
                         </a>
-                        <a href="https://instagram.com/yourpage" target="_blank" class="btn-contact" style="background: linear-gradient(45deg, #C13584, #E1306C, #F77737);">
+                        <a href="https://www.instagram.com/" target="_blank" class="btn-contact" style="background: linear-gradient(45deg, #C13584, #E1306C, #F77737);">
                             <i class="fab fa-instagram"></i> Liên hệ qua Instagram
                         </a>
                         <a href="https://zalo.me/0909123456" target="_blank" class="btn-contact" style="background: linear-gradient(45deg, #00A2FF, #0078D4);">

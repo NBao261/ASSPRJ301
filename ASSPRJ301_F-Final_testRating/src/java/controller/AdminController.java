@@ -104,7 +104,7 @@ public class AdminController extends HttpServlet {
                             } else if (sdt != null && !sdt.trim().isEmpty() && !Pattern.matches(PHONE_PATTERN, sdt)) {
                                 request.setAttribute("errorMessage", "Số điện thoại không đúng định dạng (9-12 số, có thể bắt đầu bằng +)!");
                             } else {
-                                UserDTO newUser = new UserDTO(userID, fullName, roleID, password, gmail, sdt, null);
+                                UserDTO newUser = new UserDTO(userID, fullName, roleID, password, gmail, sdt, gmail, roleID, true);
                                 if (userDAO.create(newUser)) {
                                     request.setAttribute("successMessage", "Thêm người dùng thành công!");
                                 } else {

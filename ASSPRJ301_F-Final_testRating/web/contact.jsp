@@ -40,9 +40,9 @@
 
         <div class="card contact-info animate__animated animate__fadeInLeft">
             <h3><i class="fas fa-info-circle"></i> Thông Tin Liên Hệ</h3>
-            <p><strong>Địa chỉ:</strong> 123 Đường ABC, Quận XYZ, TP. Hồ Chí Minh</p>
+            <p><strong>Địa chỉ:</strong> Vinhomes Grand Park</p>
             <p><strong>Điện thoại:</strong> 0901 234 567</p>
-            <p><strong>Email:</strong> contact@homestay.com</p>
+            <p><strong>Email:</strong> mamproject2024@gmail.com</p>
             <p><strong>Giờ làm việc:</strong> 08:00 - 22:00 (Hằng ngày)</p>
         </div>
 

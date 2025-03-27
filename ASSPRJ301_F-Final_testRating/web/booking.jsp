@@ -781,6 +781,7 @@
                             <div id="availability-message" class="availability-message" style="display: none;"></div>
 
                             <button type="submit" id="bookButton" class="btn-book" disabled>
+                                
                                 <i class="fas fa-check-circle"></i> Xác nhận đặt phòng
                             </button>
                         </form>

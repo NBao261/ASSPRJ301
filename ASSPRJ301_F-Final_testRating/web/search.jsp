@@ -285,6 +285,5 @@
                 window.location.href = "room-details?roomId=" + roomId;
             }
         </script>
-         <%@include file="footer.jsp" %> 
     </body>
 </html>

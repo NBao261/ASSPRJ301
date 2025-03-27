@@ -20,7 +20,7 @@ public class PaymentResultController extends HttpServlet {
 
     private BookingDAO bookingDAO = new BookingDAO();
     private NotificationDAO notificationDAO = new NotificationDAO();
-    private UserDAO userDAO = new UserDAO(); // Khởi tạo UserDAO để lấy danh sách admin
+    private UserDAO userDAO = new UserDAO(); 
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
