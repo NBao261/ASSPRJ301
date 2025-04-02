@@ -40,7 +40,7 @@ public class ContactController extends HttpServlet {
                 // Tạo thông báo
                 NotificationDAO notificationDAO = new NotificationDAO();
 
-                // 1. Thông báo cho người dùng (nếu có userId)
+                // 1. Thông báo cho người dùng
                 if (userId != null && !userId.trim().isEmpty()) {
                     String userNotificationMessage = "Bạn vừa gửi một tin nhắn.";
                     NotificationDTO userNotification = new NotificationDTO(0, userId, userNotificationMessage, new Timestamp(System.currentTimeMillis()), false);
@@ -49,7 +49,7 @@ public class ContactController extends HttpServlet {
 
                 // 2. Thông báo cho tất cả Admin
                 UserDAO userDAO = new UserDAO();
-                List<UserDTO> admins = userDAO.getAllAdmins(); // Giả định phương thức này đã có
+                List<UserDTO> admins = userDAO.getAllAdmins(); 
                 String adminNotificationMessage = "Bạn vừa nhận được một tin nhắn từ người dùng " + (userId != null && !userId.trim().isEmpty() ? userId : fullName) + ".";
                 for (UserDTO admin : admins) {
                     NotificationDTO adminNotification = new NotificationDTO(0, admin.getUserID(), adminNotificationMessage, new Timestamp(System.currentTimeMillis()), false);

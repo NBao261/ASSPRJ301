@@ -24,7 +24,6 @@ public class ProfileController extends HttpServlet {
             return;
         }
 
-        // Chuyển tiếp tới profile.jsp với section được chỉ định trong URL
         request.getRequestDispatcher("profile.jsp").forward(request, response);
     }
 

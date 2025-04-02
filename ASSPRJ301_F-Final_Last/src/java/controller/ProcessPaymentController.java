@@ -262,7 +262,6 @@ public class ProcessPaymentController extends HttpServlet {
         private String extraData;
         private String signature;
 
-        // Getters
         public String getPartnerCode() {
             return partnerCode;
         }
